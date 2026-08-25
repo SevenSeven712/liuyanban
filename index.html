@@ -41,7 +41,6 @@
   .config-bar.ok{border-color:rgba(110,231,183,.4);color:var(--accent-2)}
   .config-bar.bad{border-color:rgba(248,113,113,.4);color:#fcb9b9}
 
-  /* Header */
   header{
     display:flex;align-items:center;gap:14px;padding:18px 0 22px;
   }
@@ -69,7 +68,6 @@
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 
-  /* 列表视图 */
   .view{display:none;animation:fade .25s ease}
   .view.active{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -103,7 +101,6 @@
   .empty{padding:34px 20px;text-align:center;color:var(--muted);font-size:13.5px}
   .empty .big{font-size:30px;margin-bottom:8px;opacity:.6}
 
-  /* 添加视图 */
   #addView .card{padding:20px}
   .back-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
   .back-btn{
@@ -140,7 +137,6 @@
 
   footer{text-align:center;margin-top:26px;font-size:12px;color:var(--muted);opacity:.7}
 
-  /* ===== 开屏弹窗样式 ===== */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 1000;
     background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
@@ -193,7 +189,6 @@
 </head>
 <body>
 
-<!-- ====== 开屏弹窗 ====== -->
 <div class="modal-overlay" id="splashModal">
   <div class="modal-card">
     <button class="modal-close" id="closeSplash">✕</button>
@@ -216,7 +211,6 @@
     <button class="add-btn" id="showAddBtn">＋ 添加留言</button>
   </header>
 
-  <!-- ====== 列表视图 ====== -->
   <section id="listView" class="view active">
     <div class="list-title">
       <h3>收到的留言</h3><span class="count" id="visitorCount">0 条</span>
@@ -224,7 +218,6 @@
     <div class="card msg-list" id="visitorList"></div>
   </section>
 
-  <!-- ====== 添加视图 ====== -->
   <section id="addView" class="view">
     <div class="card">
       <div class="back-row">
@@ -251,22 +244,15 @@
   <footer>声音簿 · 数据存于 Supabase 云端</footer>
 </div>
 
-<!-- 官方 SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 (function(){
   "use strict";
 
-  // ============================================================
-  // ★ 第 5 步：把你的 Project URL 和 anon key 填到下面两个地方
-  // 它们都在 Supabase 后台「Project Settings > API」里。
-  // ============================================================
   var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
-  // ============================================================
 
-  // ===== 新增：随机颜色生成函数 =====
   function randomColor() {
     return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
   }
@@ -281,7 +267,6 @@
     configBar.innerHTML = "⚠️ 尚未配置连接。请按注释把 <b>Project URL</b> 和 <b>anon key</b> 填入 JS 第 5 步处，然后刷新页面。";
   }
 
-  // ---- 视图切换 ----
   var listView = document.getElementById("listView");
   var addView = document.getElementById("addView");
   var showAddBtn = document.getElementById("showAddBtn");
@@ -300,7 +285,6 @@
   showAddBtn.addEventListener("click", showAddView);
   backToListBtn.addEventListener("click", showListView);
 
-  // ---- 工具 ----
   var COLORS = ["#6ee7b7","#fbbf24","#f87171","#a78bfa","#f472b6","#38bdf8"];
   function pickColor(hex){
     if(hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase()!=="#000000") return hex;
@@ -328,18 +312,23 @@
     return (d.getMonth()+1)+"月"+d.getDate()+"日 "+hm;
   }
 
-  // ---- 获取本机 IP ----
-  async function fetchIP(){
-    try{
-      var res = await fetch("https://api.ipify.org?format=json");
+  // ========== 核心修复：IP 获取加超时，永不卡死 ==========
+  async function fetchIP() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
+    try {
+      var res = await fetch("https://api.ipify.org?format=json", { signal: controller.signal });
       var data = await res.json();
       return data.ip || "0.0.0.0";
-    }catch(e){
+    } catch (e) {
+      // 超时或任何错误都返回默认值
       return "0.0.0.0";
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
-  // ---- 渲染留言列表 ----
   var visitorList = document.getElementById("visitorList");
   var visitorCount = document.getElementById("visitorCount");
 
@@ -388,11 +377,9 @@
     return true;
   }
 
-  // ---- Supabase 连接 ----
   if(configured){
     var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 1) 首次加载：拉取已有留言
     (async function(){
       try{
         var { data, error } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
@@ -407,7 +394,6 @@
       }
     })();
 
-    // 2) 实时订阅：有新 INSERT 自动刷新列表
     try{
       supabase.channel("voicebook-realtime")
         .on("postgres_changes",
@@ -429,7 +415,6 @@
     }catch(err){}
   }
 
-  // ---- 提交留言 ----
   var sendBtn = document.getElementById("sendBtn");
   var toast = document.getElementById("toast");
 
@@ -447,12 +432,15 @@
       return;
     }
 
+    // 禁用按钮，防止重复提交
     sendBtn.disabled = true;
     toast.className = "toast show";
     toast.textContent = "⏳ 正在写入云端…";
 
     try{
+      // 获取 IP（带超时，绝不会卡死）
       var ip = await fetchIP();
+      
       var { error } = await supabase.from("messages").insert([
         { name: name, text: text, color: color, ip: ip }
       ]);
@@ -473,31 +461,33 @@
       }, 500);
 
     }catch(err){
-      toast.className = "toast err show";
-      toast.textContent = "写入失败：" + (err.message||err);
+      var msg = err.message || String(err);
+      if(msg.includes("column") && msg.includes("ip") && msg.includes("does not exist")) {
+        toast.className = "toast err show";
+        toast.textContent = "❌ 数据库缺少 `ip` 列，请在 Supabase 执行 `ALTER TABLE messages ADD COLUMN ip TEXT;`";
+      } else {
+        toast.className = "toast err show";
+        toast.textContent = "写入失败：" + msg;
+      }
+    } finally {
+      // ========== 核心修复：无论如何，最后都要解锁按钮 ==========
+      sendBtn.disabled = false;
     }
-    sendBtn.disabled = false;
   });
 
-  // Ctrl+Enter 快速发送
   document.getElementById("visitorText").addEventListener("keydown", function(e){
     if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ sendBtn.click(); }
   });
 
-  // ===== 关键修改 1：设置随机默认颜色 =====
   document.getElementById("visitorColor").value = randomColor();
 
-  // ===== 关键修改 2：开屏弹窗关闭逻辑 =====
   var splashModal = document.getElementById("splashModal");
   var closeSplash = document.getElementById("closeSplash");
   
   closeSplash.addEventListener("click", function(){
     splashModal.style.display = "none";
-    // 释放背景滚动（如果有）
     document.body.style.overflow = "";
   });
-
-  // 点击弹窗外部（背景）也关闭（增强体验）
   splashModal.addEventListener("click", function(e){
     if(e.target === splashModal) {
       splashModal.style.display = "none";
@@ -505,7 +495,6 @@
     }
   });
 
-  // ---- 初始化 ----
   renderVisitor();
 })();
 </script>
