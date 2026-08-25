@@ -5,138 +5,173 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>声音簿 · 留言墙</title>
 <style>
-  :root{
-    --bg:#0f1115;
-    --panel:#171a21;
-    --panel-2:#1d212b;
-    --line:rgba(255,255,255,.08);
-    --text:#e8eaf0;
-    --muted:#8b93a7;
-    --accent:#5b8cff;
-    --accent-2:#6ee7b7;
-    --danger:#f87171;
-    --radius:16px;
-    --shadow:0 10px 34px rgba(0,0,0,.35);
-    --font:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1d212b;
+    --line: rgba(255,255,255,.08);
+    --text: #e8eaf0;
+    --muted: #8b93a7;
+    --accent: #5b8cff;
+    --accent-2: #6ee7b7;
+    --danger: #f87171;
+    --radius: 16px;
+    --shadow: 0 10px 34px rgba(0,0,0,.35);
+    --font: "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --mono: ui-monospace,SFMono-Regular,Menlo,monospace;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:var(--font);
-    background:
-      radial-gradient(900px 500px at 12% -8%, rgba(91,140,255,.14), transparent 60%),
-      radial-gradient(800px 460px at 95% 0%, rgba(110,231,183,.10), transparent 55%),
-      var(--bg);
-    color:var(--text);
-    min-height:100%;
-    overflow-x:hidden;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: radial-gradient(900px 500px at 12% -8%, rgba(91,140,255,.14), transparent 60%),
+                radial-gradient(800px 460px at 95% 0%, rgba(110,231,183,.10), transparent 55%),
+                var(--bg);
+    color: var(--text);
+    min-height: 100%;
+    overflow-x: hidden;
   }
-  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
-  
-  .config-bar{
-    padding:13px 16px;border-radius:13px;margin-bottom:16px;font-size:13px;line-height:1.7;
-    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
-  }
-  .config-bar.ok{border-color:rgba(110,231,183,.4);color:var(--accent-2)}
-  .config-bar.bad{border-color:rgba(248,113,113,.4);color:#fcb9b9}
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
 
-  header{
-    display:flex;align-items:center;gap:14px;padding:18px 0 22px;
+  .config-bar {
+    padding: 13px 16px; border-radius: 13px; margin-bottom: 16px; font-size: 13px; line-height: 1.7;
+    border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted);
   }
-  .logo{
-    width:44px;height:44px;border-radius:13px;flex:none;
-    display:grid;place-items:center;
-    background:linear-gradient(135deg,#5b8cff,#6ee7b7);
-    box-shadow:0 6px 18px rgba(91,140,255,.35);
-    font-size:22px;
-  }
-  .brand h1{font-size:19px;font-weight:700;letter-spacing:.3px}
-  .brand p{font-size:12.5px;color:var(--muted);margin-top:2px}
-  
-  .add-btn{
-    margin-left:auto;
-    border:0;border-radius:999px;padding:8px 20px;
-    font-family:var(--font);font-size:14px;font-weight:600;
-    color:#0b0e14;
-    background:linear-gradient(135deg,#6ee7b7,#5b8cff);
-    cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(91,140,255,.3);
-    white-space:nowrap;
-  }
-  .add-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
-  .add-btn:active{transform:translateY(0)}
+  .config-bar.ok { border-color: rgba(110,231,183,.4); color: var(--accent-2); }
+  .config-bar.bad { border-color: rgba(248,113,113,.4); color: #fcb9b9; }
+  .config-bar.author { border-color: var(--accent); color: var(--accent); background: rgba(91,140,255,.1); }
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 18px 0 22px;
+    cursor: default;
+    user-select: none;
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: 13px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg,#5b8cff,#6ee7b7);
+    box-shadow: 0 6px 18px rgba(91,140,255,.35);
+    font-size: 22px;
+  }
+  .brand { flex: 1; }
+  .brand h1 { font-size: 19px; font-weight: 700; letter-spacing: .3px; }
+  .brand p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .brand .author-badge {
+    display: inline-block; background: var(--accent); color: #fff; font-size: 10px;
+    padding: 0 8px; border-radius: 999px; line-height: 18px; margin-left: 6px;
+    vertical-align: middle;
+  }
 
-  .view{display:none;animation:fade .25s ease}
-  .view.active{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .add-btn {
+    margin-left: auto;
+    border: 0; border-radius: 999px; padding: 8px 20px;
+    font-family: var(--font); font-size: 14px; font-weight: 600;
+    color: #0b0e14;
+    background: linear-gradient(135deg,#6ee7b7,#5b8cff);
+    cursor: pointer; transition: .2s; box-shadow: 0 4px 14px rgba(91,140,255,.3);
+    white-space: nowrap;
+  }
+  .add-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  .add-btn:active { transform: translateY(0); }
 
-  .list-title{display:flex;align-items:baseline;gap:10px;padding:18px 20px 0}
-  .list-title h3{font-size:15px}
-  .list-title .count{font-size:12px;color:var(--muted);font-family:var(--mono)}
-  
-  .msg-list{padding:14px 20px 20px;display:flex;flex-direction:column;gap:12px}
-  
-  .msg{
-    display:flex;gap:12px;padding:14px;background:var(--panel-2);border:1px solid var(--line);
-    border-radius:13px;animation:rise .35s ease;
-  }
-  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
-  .msg .avatar{
-    width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
-    font-weight:700;font-size:16px;color:#0b0e14;
-  }
-  .msg .body{flex:1;min-width:0}
-  .msg .meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
-  .msg .name{font-size:14px;font-weight:600}
-  .msg .time{font-size:11.5px;color:var(--muted)}
-  .msg .txt{font-size:14px;line-height:1.6;color:#cdd3df;word-break:break-word}
-  .msg .ip{
-    margin-top:6px;font-size:11.5px;color:var(--muted);
-    display:flex;align-items:center;gap:4px;
-  }
-  .msg .ip::before{content:"📍";opacity:.6}
-  
-  .empty{padding:34px 20px;text-align:center;color:var(--muted);font-size:13.5px}
-  .empty .big{font-size:30px;margin-bottom:8px;opacity:.6}
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 
-  #addView .card{padding:20px}
-  .back-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-  .back-btn{
-    border:0;background:rgba(255,255,255,.06);color:var(--text);
-    padding:6px 14px;border-radius:999px;font-size:13px;cursor:pointer;transition:.2s;
-    font-family:var(--font);
-  }
-  .back-btn:hover{background:rgba(255,255,255,.12)}
-  
-  #addView h3{font-size:15px;margin-bottom:4px}
-  #addView .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
-  #addView label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px}
-  #addView input,#addView textarea{
-    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
-    color:var(--text);font-family:var(--font);font-size:14px;padding:11px 13px;outline:none;transition:.2s;
-  }
-  #addView input:focus,#addView textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
-  #addView textarea{min-height:92px;resize:vertical}
-  #addView .send-btn{
-    margin-top:16px;width:100%;border:0;cursor:pointer;border-radius:11px;padding:12px;
-    font-family:var(--font);font-size:15px;font-weight:600;color:#0b0e14;
-    background:linear-gradient(135deg,#6ee7b7,#5b8cff);transition:.2s;box-shadow:0 6px 16px rgba(91,140,255,.3);
-  }
-  #addView .send-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
-  #addView .send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  
-  .toast{
-    margin-top:14px;font-size:13px;color:var(--accent-2);display:none;
-    align-items:center;gap:7px;animation:pop .3s ease;
-  }
-  .toast.err{color:var(--danger)}
-  .toast.show{display:flex}
-  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+  .view { display: none; animation: fade .25s ease; }
+  .view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-  footer{text-align:center;margin-top:26px;font-size:12px;color:var(--muted);opacity:.7}
+  .list-title {
+    display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0;
+  }
+  .list-title h3 { font-size: 15px; }
+  .list-title .count { font-size: 12px; color: var(--muted); font-family: var(--mono); }
 
+  .msg-list { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+  .msg {
+    display: flex; gap: 12px; padding: 14px; background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 13px; animation: rise .35s ease;
+    position: relative;
+  }
+  .msg.pinned { border-color: var(--accent-2); box-shadow: 0 0 16px rgba(110,231,183,.12); }
+  .msg .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    font-weight: 700; font-size: 16px; color: #0b0e14;
+  }
+  .msg .body { flex: 1; min-width: 0; }
+  .msg .meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .msg .name { font-size: 14px; font-weight: 600; }
+  .msg .official-tag {
+    background: #2b6cff; color: #fff; font-size: 10px; font-weight: 600;
+    padding: 0 8px; border-radius: 999px; line-height: 18px;
+  }
+  .msg .time { font-size: 11.5px; color: var(--muted); }
+  .msg .txt { font-size: 14px; line-height: 1.6; color: #cdd3df; word-break: break-word; }
+  .msg .ip {
+    margin-top: 6px; font-size: 11.5px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .msg .ip .ip-text { display: flex; align-items: center; gap: 4px; }
+  .msg .ip .ip-text::before { content: "📍"; opacity: .6; }
+  .msg .comment-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 13px; display: flex; align-items: center; gap: 4px;
+    transition: .2s; padding: 2px 6px; border-radius: 999px;
+  }
+  .msg .comment-btn:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .msg .comment-btn .count { font-size: 12px; }
+
+  .msg .del-btn {
+    background: none; border: none; color: var(--danger); cursor: pointer;
+    font-size: 13px; opacity: 0.6; transition: .2s; padding: 0 4px;
+  }
+  .msg .del-btn:hover { opacity: 1; }
+  .author-mode .msg .del-btn { display: inline; }
+  .msg .del-btn { display: none; }
+
+  .empty { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
+  .empty .big { font-size: 30px; margin-bottom: 8px; opacity: .6; }
+
+  /* 添加页 */
+  #addView .card { padding: 20px; }
+  .back-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .back-btn {
+    border: 0; background: rgba(255,255,255,.06); color: var(--text);
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; cursor: pointer; transition: .2s;
+    font-family: var(--font);
+  }
+  .back-btn:hover { background: rgba(255,255,255,.12); }
+  #addView h3 { font-size: 15px; margin-bottom: 4px; }
+  #addView .sub { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
+  #addView label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
+  #addView input, #addView textarea {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 11px;
+    color: var(--text); font-family: var(--font); font-size: 14px; padding: 11px 13px; outline: none; transition: .2s;
+  }
+  #addView input:focus, #addView textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,140,255,.15); }
+  #addView textarea { min-height: 92px; resize: vertical; }
+  #addView .send-btn {
+    margin-top: 16px; width: 100%; border: 0; cursor: pointer; border-radius: 11px; padding: 12px;
+    font-family: var(--font); font-size: 15px; font-weight: 600; color: #0b0e14;
+    background: linear-gradient(135deg,#6ee7b7,#5b8cff); transition: .2s; box-shadow: 0 6px 16px rgba(91,140,255,.3);
+  }
+  #addView .send-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  #addView .send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .toast {
+    margin-top: 14px; font-size: 13px; color: var(--accent-2); display: none;
+    align-items: center; gap: 7px; animation: pop .3s ease;
+    padding: 10px 14px; background: rgba(0,0,0,0.4); border-radius: 10px; border: 1px solid var(--line);
+  }
+  .toast.err { color: var(--danger); }
+  .toast.show { display: flex; }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  footer { text-align: center; margin-top: 26px; font-size: 12px; color: var(--muted); opacity: .7; }
+
+  /* 弹窗（开屏） */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 1000;
     background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
@@ -152,12 +187,11 @@
   .modal-close {
     position: absolute; top: 12px; right: 18px;
     background: none; border: 0; color: var(--muted); font-size: 26px;
-    cursor: pointer; transition: .3s; line-height: 1;
-    padding: 4px;
+    cursor: pointer; transition: .3s; line-height: 1; padding: 4px;
   }
   .modal-close:hover { color: var(--text); transform: rotate(90deg) scale(1.1); }
-  .modal-body p { 
-    font-size: 17px; line-height: 1.9; color: var(--text); 
+  .modal-body p {
+    font-size: 17px; line-height: 1.9; color: var(--text);
     margin-bottom: 28px; letter-spacing: .3px;
     background: linear-gradient(135deg, #f0f4ff, #c8d6ff);
     -webkit-background-clip: text;
@@ -165,30 +199,82 @@
     background-clip: text;
     font-weight: 500;
   }
-  .modal-signature { 
-    text-align: right; 
-    font-size: 15px; 
-    color: var(--accent-2); 
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    border-top: 1px solid var(--line);
-    padding-top: 16px;
+  .modal-signature {
+    text-align: right; font-size: 15px; color: var(--accent-2);
+    font-weight: 500; letter-spacing: 0.5px;
+    border-top: 1px solid var(--line); padding-top: 16px;
   }
-  @keyframes modalFade { 
-    from { opacity: 0; transform: scale(.94) translateY(10px); } 
-    to { opacity: 1; transform: scale(1) translateY(0); } 
-  }
+  @keyframes modalFade { from { opacity: 0; transform: scale(.94) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-  @media (max-width:480px){
-    .brand p{max-width:150px}
-    .add-btn{padding:6px 14px;font-size:13px}
+  /* 评论弹窗 */
+  .comment-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+    display: none; align-items: flex-end; justify-content: center;
+    padding: 20px; animation: modalFade .3s ease;
+  }
+  .comment-overlay.active { display: flex; }
+  .comment-panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-width: 600px; width: 100%; max-height: 80vh;
+    padding: 20px; display: flex; flex-direction: column;
+  }
+  .comment-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .comment-header h4 { font-size: 15px; }
+  .comment-close {
+    background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer;
+  }
+  .comment-list {
+    flex: 1; overflow-y: auto; margin-bottom: 12px;
+    display: flex; flex-direction: column; gap: 10px;
+    max-height: 50vh;
+  }
+  .comment-item {
+    background: var(--panel-2); border-radius: 11px; padding: 10px 12px;
+    border-left: 3px solid var(--accent);
+  }
+  .comment-item.official { border-left-color: #2b6cff; background: rgba(43,108,255,.08); }
+  .comment-item .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .comment-item .name { font-weight: 600; font-size: 13px; }
+  .comment-item .time { font-size: 11px; color: var(--muted); }
+  .comment-item .txt { font-size: 13px; line-height: 1.5; margin-top: 4px; }
+  .comment-item .official-tag {
+    background: #2b6cff; color: #fff; font-size: 9px; padding: 0 6px; border-radius: 999px; line-height: 16px;
+  }
+  .comment-input-area {
+    display: flex; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  .comment-input-area input {
+    flex: 1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; color: var(--text); font-family: var(--font); font-size: 13px;
+    outline: none;
+  }
+  .comment-input-area input:focus { border-color: var(--accent); }
+  .comment-input-area button {
+    background: var(--accent); border: none; border-radius: 999px; padding: 8px 16px;
+    color: #fff; font-weight: 600; cursor: pointer; transition: .2s;
+  }
+  .comment-input-area button:hover { filter: brightness(1.1); }
+  .comment-input-area button:disabled { opacity: .5; cursor: not-allowed; }
+
+  .comment-empty { color: var(--muted); text-align: center; padding: 20px 0; font-size: 13px; }
+
+  @media (max-width:480px) {
+    .brand p { max-width: 150px; }
+    .add-btn { padding: 6px 14px; font-size: 13px; }
     .modal-body p { font-size: 15px; }
     .modal-card { padding: 28px 20px 22px; }
+    .comment-panel { padding: 16px; }
   }
 </style>
 </head>
 <body>
 
+<!-- 开屏弹窗 -->
 <div class="modal-overlay" id="splashModal">
   <div class="modal-card">
     <button class="modal-close" id="closeSplash">✕</button>
@@ -199,18 +285,34 @@
   </div>
 </div>
 
+<!-- 评论弹窗 -->
+<div class="comment-overlay" id="commentOverlay">
+  <div class="comment-panel">
+    <div class="comment-header">
+      <h4>💬 评论</h4>
+      <button class="comment-close" id="closeComment">✕</button>
+    </div>
+    <div class="comment-list" id="commentList"></div>
+    <div class="comment-input-area">
+      <input type="text" id="commentInput" placeholder="写评论…" maxlength="200">
+      <button id="sendCommentBtn">发送</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <div class="config-bar bad" id="configBar">⏳ 正在检查连接…</div>
 
-  <header>
+  <header id="headerClickArea">
     <div class="logo">💬</div>
-    <div class="brand">
-      <h1>声音簿</h1>
+    <div class="brand" id="brandArea">
+      <h1>声音簿 <span id="authorBadge" style="display:none;" class="author-badge">👑 作者模式</span></h1>
       <p>云端留言墙 · 实时同步</p>
     </div>
     <button class="add-btn" id="showAddBtn">＋ 添加留言</button>
   </header>
 
+  <!-- 列表视图 -->
   <section id="listView" class="view active">
     <div class="list-title">
       <h3>收到的留言</h3><span class="count" id="visitorCount">0 条</span>
@@ -218,6 +320,7 @@
     <div class="card msg-list" id="visitorList"></div>
   </section>
 
+  <!-- 添加视图 -->
   <section id="addView" class="view">
     <div class="card">
       <div class="back-row">
@@ -226,16 +329,24 @@
       </div>
       <h3>写一条留言</h3>
       <p class="sub">提交后，所有设备将实时收到。</p>
-      
+
       <label>你的称呼</label>
       <input type="text" id="visitorName" placeholder="输入昵称" maxlength="12">
-      
+
       <label>头像颜色（点击可更改）</label>
       <input type="color" id="visitorColor" style="height:40px;padding:4px;cursor:pointer">
-      
+
       <label>留言内容</label>
       <textarea id="visitorText" placeholder="想对大家说点什么…"></textarea>
-      
+
+      <!-- 作者专属：置顶选项（仅作者模式可见） -->
+      <div id="authorOptions" style="display:none; margin-top:10px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+          <input type="checkbox" id="pinnedCheck"> 📌 置顶此留言（仅作者）
+        </label>
+        <p style="font-size:11px; color:var(--muted); margin-top:4px;">此留言将显示“官方”标签，并优先展示。</p>
+      </div>
+
       <button class="send-btn" id="sendBtn">发出留言</button>
       <div class="toast" id="toast">✓ 已写入云端</div>
     </div>
@@ -250,252 +361,539 @@
 (function(){
   "use strict";
 
+  // ============================================================
+  // ★ 配置你的 Supabase 项目
+  // ============================================================
   var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
+  // ============================================================
 
+  // ---------- 作者模式相关 ----------
+  var AUTHOR_PASSWORD = "7592";
+  // 简单 SHA-256 加密（前端实现，防君子不防小人）
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  var isAuthorMode = false;
+  var clickCount = 0;
+  var clickTimer = null;
+
+  var headerArea = document.getElementById('headerClickArea');
+  var authorBadge = document.getElementById('authorBadge');
+  var authorOptions = document.getElementById('authorOptions');
+
+  // 点击检测（3次）
+  headerArea.addEventListener('click', async function(e) {
+    // 忽略按钮点击
+    if (e.target.closest('.add-btn')) return;
+    clickCount++;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => { clickCount = 0; }, 800);
+
+    if (clickCount === 3) {
+      clickCount = 0;
+      if (!isAuthorMode) {
+        // 进入作者模式，验证密码
+        var pwd = prompt('请输入作者密码：');
+        if (pwd === null) return;
+        var hash = await sha256(pwd);
+        var correctHash = await sha256(AUTHOR_PASSWORD);
+        if (hash === correctHash) {
+          isAuthorMode = true;
+          authorBadge.style.display = 'inline-block';
+          authorOptions.style.display = 'block';
+          document.body.classList.add('author-mode');
+          document.getElementById('configBar').className = 'config-bar author';
+          document.getElementById('configBar').innerHTML = '👑 作者模式已激活 · 可删除留言，发布官方置顶消息';
+          // 刷新列表显示删除按钮
+          renderVisitor();
+        } else {
+          alert('密码错误');
+        }
+      } else {
+        // 退出作者模式
+        isAuthorMode = false;
+        authorBadge.style.display = 'none';
+        authorOptions.style.display = 'none';
+        document.body.classList.remove('author-mode');
+        document.getElementById('configBar').className = 'config-bar ok';
+        document.getElementById('configBar').innerHTML = '✅ 已退出作者模式';
+        renderVisitor();
+      }
+    }
+  });
+
+  // ---------- 基础工具 ----------
   function randomColor() {
     return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
   }
 
   var configured = /^https:\/\/.+\..+/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20;
-  var allMessages = [];
+  var allMessages = [];      // 所有留言（含评论）
+  var mainMessages = [];     // 仅主留言（parent_id = null）
   var knownIds = {};
 
   var configBar = document.getElementById("configBar");
-  if(!configured){
+  if (!configured) {
     configBar.className = "config-bar bad";
-    configBar.innerHTML = "⚠️ 尚未配置连接。请按注释把 <b>Project URL</b> 和 <b>anon key</b> 填入 JS 第 5 步处，然后刷新页面。";
+    configBar.innerHTML = "⚠️ 尚未配置连接。请按注释把 <b>Project URL</b> 和 <b>anon key</b> 填入 JS 配置处，然后刷新页面。";
   }
 
+  // 视图切换
   var listView = document.getElementById("listView");
   var addView = document.getElementById("addView");
   var showAddBtn = document.getElementById("showAddBtn");
   var backToListBtn = document.getElementById("backToListBtn");
 
-  function showListView(){
+  function showListView() {
     listView.classList.add("active");
     addView.classList.remove("active");
+    if (window._countdownTimer) {
+      clearInterval(window._countdownTimer);
+      window._countdownTimer = null;
+    }
+    sendBtn.disabled = false;
+    document.getElementById("toast").classList.remove("show");
   }
-  function showAddView(){
+  function showAddView() {
     listView.classList.remove("active");
     addView.classList.add("active");
     document.getElementById("visitorName").focus();
+    if (window._countdownTimer) {
+      clearInterval(window._countdownTimer);
+      window._countdownTimer = null;
+      sendBtn.disabled = false;
+    }
   }
-
   showAddBtn.addEventListener("click", showAddView);
   backToListBtn.addEventListener("click", showListView);
 
+  // 工具
   var COLORS = ["#6ee7b7","#fbbf24","#f87171","#a78bfa","#f472b6","#38bdf8"];
-  function pickColor(hex){
-    if(hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase()!=="#000000") return hex;
+  function pickColor(hex) {
+    if (hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase() !== "#000000") return hex;
     return COLORS[Math.floor(Math.random()*COLORS.length)];
   }
   var avatarCache = {};
-  function avatarFor(name, color){
+  function avatarFor(name, color) {
     var key = name + "|" + color;
-    if(!avatarCache[key]) avatarCache[key] = pickColor(color);
+    if (!avatarCache[key]) avatarCache[key] = pickColor(color);
     return avatarCache[key];
   }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, function(c){
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
   }
-  function toLocalTs(o){
-    return new Date(o.created_at).getTime();
-  }
-  function timeText(ts){
+  function toLocalTs(o) { return new Date(o.created_at).getTime(); }
+  function timeText(ts) {
     var d = new Date(ts), now = new Date();
     var pad = function(n){ return n<10 ? "0"+n : n; };
     var hm = pad(d.getHours())+":"+pad(d.getMinutes());
-    if(d.toDateString() === now.toDateString()) return "今天 "+hm;
+    if (d.toDateString() === now.toDateString()) return "今天 "+hm;
     return (d.getMonth()+1)+"月"+d.getDate()+"日 "+hm;
   }
 
-  // ========== 核心修复：IP 获取加超时，永不卡死 ==========
   async function fetchIP() {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
-
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
       var res = await fetch("https://api.ipify.org?format=json", { signal: controller.signal });
       var data = await res.json();
       return data.ip || "0.0.0.0";
-    } catch (e) {
-      // 超时或任何错误都返回默认值
-      return "0.0.0.0";
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    } catch (e) { return "0.0.0.0"; }
+    finally { clearTimeout(timeoutId); }
   }
 
+  // ---------- 渲染 ----------
   var visitorList = document.getElementById("visitorList");
   var visitorCount = document.getElementById("visitorCount");
 
-  function buildMsg(m){
+  function getComments(parentId) {
+    return allMessages.filter(m => m.parent_id === parentId).sort((a,b) => b.ts - a.ts);
+  }
+
+  function buildMsg(m, isMain) {
     var d = document.createElement("div");
     d.className = "msg";
+    if (m.is_pinned) d.classList.add("pinned");
+
     var av = avatarFor(m.name, m.color);
-    d.innerHTML =
-      '<div class="avatar" style="background:'+av+'">'+escapeHtml(m.name.slice(0,1))+"</div>"+
-      '<div class="body">'+
-        '<div class="meta"><span class="name">'+escapeHtml(m.name)+"</span>"+
-        '<span class="time">'+timeText(m.ts)+"</span></div>"+
-        '<div class="txt">'+escapeHtml(m.text)+"</div>"+
-        '<div class="ip">'+escapeHtml(m.ip || "未知")+"</div>"+
-      "</div>";
+    var officialTag = m.is_official ? '<span class="official-tag">官方</span>' : '';
+    var delBtn = isAuthorMode ? `<button class="del-btn" data-id="${m.id}">🗑️</button>` : '';
+
+    var commentCount = 0;
+    if (isMain) {
+      commentCount = allMessages.filter(c => c.parent_id === m.id).length;
+    }
+
+    var commentBtn = isMain ? `
+      <button class="comment-btn" data-id="${m.id}">
+        💬 <span class="count">${commentCount}</span>
+      </button>
+    ` : '';
+
+    d.innerHTML = `
+      <div class="avatar" style="background:${av}">${escapeHtml(m.name.slice(0,1))}</div>
+      <div class="body">
+        <div class="meta">
+          <span class="name">${escapeHtml(m.name)}</span>
+          ${officialTag}
+          <span class="time">${timeText(m.ts)}</span>
+        </div>
+        <div class="txt">${escapeHtml(m.text)}</div>
+        <div class="ip">
+          <span class="ip-text">${escapeHtml(m.ip || "未知")}</span>
+          ${commentBtn}
+          ${delBtn}
+        </div>
+      </div>
+    `;
     return d;
   }
 
-  function sorted(){ return allMessages.slice().sort(function(a,b){ return b.ts - a.ts; }); }
+  function renderVisitor() {
+    // 更新主留言列表（只显示 parent_id = null 的）
+    mainMessages = allMessages.filter(m => !m.parent_id).sort((a,b) => {
+      // 置顶优先
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return b.ts - a.ts;
+    });
 
-  function renderVisitor(){
-    visitorCount.textContent = allMessages.length+" 条";
+    visitorCount.textContent = mainMessages.length + " 条";
     visitorList.innerHTML = "";
-    if(!allMessages.length){
+    if (!mainMessages.length) {
       var e = document.createElement("div");
       e.className = "empty";
       e.innerHTML = '<div class="big">📭</div>还没有留言，快来写第一条吧';
       visitorList.appendChild(e);
       return;
     }
-    sorted().forEach(function(m){ visitorList.appendChild(buildMsg(m)); });
+    mainMessages.forEach(function(m) {
+      var el = buildMsg(m, true);
+      visitorList.appendChild(el);
+      // 绑定评论按钮事件
+      var commentBtn = el.querySelector('.comment-btn');
+      if (commentBtn) {
+        commentBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          openCommentPanel(m.id);
+        });
+      }
+      // 绑定删除事件
+      var delBtn = el.querySelector('.del-btn');
+      if (delBtn) {
+        delBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (confirm('确定要删除这条留言吗？')) {
+            deleteMessage(m.id);
+          }
+        });
+      }
+    });
   }
 
-  function upsert(row){
-    var msg = { 
-      id: String(row.id), 
-      name: row.name, 
-      text: row.text, 
-      color: row.color, 
-      ip: row.ip || "未知",
-      ts: toLocalTs(row) 
-    };
-    if(knownIds[msg.id]) return false;
-    knownIds[msg.id] = true;
-    allMessages.push(msg);
-    return true;
+  // ---------- 删除留言 ----------
+  async function deleteMessage(id) {
+    if (!isAuthorMode) return;
+    try {
+      var { error } = await supabase.from("messages").delete().match({ id: id });
+      if (error) throw error;
+      // 本地删除
+      allMessages = allMessages.filter(m => m.id !== id);
+      // 如果该留言有评论，一并删除（但为了简单，我们可以允许评论孤立，但最好也删除）
+      // 这里不级联，只删主留言，评论保留但 parent_id 指向不存在，可以后续清理。
+      // 或者我们只删主留言，评论保留，但列表里不显示了，因为主留言没了。
+      renderVisitor();
+    } catch (err) {
+      alert('删除失败：' + err.message);
+    }
   }
 
-  if(configured){
+  // ---------- 评论面板 ----------
+  var currentCommentParent = null;
+  var commentOverlay = document.getElementById('commentOverlay');
+  var commentList = document.getElementById('commentList');
+  var commentInput = document.getElementById('commentInput');
+  var sendCommentBtn = document.getElementById('sendCommentBtn');
+  var closeCommentBtn = document.getElementById('closeComment');
+
+  function openCommentPanel(parentId) {
+    currentCommentParent = parentId;
+    commentOverlay.classList.add('active');
+    renderComments(parentId);
+    commentInput.value = '';
+    commentInput.focus();
+  }
+
+  function closeCommentPanel() {
+    commentOverlay.classList.remove('active');
+    currentCommentParent = null;
+  }
+  closeCommentBtn.addEventListener('click', closeCommentPanel);
+  commentOverlay.addEventListener('click', function(e) {
+    if (e.target === commentOverlay) closeCommentPanel();
+  });
+
+  function renderComments(parentId) {
+    var comments = allMessages.filter(m => m.parent_id === parentId).sort((a,b) => b.ts - a.ts);
+    commentList.innerHTML = '';
+    if (!comments.length) {
+      commentList.innerHTML = '<div class="comment-empty">还没有评论，来抢沙发吧</div>';
+      return;
+    }
+    comments.forEach(function(c) {
+      var div = document.createElement('div');
+      div.className = 'comment-item';
+      if (c.is_official) div.classList.add('official');
+      var officialTag = c.is_official ? '<span class="official-tag">官方</span>' : '';
+      div.innerHTML = `
+        <div class="meta">
+          <span class="name">${escapeHtml(c.name)}</span>
+          ${officialTag}
+          <span class="time">${timeText(c.ts)}</span>
+        </div>
+        <div class="txt">${escapeHtml(c.text)}</div>
+      `;
+      commentList.appendChild(div);
+    });
+  }
+
+  // 发送评论
+  sendCommentBtn.addEventListener('click', async function() {
+    if (!currentCommentParent) return;
+    var text = commentInput.value.trim();
+    if (!text) return;
+    if (!configured) {
+      alert('未配置连接');
+      return;
+    }
+    sendCommentBtn.disabled = true;
+    try {
+      var ip = await fetchIP();
+      var name = document.getElementById('visitorName').value.trim() || '匿名';
+      var color = document.getElementById('visitorColor').value;
+      var isOfficial = isAuthorMode; // 作者模式下评论自动官方
+      var { error } = await supabase.from('messages').insert([
+        {
+          name: name,
+          text: text,
+          color: color,
+          ip: ip,
+          parent_id: currentCommentParent,
+          is_official: isOfficial,
+          is_pinned: false
+        }
+      ]);
+      if (error) throw error;
+      commentInput.value = '';
+      // 等待订阅自动刷新，但为了即时，手动添加一条
+      // 但是因为我们有订阅，会触发 upsert，所以不用额外添加
+      // 但为了即时显示，可以主动添加本地（但订阅会重复添加，需要去重）
+      // 我们依赖订阅，所以不用管。
+      renderComments(currentCommentParent);
+    } catch (err) {
+      alert('评论失败：' + err.message);
+    } finally {
+      sendCommentBtn.disabled = false;
+    }
+  });
+
+  // ---------- Supabase 连接 ----------
+  if (configured) {
     var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    (async function(){
-      try{
+    // 1) 首次加载
+    (async function() {
+      try {
         var { data, error } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
-        if(error) throw error;
-        (data||[]).forEach(function(row){ upsert(row); });
+        if (error) throw error;
+        (data||[]).forEach(function(row) { upsert(row); });
         renderVisitor();
         configBar.className = "config-bar ok";
-        configBar.innerHTML = "✅ 已连接云端，共加载 "+allMessages.length+" 条留言。";
-      }catch(err){
+        configBar.innerHTML = "✅ 已连接云端，共加载 " + mainMessages.length + " 条留言。";
+      } catch (err) {
         configBar.className = "config-bar bad";
         configBar.innerHTML = "❌ 读取云端失败：" + escapeHtml(err && (err.message || err)) + "。请检查 URL / Key / 表结构。";
       }
     })();
 
-    try{
+    // 2) 实时订阅
+    try {
       supabase.channel("voicebook-realtime")
         .on("postgres_changes",
             { event: "INSERT", schema: "public", table: "messages" },
-            function(payload){
+            function(payload) {
               var isNew = upsert(payload.new);
-              if(isNew){
+              if (isNew) {
                 renderVisitor();
-                if(!document.hidden && typeof navigator.vibrate === "function"){
-                  try{ navigator.vibrate(80); }catch(e){}
+                // 如果当前评论面板打开且父ID匹配，刷新评论
+                if (currentCommentParent && payload.new.parent_id === currentCommentParent) {
+                  renderComments(currentCommentParent);
+                }
+                if (!document.hidden && typeof navigator.vibrate === "function") {
+                  try { navigator.vibrate(80); } catch(e) {}
                 }
               }
             })
-        .subscribe(function(status, err){
-          if(status !== "SUBSCRIBED"){
-            console.warn("实时订阅未建立，列表将不会自动刷新", err);
+        .on("postgres_changes",
+            { event: "DELETE", schema: "public", table: "messages" },
+            function(payload) {
+              // 删除旧记录
+              var old = payload.old;
+              if (old && old.id) {
+                allMessages = allMessages.filter(m => m.id !== old.id);
+                renderVisitor();
+                if (currentCommentParent && old.id === currentCommentParent) {
+                  closeCommentPanel();
+                } else if (currentCommentParent) {
+                  renderComments(currentCommentParent);
+                }
+              }
+            })
+        .subscribe(function(status, err) {
+          if (status !== "SUBSCRIBED") {
+            console.warn("实时订阅未建立", err);
           }
         });
-    }catch(err){}
+    } catch (err) {}
   }
 
+  // ---------- 数据操作 ----------
+  function upsert(row) {
+    var msg = {
+      id: String(row.id),
+      name: row.name,
+      text: row.text,
+      color: row.color,
+      ip: row.ip || "未知",
+      ts: toLocalTs(row),
+      is_pinned: row.is_pinned || false,
+      is_official: row.is_official || false,
+      parent_id: row.parent_id || null
+    };
+    if (knownIds[msg.id]) {
+      // 更新已有（可处理更新，但这里简单跳过）
+      return false;
+    }
+    knownIds[msg.id] = true;
+    allMessages.push(msg);
+    return true;
+  }
+
+  // ---------- 提交留言（主留言） ----------
   var sendBtn = document.getElementById("sendBtn");
   var toast = document.getElementById("toast");
 
-  sendBtn.addEventListener("click", async function(){
+  sendBtn.addEventListener("click", async function() {
     var name = document.getElementById("visitorName").value.trim();
     var text = document.getElementById("visitorText").value.trim();
     var color = document.getElementById("visitorColor").value;
+    var isPinned = document.getElementById("pinnedCheck").checked;
 
-    if(!name){ document.getElementById("visitorName").focus(); return; }
-    if(!text){ document.getElementById("visitorText").focus(); return; }
-    if(!configured){
+    if (!name) { document.getElementById("visitorName").focus(); return; }
+    if (!text) { document.getElementById("visitorText").focus(); return; }
+    if (!configured) {
       toast.className = "toast err show";
-      toast.textContent = "尚未配置连接，请先填入 URL / Key";
+      toast.textContent = "尚未配置连接";
       setTimeout(function(){ toast.classList.remove("show"); }, 2600);
       return;
     }
 
-    // 禁用按钮，防止重复提交
     sendBtn.disabled = true;
     toast.className = "toast show";
-    toast.textContent = "⏳ 正在写入云端…";
+    toast.textContent = "⏳ 提交中，正在同步文本…";
 
-    try{
-      // 获取 IP（带超时，绝不会卡死）
+    try {
       var ip = await fetchIP();
-      
+      var isOfficial = isAuthorMode; // 作者模式下自动官方
+      // 如果是作者模式，可置顶；非作者模式忽略 isPinned
+      var pinned = isAuthorMode ? isPinned : false;
+
       var { error } = await supabase.from("messages").insert([
-        { name: name, text: text, color: color, ip: ip }
+        { name, text, color, ip, is_official: isOfficial, is_pinned: pinned, parent_id: null }
       ]);
-      if(error) throw error;
+      if (error) throw error;
 
       document.getElementById("visitorText").value = "";
-      toast.className = "toast show";
-      toast.textContent = "✓ 已写入云端！";
-      setTimeout(function(){ toast.classList.remove("show"); }, 2000);
-      
-      showListView();
-      setTimeout(async function(){
-        var { data } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
-        if(data){
-          data.forEach(function(row){ upsert(row); });
-          renderVisitor();
-        }
-      }, 500);
+      toast.textContent = "📤 文本同步成功，正在载入云端…";
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    }catch(err){
+      let seconds = 3;
+      toast.textContent = `✅ 留言成功（预计 ${seconds} 秒后返回）`;
+      window._countdownTimer = setInterval(() => {
+        seconds--;
+        if (seconds > 0) {
+          toast.textContent = `✅ 留言成功（预计 ${seconds} 秒后返回）`;
+        } else {
+          clearInterval(window._countdownTimer);
+          window._countdownTimer = null;
+          toast.classList.remove("show");
+          showListView();
+          // 刷新数据（订阅会更新，但以防万一）
+          (async function refresh() {
+            try {
+              var { data } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
+              if (data) {
+                data.forEach(function(row){ upsert(row); });
+                renderVisitor();
+              }
+            } catch(e) {}
+          })();
+        }
+      }, 1000);
+
+    } catch (err) {
       var msg = err.message || String(err);
-      if(msg.includes("column") && msg.includes("ip") && msg.includes("does not exist")) {
+      if (msg.includes("column") && msg.includes("ip")) {
         toast.className = "toast err show";
-        toast.textContent = "❌ 数据库缺少 `ip` 列，请在 Supabase 执行 `ALTER TABLE messages ADD COLUMN ip TEXT;`";
+        toast.textContent = "❌ 数据库缺少字段，请执行 `ALTER TABLE messages ADD COLUMN ip TEXT; ADD COLUMN is_pinned BOOLEAN; ADD COLUMN is_official BOOLEAN; ADD COLUMN parent_id UUID;`";
       } else {
         toast.className = "toast err show";
         toast.textContent = "写入失败：" + msg;
       }
-    } finally {
-      // ========== 核心修复：无论如何，最后都要解锁按钮 ==========
       sendBtn.disabled = false;
+      setTimeout(() => toast.classList.remove("show"), 5000);
     }
   });
 
-  document.getElementById("visitorText").addEventListener("keydown", function(e){
-    if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ sendBtn.click(); }
+  // Ctrl+Enter
+  document.getElementById("visitorText").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { sendBtn.click(); }
   });
 
+  // 随机初始颜色
   document.getElementById("visitorColor").value = randomColor();
 
+  // 开屏弹窗
   var splashModal = document.getElementById("splashModal");
   var closeSplash = document.getElementById("closeSplash");
-  
-  closeSplash.addEventListener("click", function(){
+  closeSplash.addEventListener("click", function() {
     splashModal.style.display = "none";
     document.body.style.overflow = "";
   });
-  splashModal.addEventListener("click", function(e){
-    if(e.target === splashModal) {
+  splashModal.addEventListener("click", function(e) {
+    if (e.target === splashModal) {
       splashModal.style.display = "none";
       document.body.style.overflow = "";
     }
   });
 
+  // 初始化渲染
   renderVisitor();
+
+  // ============================================================
+  // ★ 免费版流量说明 ★
+  // ============================================================
+  console.log("📊 Supabase 免费版限制：500MB 数据库 + 每月 200 万条实时消息 + 每天约 5 万次 API 请求。");
+  console.log("对于个人留言墙，每天几千条留言完全够用。如果担心流量，可以设置 RLS 限制或缓存。");
+  // 你也可以在界面上显示提示，这里只做控制台输出。
+
 })();
 </script>
 
