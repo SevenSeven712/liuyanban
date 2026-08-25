@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head>
+<html lang="zh-CN">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>声音簿 · 真实后端版（Supabase）</title>
+<title>声音簿 · 留言墙</title>
 <style>
   :root{
     --bg:#0f1115;
@@ -32,13 +33,18 @@
     overflow-x:hidden;
   }
   .wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+  
   .config-bar{
     padding:13px 16px;border-radius:13px;margin-bottom:16px;font-size:13px;line-height:1.7;
     border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
   }
   .config-bar.ok{border-color:rgba(110,231,183,.4);color:var(--accent-2)}
   .config-bar.bad{border-color:rgba(248,113,113,.4);color:#fcb9b9}
-  header{display:flex;align-items:center;gap:14px;padding:18px 0 22px}
+
+  /* Header */
+  header{
+    display:flex;align-items:center;gap:14px;padding:18px 0 22px;
+  }
   .logo{
     width:44px;height:44px;border-radius:13px;flex:none;
     display:grid;place-items:center;
@@ -48,47 +54,32 @@
   }
   .brand h1{font-size:19px;font-weight:700;letter-spacing:.3px}
   .brand p{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .mode-switch{margin-left:auto;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
-  .mode-switch button{
-    border:0;background:transparent;color:var(--muted);font-family:var(--font);
-    font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s;
+  
+  .add-btn{
+    margin-left:auto;
+    border:0;border-radius:999px;padding:8px 20px;
+    font-family:var(--font);font-size:14px;font-weight:600;
+    color:#0b0e14;
+    background:linear-gradient(135deg,#6ee7b7,#5b8cff);
+    cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(91,140,255,.3);
+    white-space:nowrap;
   }
-  .mode-switch button.active{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(91,140,255,.4)}
-  .mode-switch button:not(.active):hover{color:var(--text)}
+  .add-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+  .add-btn:active{transform:translateY(0)}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 
-  /* visitor */
-  .visitor-form{padding:20px}
-  .visitor-form h3{font-size:15px;margin-bottom:4px}
-  .visitor-form .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
-  .visitor-form label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px}
-  .visitor-form input,.visitor-form textarea{
-    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
-    color:var(--text);font-family:var(--font);font-size:14px;padding:11px 13px;outline:none;transition:.2s;
-  }
-  .visitor-form input:focus,.visitor-form textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
-  .visitor-form textarea{min-height:92px;resize:vertical}
-  .visitor-form button{
-    margin-top:16px;width:100%;border:0;cursor:pointer;border-radius:11px;padding:12px;
-    font-family:var(--font);font-size:15px;font-weight:600;color:#0b0e14;
-    background:linear-gradient(135deg,#6ee7b7,#5b8cff);transition:.2s;box-shadow:0 6px 16px rgba(91,140,255,.3);
-  }
-  .visitor-form button:hover{transform:translateY(-1px);filter:brightness(1.05)}
-  .visitor-form button:active{transform:translateY(0)}
-  .visitor-form button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .toast{
-    margin-top:14px;font-size:13px;color:var(--accent-2);display:none;
-    align-items:center;gap:7px;animation:pop .3s ease;
-  }
-  .toast.err{color:var(--danger)}
-  .toast.show{display:flex}
-  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+  /* 列表视图 */
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
   .list-title{display:flex;align-items:baseline;gap:10px;padding:18px 20px 0}
   .list-title h3{font-size:15px}
   .list-title .count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  
   .msg-list{padding:14px 20px 20px;display:flex;flex-direction:column;gap:12px}
+  
   .msg{
     display:flex;gap:12px;padding:14px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:13px;animation:rise .35s ease;
@@ -99,120 +90,168 @@
     font-weight:700;font-size:16px;color:#0b0e14;
   }
   .msg .body{flex:1;min-width:0}
-  .msg .meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .msg .meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
   .msg .name{font-size:14px;font-weight:600}
   .msg .time{font-size:11.5px;color:var(--muted)}
   .msg .txt{font-size:14px;line-height:1.6;color:#cdd3df;word-break:break-word}
+  .msg .ip{
+    margin-top:6px;font-size:11.5px;color:var(--muted);
+    display:flex;align-items:center;gap:4px;
+  }
+  .msg .ip::before{content:"📍";opacity:.6}
+  
   .empty{padding:34px 20px;text-align:center;color:var(--muted);font-size:13.5px}
   .empty .big{font-size:30px;margin-bottom:8px;opacity:.6}
 
-  /* author */
-  .author-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
-  .status-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 10px #22c55e;animation:pulse 1.6s infinite}
-  .status-dot.off{background:#f87171;box-shadow:0 0 10px #f87171;animation:none}
-  @keyframes pulse{50%{opacity:.4}}
-  .author-head h3{font-size:15px}
-  .author-head .sub{font-size:12px;color:var(--muted)}
-  .author-head .hint{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right;line-height:1.5}
-  .author-head .unread{
-    margin-left:auto;background:var(--danger);color:#fff;font-size:12px;font-weight:700;
-    padding:2px 10px;border-radius:999px;display:none;
+  /* 添加视图 */
+  #addView .card{padding:20px}
+  .back-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .back-btn{
+    border:0;background:rgba(255,255,255,.06);color:var(--text);
+    padding:6px 14px;border-radius:999px;font-size:13px;cursor:pointer;transition:.2s;
+    font-family:var(--font);
   }
-  .inbox{padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px}
-  .inbox .msg{border-left:3px solid var(--accent)}
-  .inbox .msg.new{border-left-color:var(--accent-2);box-shadow:0 0 22px rgba(110,231,183,.12)}
-
-  .tutorial{
-    margin-top:16px;padding:18px 20px;font-size:13px;line-height:1.9;color:var(--muted);
-    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  .back-btn:hover{background:rgba(255,255,255,.12)}
+  
+  #addView h3{font-size:15px;margin-bottom:4px}
+  #addView .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+  #addView label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px}
+  #addView input,#addView textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);font-family:var(--font);font-size:14px;padding:11px 13px;outline:none;transition:.2s;
   }
-  .tutorial h4{color:var(--text);font-size:14px;margin-bottom:10px}
-  .tutorial code{
-    font-family:var(--mono);font-size:12px;color:var(--accent-2);
-    background:rgba(255,255,255,.05);padding:1px 6px;border-radius:5px;word-break:break-all;
+  #addView input:focus,#addView textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+  #addView textarea{min-height:92px;resize:vertical}
+  #addView .send-btn{
+    margin-top:16px;width:100%;border:0;cursor:pointer;border-radius:11px;padding:12px;
+    font-family:var(--font);font-size:15px;font-weight:600;color:#0b0e14;
+    background:linear-gradient(135deg,#6ee7b7,#5b8cff);transition:.2s;box-shadow:0 6px 16px rgba(91,140,255,.3);
   }
-  .tutorial ol{padding-left:20px}
-  .tutorial li{margin-bottom:6px}
+  #addView .send-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+  #addView .send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  
+  .toast{
+    margin-top:14px;font-size:13px;color:var(--accent-2);display:none;
+    align-items:center;gap:7px;animation:pop .3s ease;
+  }
+  .toast.err{color:var(--danger)}
+  .toast.show{display:flex}
+  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 
   footer{text-align:center;margin-top:26px;font-size:12px;color:var(--muted);opacity:.7}
 
-  .view{display:none}
-  .view.active{display:block}
+  /* ===== 开屏弹窗样式 ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; animation: modalFade .5s ease;
+  }
+  .modal-card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); max-width: 480px; width: 100%;
+    padding: 36px 30px 28px; position: relative;
+    box-shadow: 0 24px 64px rgba(0,0,0,.7);
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 18px;
+    background: none; border: 0; color: var(--muted); font-size: 26px;
+    cursor: pointer; transition: .3s; line-height: 1;
+    padding: 4px;
+  }
+  .modal-close:hover { color: var(--text); transform: rotate(90deg) scale(1.1); }
+  .modal-body p { 
+    font-size: 17px; line-height: 1.9; color: var(--text); 
+    margin-bottom: 28px; letter-spacing: .3px;
+    background: linear-gradient(135deg, #f0f4ff, #c8d6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 500;
+  }
+  .modal-signature { 
+    text-align: right; 
+    font-size: 15px; 
+    color: var(--accent-2); 
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  @keyframes modalFade { 
+    from { opacity: 0; transform: scale(.94) translateY(10px); } 
+    to { opacity: 1; transform: scale(1) translateY(0); } 
+  }
 
   @media (max-width:480px){
     .brand p{max-width:150px}
-    .mode-switch button{padding:6px 10px;font-size:12.5px}
+    .add-btn{padding:6px 14px;font-size:13px}
+    .modal-body p { font-size: 15px; }
+    .modal-card { padding: 28px 20px 22px; }
   }
 </style>
 </head>
 <body>
+
+<!-- ====== 开屏弹窗 ====== -->
+<div class="modal-overlay" id="splashModal">
+  <div class="modal-card">
+    <button class="modal-close" id="closeSplash">✕</button>
+    <div class="modal-body">
+      <p>恭喜Seven戚成功写出了能够连接后端实时同步的网站，现在你能在这个网站留言，让你在网站留下一抹痕迹！</p>
+      <div class="modal-signature">——Seven戚</div>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
-  <div class="config-bar bad" id="configBar">⏳ 正在检查连接…（若长时间停留，请确认下方教程第 5 步的 URL / Key 已填对）</div>
+  <div class="config-bar bad" id="configBar">⏳ 正在检查连接…</div>
 
   <header>
     <div class="logo">💬</div>
     <div class="brand">
       <h1>声音簿</h1>
-      <p>真实后端版 · 跨设备实时接收（Supabase）</p>
+      <p>云端留言墙 · 实时同步</p>
     </div>
-    <div class="mode-switch">
-      <button id="toVisitor" class="active">游客端</button>
-      <button id="toAuthor">作者端</button>
-    </div>
+    <button class="add-btn" id="showAddBtn">＋ 添加留言</button>
   </header>
 
-  <!-- 游客端 -->
-  <section id="viewVisitor" class="view active">
-    <div class="card visitor-form">
-      <h3>写一条留言</h3>
-      <p class="sub">留言写入云端，任何设备的作者端都会实时收到。</p>
-      <label>你的称呼</label>
-      <input type="text" id="visitorName" placeholder="例如：小林" maxlength="12">
-      <label>头像颜色</label>
-      <input type="color" id="visitorColor" value="#6ee7b7" style="height:40px;padding:4px;cursor:pointer">
-      <label>留言内容</label>
-      <textarea id="visitorText" placeholder="想对作者说点什么…"></textarea>
-      <button id="sendBtn">发出留言</button>
-      <div class="toast" id="toast">✓ 已写入云端</div>
-    </div>
-
+  <!-- ====== 列表视图 ====== -->
+  <section id="listView" class="view active">
     <div class="list-title">
-      <h3>已收到的留言</h3><span class="count" id="visitorCount">0 条</span>
+      <h3>收到的留言</h3><span class="count" id="visitorCount">0 条</span>
     </div>
     <div class="card msg-list" id="visitorList"></div>
   </section>
 
-  <!-- 作者端 -->
-  <section id="viewAuthor" class="view">
+  <!-- ====== 添加视图 ====== -->
+  <section id="addView" class="view">
     <div class="card">
-      <div class="author-head">
-        <span class="status-dot off" id="statusDot"></span>
-        <div>
-          <h3>实时收件箱</h3>
-          <div class="sub" id="statusText">连接中…</div>
-        </div>
-        <span class="unread" id="unread"><!--JS--></span>
-        <div class="hint">任何设备提交<br>这里实时弹出</div>
+      <div class="back-row">
+        <button class="back-btn" id="backToListBtn">← 返回列表</button>
+        <span style="font-size:14px;font-weight:500;color:var(--muted)">新留言</span>
       </div>
-      <div class="inbox" id="inbox"></div>
+      <h3>写一条留言</h3>
+      <p class="sub">提交后，所有设备将实时收到。</p>
+      
+      <label>你的称呼</label>
+      <input type="text" id="visitorName" placeholder="输入昵称" maxlength="12">
+      
+      <label>头像颜色（点击可更改）</label>
+      <input type="color" id="visitorColor" style="height:40px;padding:4px;cursor:pointer">
+      
+      <label>留言内容</label>
+      <textarea id="visitorText" placeholder="想对大家说点什么…"></textarea>
+      
+      <button class="send-btn" id="sendBtn">发出留言</button>
+      <div class="toast" id="toast">✓ 已写入云端</div>
     </div>
   </section>
 
-  <div class="tutorial" id="tutorialBox">
-    <h4>📘 你是如何"连上后端"的？（填完即可用，前端零后端代码）</h4>
-    <ol>
-      <li>这个页面用官方 SDK 连接了你在 Supabase 上创建的云端数据库。</li>
-      <li>游客提交时：<code>INSERT</code> 一条记录写到云端表 <code>messages</code>。</li>
-      <li>作者端用 <code>postgres_changes</code> 实时订阅：云端一有 <code>INSERT</code>，立即推送到这个页面，无需刷新。</li>
-      <li>所以无论游客在手机还是另一台电脑提交，你打开本页"作者端"就能实时收到。</li>
-      <li>当前成本：Supabase 免费档 <code>$0</code>，500 MB 数据库 + 每月 200 万条实时消息。</li>
-    </ol>
-  </div>
-
-  <footer>声音簿 · 真实后端版 · 数据存于 Supabase 云端</footer>
+  <footer>声音簿 · 数据存于 Supabase 云端</footer>
 </div>
 
-<!-- 0) 加载官方 SDK（CDN，无需安装） -->
+<!-- 官方 SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -222,37 +261,44 @@
   // ============================================================
   // ★ 第 5 步：把你的 Project URL 和 anon key 填到下面两个地方
   // 它们都在 Supabase 后台「Project Settings > API」里。
-  // 填之前是演示占位，页面会提示"未连接"；填好刷新即可连通。
   // ============================================================
   var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
   // ============================================================
+
+  // ===== 新增：随机颜色生成函数 =====
+  function randomColor() {
+    return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+  }
 
   var configured = /^https:\/\/.+\..+/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20;
   var allMessages = [];
   var knownIds = {};
 
   var configBar = document.getElementById("configBar");
-
   if(!configured){
     configBar.className = "config-bar bad";
-    configBar.innerHTML = "⚠️ 尚未配置连接。请按下方页面注释 / 说明，把 <b>Project URL</b> 和 <b>anon key</b> 填入源文件第 5 步处，然后刷新页面。";
+    configBar.innerHTML = "⚠️ 尚未配置连接。请按注释把 <b>Project URL</b> 和 <b>anon key</b> 填入 JS 第 5 步处，然后刷新页面。";
   }
 
   // ---- 视图切换 ----
-  var vVisitor = document.getElementById("viewVisitor");
-  var vAuthor  = document.getElementById("viewAuthor");
-  var btnV = document.getElementById("toVisitor");
-  var btnA = document.getElementById("toAuthor");
+  var listView = document.getElementById("listView");
+  var addView = document.getElementById("addView");
+  var showAddBtn = document.getElementById("showAddBtn");
+  var backToListBtn = document.getElementById("backToListBtn");
 
-  function setMode(author){
-    vVisitor.classList.toggle("active", !author);
-    vAuthor.classList.toggle("active", author);
-    btnV.classList.toggle("active", !author);
-    btnA.classList.toggle("active", author);
+  function showListView(){
+    listView.classList.add("active");
+    addView.classList.remove("active");
   }
-  btnV.addEventListener("click", function(){ setMode(false); });
-  btnA.addEventListener("click", function(){ setMode(true); });
+  function showAddView(){
+    listView.classList.remove("active");
+    addView.classList.add("active");
+    document.getElementById("visitorName").focus();
+  }
+
+  showAddBtn.addEventListener("click", showAddView);
+  backToListBtn.addEventListener("click", showListView);
 
   // ---- 工具 ----
   var COLORS = ["#6ee7b7","#fbbf24","#f87171","#a78bfa","#f472b6","#38bdf8"];
@@ -272,7 +318,6 @@
     });
   }
   function toLocalTs(o){
-    // Supabase 的 created_at 是 UTC，转成本地时间戳（毫秒）
     return new Date(o.created_at).getTime();
   }
   function timeText(ts){
@@ -283,14 +328,20 @@
     return (d.getMonth()+1)+"月"+d.getDate()+"日 "+hm;
   }
 
-  // ---- 渲染 ----
+  // ---- 获取本机 IP ----
+  async function fetchIP(){
+    try{
+      var res = await fetch("https://api.ipify.org?format=json");
+      var data = await res.json();
+      return data.ip || "0.0.0.0";
+    }catch(e){
+      return "0.0.0.0";
+    }
+  }
+
+  // ---- 渲染留言列表 ----
   var visitorList = document.getElementById("visitorList");
   var visitorCount = document.getElementById("visitorCount");
-  var inboxEl = document.getElementById("inbox");
-  var unreadEl = document.getElementById("unread");
-  var unreadCount = 0;
-  var statusDot = document.getElementById("statusDot");
-  var statusText = document.getElementById("statusText");
 
   function buildMsg(m){
     var d = document.createElement("div");
@@ -302,6 +353,7 @@
         '<div class="meta"><span class="name">'+escapeHtml(m.name)+"</span>"+
         '<span class="time">'+timeText(m.ts)+"</span></div>"+
         '<div class="txt">'+escapeHtml(m.text)+"</div>"+
+        '<div class="ip">'+escapeHtml(m.ip || "未知")+"</div>"+
       "</div>";
     return d;
   }
@@ -314,112 +366,73 @@
     if(!allMessages.length){
       var e = document.createElement("div");
       e.className = "empty";
-      e.innerHTML = '<div class="big">📭</div>还没有留言，来写第一条吧';
+      e.innerHTML = '<div class="big">📭</div>还没有留言，快来写第一条吧';
       visitorList.appendChild(e);
       return;
     }
     sorted().forEach(function(m){ visitorList.appendChild(buildMsg(m)); });
   }
 
-  function renderInbox(newMsg, fromRemote){
-    inboxEl.innerHTML = "";
-    if(!allMessages.length){
-      var e = document.createElement("div");
-      e.className = "empty";
-      e.innerHTML = '<div class="big">🔔</div>等待新留言，实时接收中…';
-      inboxEl.appendChild(e);
-      unreadEl.style.display = "none";
-      return;
-    }
-    sorted().forEach(function(m){
-      var n = inboxEl.appendChild(buildMsg(m));
-      if(newMsg && m.id === newMsg.id){ n.classList.add("new"); }
-    });
-    if(newMsg && fromRemote){ addUnread(); }
-  }
-
-  function addUnread(){
-    unreadCount++;
-    unreadEl.textContent = "新留言 +"+unreadCount;
-    unreadEl.style.display = "inline-block";
-    if(document.hidden === false && typeof navigator.vibrate === "function"){
-      try{ navigator.vibrate(120); }catch(e){}
-    }
-    clearTimeout(addUnread._t);
-    addUnread._t = setTimeout(function(){
-      unreadCount = 0;
-      if(vAuthor.classList.contains("active")) unreadEl.style.display = "none";
-    }, 6000);
-  }
-
-  function notifyAuthor(m){
-    try{
-      if("Notification" in window && Notification.permission === "granted" && document.hidden){
-        new Notification("收到新留言：" + m.name, { body: m.text });
-      }
-    }catch(e){}
-  }
-
   function upsert(row){
-    var msg = { id: String(row.id), name: row.name, text: row.text, color: row.color, ts: toLocalTs(row) };
-    if(knownIds[msg.id]) return { msg: msg, isNew: false };
+    var msg = { 
+      id: String(row.id), 
+      name: row.name, 
+      text: row.text, 
+      color: row.color, 
+      ip: row.ip || "未知",
+      ts: toLocalTs(row) 
+    };
+    if(knownIds[msg.id]) return false;
     knownIds[msg.id] = true;
     allMessages.push(msg);
-    return { msg: msg, isNew: true };
+    return true;
   }
 
-  // ---- 若尚未配置，直接停止，不做任何网络请求 ----
+  // ---- Supabase 连接 ----
   if(configured){
     var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 1) 首次加载：拉取云端已有的所有留言
+    // 1) 首次加载：拉取已有留言
     (async function(){
       try{
         var { data, error } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
         if(error) throw error;
         (data||[]).forEach(function(row){ upsert(row); });
         renderVisitor();
+        configBar.className = "config-bar ok";
+        configBar.innerHTML = "✅ 已连接云端，共加载 "+allMessages.length+" 条留言。";
       }catch(err){
         configBar.className = "config-bar bad";
-        configBar.innerHTML = "❌ 读取云端失败：" + escapeHtml(err && (err.message || err)) + "。请检查 URL / Key 是否正确、表是否已建（见下方说明）。";
-        statusDot.classList.remove("off");
+        configBar.innerHTML = "❌ 读取云端失败：" + escapeHtml(err && (err.message || err)) + "。请检查 URL / Key / 表结构。";
       }
     })();
 
-    // 2) 作者端实时订阅：云端一出现新 INSERT，立即推送
+    // 2) 实时订阅：有新 INSERT 自动刷新列表
     try{
       supabase.channel("voicebook-realtime")
         .on("postgres_changes",
             { event: "INSERT", schema: "public", table: "messages" },
             function(payload){
-              var upserted = upsert(payload.new);
-              renderVisitor();
-              if(upserted.isNew){
-                renderInbox(upserted.msg, true);
-                notifyAuthor(upserted.msg);
-              } else {
-                renderInbox(upserted.msg, false);
+              var isNew = upsert(payload.new);
+              if(isNew){
+                renderVisitor();
+                if(!document.hidden && typeof navigator.vibrate === "function"){
+                  try{ navigator.vibrate(80); }catch(e){}
+                }
               }
             })
         .subscribe(function(status, err){
-          if(status === "SUBSCRIBED"){
-            statusDot.classList.remove("off");
-            statusText.textContent = "实时连接已建立 · 任何设备留言将即时送达";
-            configBar.className = "config-bar ok";
-            configBar.innerHTML = "✅ 已连接云端（Supabase）。在任何设备打开本页，游客留言都会实时同步到这里。";
-          } else {
-            statusDot.classList.add("off");
-            statusText.textContent = "实时监听连接失败，可切换游客端查看已存留言。";
+          if(status !== "SUBSCRIBED"){
+            console.warn("实时订阅未建立，列表将不会自动刷新", err);
           }
         });
-    }catch(err){
-      statusText.textContent = "实时监听初始化失败：" + (err.message||err);
-    }
+    }catch(err){}
   }
 
-  // ---- 提交留言（写到云端）----
+  // ---- 提交留言 ----
   var sendBtn = document.getElementById("sendBtn");
   var toast = document.getElementById("toast");
+
   sendBtn.addEventListener("click", async function(){
     var name = document.getElementById("visitorName").value.trim();
     var text = document.getElementById("visitorText").value.trim();
@@ -437,16 +450,28 @@
     sendBtn.disabled = true;
     toast.className = "toast show";
     toast.textContent = "⏳ 正在写入云端…";
+
     try{
+      var ip = await fetchIP();
       var { error } = await supabase.from("messages").insert([
-        { name: name, text: text, color: color }
+        { name: name, text: text, color: color, ip: ip }
       ]);
       if(error) throw error;
 
       document.getElementById("visitorText").value = "";
       toast.className = "toast show";
-      toast.textContent = "✓ 已写入云端，作者端已同步收到";
-      setTimeout(function(){ toast.classList.remove("show"); }, 2600);
+      toast.textContent = "✓ 已写入云端！";
+      setTimeout(function(){ toast.classList.remove("show"); }, 2000);
+      
+      showListView();
+      setTimeout(async function(){
+        var { data } = await supabase.from("messages").select("*").order("created_at", {ascending:false});
+        if(data){
+          data.forEach(function(row){ upsert(row); });
+          renderVisitor();
+        }
+      }, 500);
+
     }catch(err){
       toast.className = "toast err show";
       toast.textContent = "写入失败：" + (err.message||err);
@@ -454,18 +479,36 @@
     sendBtn.disabled = false;
   });
 
-  // Enter 快速发送（Ctrl/Cmd+Enter）
+  // Ctrl+Enter 快速发送
   document.getElementById("visitorText").addEventListener("keydown", function(e){
     if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ sendBtn.click(); }
   });
 
+  // ===== 关键修改 1：设置随机默认颜色 =====
+  document.getElementById("visitorColor").value = randomColor();
+
+  // ===== 关键修改 2：开屏弹窗关闭逻辑 =====
+  var splashModal = document.getElementById("splashModal");
+  var closeSplash = document.getElementById("closeSplash");
+  
+  closeSplash.addEventListener("click", function(){
+    splashModal.style.display = "none";
+    // 释放背景滚动（如果有）
+    document.body.style.overflow = "";
+  });
+
+  // 点击弹窗外部（背景）也关闭（增强体验）
+  splashModal.addEventListener("click", function(e){
+    if(e.target === splashModal) {
+      splashModal.style.display = "none";
+      document.body.style.overflow = "";
+    }
+  });
+
   // ---- 初始化 ----
   renderVisitor();
-  renderInbox();
-  if("Notification" in window && Notification.permission === "default" && configured){
-    setTimeout(function(){ Notification.requestPermission(); }, 1200);
-  }
 })();
 </script>
 
-</body></html>
+</body>
+</html>
