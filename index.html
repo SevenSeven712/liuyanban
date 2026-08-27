@@ -1,0 +1,602 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>登录 · Seven戚社区</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+    <style>
+        /* ===== 样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        :root {
+            --bg: #f5faf5;
+            --bg-card: #ffffff;
+            --bg-input: #eaf3ea;
+            --border: #c8e0c8;
+            --text: #1e3a2e;
+            --text-muted: #5a7a6a;
+            --text-light: #8aaa9a;
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-glow: rgba(76, 175, 80, 0.25);
+            --primary-bg: #e8f5e9;
+            --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+            --danger: #e57373;
+            --danger-bg: #ffebee;
+        }
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .login-card {
+            width: 22em;
+            max-width: 92vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 2.2em 2em;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+        .login-card::-webkit-scrollbar {
+            width: 4px;
+        }
+        .login-card::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 99px;
+        }
+        .login-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2em;
+        }
+        .login-logo {
+            font-weight: 900;
+            font-size: 1.4em;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+        .login-logo span {
+            color: var(--primary);
+        }
+        .lang-switch {
+            display: flex;
+            gap: 0.3em;
+        }
+        .lang-btn {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.2em 0.7em;
+            border-radius: 99px;
+            font-size: 0.65em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .lang-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        .lang-btn:hover {
+            transform: scale(1.05);
+        }
+        .login-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 0.8em;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9em;
+            margin-top: 0.8em;
+        }
+        .login-form .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3em;
+        }
+        .login-form .field-group label {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .login-form input {
+            width: 100%;
+            padding: 0.8em 1em;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 0.95em;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+        }
+        .login-form input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+        .login-form input::placeholder {
+            color: var(--text-light);
+        }
+        .login-form .login-continue {
+            width: 100%;
+            padding: 0.8em;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5em;
+            font-family: inherit;
+            margin-top: 0.2em;
+        }
+        .login-form .login-continue:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            box-shadow: 0 0 30px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+        .login-form .login-continue .icon {
+            width: 1.2em;
+            height: 1.2em;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            fill: none;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 1.2em;
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+        .login-footer .switch-link {
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 0 4px;
+        }
+        .login-footer .switch-link:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
+        }
+        .login-error {
+            color: #c62828;
+            font-size: 0.75em;
+            text-align: center;
+            min-height: 1.5em;
+            margin-top: 0.2em;
+        }
+        .auth-card {
+            display: none;
+        }
+        .auth-card.active {
+            display: block;
+        }
+
+        .icon-svg {
+            width: 1.2em;
+            height: 1.2em;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            fill: none;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text);
+            color: #fff;
+            padding: 0.7em 1.6em;
+            border-radius: 2em;
+            font-weight: 600;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 300;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 自定义弹窗 (Modal) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            max-width: 420px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .modal-box .modal-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .modal-box .modal-body {
+            font-size: 0.95em;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .modal-box .modal-body .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .modal-box .modal-body .danger-text {
+            color: #c62828;
+            font-weight: 600;
+        }
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .modal-box .modal-actions button {
+            padding: 6px 18px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .modal-box .modal-actions .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .modal-box .modal-actions .btn-primary:hover {
+            background: var(--primary-light);
+        }
+        .modal-box .modal-actions .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-muted);
+        }
+        .modal-box .modal-actions .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 1.6em 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">🌿 <span>Seven</span>戚</div>
+            <div class="lang-switch">
+                <button class="lang-btn active" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">English</button>
+            </div>
+        </div>
+
+        <!-- 登录卡片 -->
+        <div id="loginCard" class="auth-card active">
+            <div class="login-title">登录</div>
+            <div class="login-form">
+                <div class="field-group">
+                    <label id="phoneLabel">手机号</label>
+                    <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11" />
+                </div>
+                <div class="field-group">
+                    <label id="passwordLabel">密码</label>
+                    <input type="password" id="loginPassword" placeholder="请输入密码" />
+                </div>
+                <button class="login-continue" onclick="handleLogin()">
+                    <span>登录</span>
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                </button>
+                <div class="login-error" id="loginError"></div>
+            </div>
+            <div class="login-footer">
+                <span>没有账号？</span>
+                <button class="switch-link" onclick="showRegisterCard()">去注册</button>
+            </div>
+        </div>
+
+        <!-- 注册卡片 -->
+        <div id="registerCard" class="auth-card">
+            <div class="login-title">注册</div>
+            <div class="login-form">
+                <div class="field-group">
+                    <label id="regNickLabel">昵称</label>
+                    <input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
+                </div>
+                <div class="field-group">
+                    <label id="regPhoneLabel">手机号</label>
+                    <input type="tel" id="regPhone" placeholder="请输入手机号" maxlength="11" />
+                </div>
+                <div class="field-group">
+                    <label id="regPassLabel">密码</label>
+                    <input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
+                </div>
+                <div class="field-group">
+                    <label id="regPass2Label">确认密码</label>
+                    <input type="password" id="regPassword2" placeholder="请再次输入密码" />
+                </div>
+                <button class="login-continue" onclick="handleRegister()">
+                    <span>注册</span>
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                </button>
+                <div class="login-error" id="registerError"></div>
+            </div>
+            <div class="login-footer">
+                <span>已有账号？</span>
+                <button class="switch-link" onclick="showLoginCard()">去登录</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- 封禁通知弹窗（仅用作提示，不再拦截登录） -->
+    <div class="modal-overlay" id="bannedModal">
+        <div class="modal-box">
+            <div class="modal-title">⛔ 账号已被封禁</div>
+            <div class="modal-body" id="bannedContent">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="document.getElementById('bannedModal').classList.remove('active')">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // Supabase 配置
+        // ============================================================
+        var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+        var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
+        window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // 生成默认头像（基于昵称首字母）
+        function generateDefaultAvatar(nickname) {
+            const colors = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8", "#2e7d32", "#e67e22"];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const initial = nickname.charAt(0).toUpperCase();
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <rect width="100" height="100" fill="${color}" rx="50"/>
+                <text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text>
+            </svg>`;
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+
+        // ============================================================
+        // 卡片切换
+        // ============================================================
+        function showLoginCard() {
+            document.getElementById('loginCard').classList.add('active');
+            document.getElementById('registerCard').classList.remove('active');
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('registerError').textContent = '';
+        }
+
+        function showRegisterCard() {
+            document.getElementById('registerCard').classList.add('active');
+            document.getElementById('loginCard').classList.remove('active');
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('registerError').textContent = '';
+        }
+
+        // ============================================================
+        // 登录/注册逻辑（不再拦截封禁）
+        // ============================================================
+        async function registerUser(phone, password, nickname) {
+            const hashed = await hashPassword(password);
+            const avatar = generateDefaultAvatar(nickname);
+            const { data, error } = await window.sb
+                .from('users')
+                .insert([{ phone, password: hashed, nickname, avatar_url: avatar }]);
+            if (error) {
+                if (error.code === '23505') throw new Error('手机号已注册');
+                throw error;
+            }
+            return data;
+        }
+
+        async function loginUser(phone, password) {
+            const hashed = await hashPassword(password);
+            const { data, error } = await window.sb
+                .from('users')
+                .select('*')
+                .eq('phone', phone)
+                .eq('password', hashed);
+            if (error) throw error;
+            if (!data || data.length === 0) throw new Error('手机号未注册或密码错误');
+            return data[0];
+        }
+
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const loginError = document.getElementById('loginError');
+
+            if (!phone || !password) { loginError.textContent = '请填写完整信息'; return; }
+            if (!/^\d{11}$/.test(phone)) { loginError.textContent = '手机号格式不正确（11位数字）'; return; }
+            if (password.length < 6) { loginError.textContent = '密码至少6位'; return; }
+
+            loginError.textContent = '⏳ 登录中...';
+            loginUser(phone, password)
+                .then(user => {
+                    loginError.textContent = '';
+                    // 保存会话（不拦截封禁）
+                    localStorage.setItem('sq_user_session', JSON.stringify(user));
+                    showToast('🎉 登录成功！');
+                    // 若被封禁，仅在控制台提示，不弹窗
+                    const now = new Date();
+                    const bannedUntil = user.banned_until ? new Date(user.banned_until) : null;
+                    if (bannedUntil && bannedUntil > now) {
+                        console.warn('用户已被封禁，仍可浏览');
+                    }
+                    window.location.href = '/liuyanban/posts.html';
+                })
+                .catch(err => {
+                    loginError.textContent = err.message || '登录失败';
+                });
+        }
+
+        function handleRegister() {
+            const nickname = document.getElementById('regNick').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const password2 = document.getElementById('regPassword2').value.trim();
+            const registerError = document.getElementById('registerError');
+
+            if (!nickname || !phone || !password || !password2) { registerError.textContent = '请填写完整信息'; return; }
+            if (nickname.toLowerCase() === 'seven戚') { registerError.textContent = '该昵称不可用，请使用其他名称'; return; }
+            if (!/^\d{11}$/.test(phone)) { registerError.textContent = '手机号格式不正确（11位数字）'; return; }
+            if (password.length < 6) { registerError.textContent = '密码至少6位'; return; }
+            if (password !== password2) { registerError.textContent = '两次密码不一致'; return; }
+
+            registerError.textContent = '⏳ 注册中...';
+            registerUser(phone, password, nickname)
+                .then(() => {
+                    registerError.textContent = '';
+                    showToast('✅ 注册成功，请登录');
+                    showLoginCard();
+                    document.getElementById('loginPhone').value = phone;
+                    document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginPassword').focus();
+                    document.getElementById('regNick').value = '';
+                    document.getElementById('regPhone').value = '';
+                    document.getElementById('regPassword').value = '';
+                    document.getElementById('regPassword2').value = '';
+                })
+                .catch(err => {
+                    registerError.textContent = err.message || '注册失败';
+                    console.error('注册失败:', err);
+                });
+        }
+
+        // ============================================================
+        // 检查是否已登录（自动跳转）
+        // ============================================================
+        (function checkSession() {
+            const session = localStorage.getItem('sq_user_session');
+            if (session) {
+                try {
+                    const user = JSON.parse(session);
+                    if (user && user.id) {
+                        window.location.href = '/liuyanban/posts.html';
+                        return;
+                    }
+                } catch (e) {}
+            }
+            showLoginCard();
+        })();
+
+        // ============================================================
+        // 语言切换（仅界面文字）
+        // ============================================================
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    if (document.getElementById('loginCard').classList.contains('active')) {
+                        handleLogin();
+                    } else {
+                        handleRegister();
+                    }
+                }
+            });
+        });
+
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+
+        console.log('🌿 Seven戚 登录页已加载（封禁仅提示，不拦截）');
+    </script>
+
+</body>
+</html>
