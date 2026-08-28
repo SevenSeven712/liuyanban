@@ -347,7 +347,7 @@
                     if (match) {
                         const revokedName = match[1];
                         const revokerName = match[2];
-                        finalContent = `<span class="chat-text">${escapeHtml(revokedName)} 的消息被 <span class="deleted-by">${escapeHtml(revokerName)}</span> 撤回了</span>`;
+                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(revokedName)}</span> 的消息被 <span class="deleted-by">${escapeHtml(revokerName)}</span> 撤回了</span>`;
                     } else if (contentText.includes('撤回了一条消息')) {
                         const name = contentText.replace(' 撤回了一条消息', '');
                         finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(name)}</span> 撤回了一条消息</span>`;
