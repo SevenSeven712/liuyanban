@@ -6,7 +6,6 @@
     <title>Seven戚 · 聊天群</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 完整样式（与您之前的 chats.html 完全相同） ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --bg: #f5faf5;
@@ -152,17 +151,11 @@
 
     <div id="toast"></div>
 
-    <script src="/liuyanban/common.js"></script>
+    <script src="common.js"></script>
     <script>
-        // ============================================================
-        // 渲染头部和底部（路径已适配 /liuyanban/）
-        // ============================================================
         renderHeader('聊天群', 'chats');
         renderFooter('chats');
 
-        // ============================================================
-        // 工具函数
-        // ============================================================
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -178,9 +171,6 @@
             });
         }
 
-        // ============================================================
-        // 作者模式
-        // ============================================================
         var isAuthorMode = false;
         var AUTHOR_PASSWORD = "7592";
 
@@ -220,11 +210,8 @@
             }
         });
 
-        // ============================================================
-        // 会话管理
-        // ============================================================
         var currentUser = getSessionUser();
-        if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
+        if (!currentUser || !currentUser.id) window.location.href = 'index.html';
         var isAdmin = (currentUser.phone === '17355394710');
 
         function updateBannedBanner() {
@@ -245,9 +232,6 @@
             }
         }
 
-        // ============================================================
-        // 聊天数据操作
-        // ============================================================
         var chats = [];
         var chatsLoading = false;
         var usersCache = {};
@@ -334,27 +318,42 @@
 
             let html = '';
             let prevMsgTime = null;
+
             chats.forEach(c => {
                 const isSelf = currentUser && c.user_id === currentUser.id;
                 const isOfficial = c.is_official || c.author === 'Seven戚';
                 const isDeleted = c.is_deleted === true;
+
                 let userInfo = usersCache[c.user_id] || null;
                 let displayName = userInfo ? userInfo.nickname : c.author;
                 let avatarUrl = userInfo ? userInfo.avatar_url : null;
 
                 const showDivider = shouldShowTimeDivider(prevMsgTime, c.created_at);
-                if (showDivider) html += `<div class="time-divider"><span>${formatTimeDivider(c.created_at)}</span></div>`;
+                if (showDivider) {
+                    html += `<div class="time-divider"><span>${formatTimeDivider(c.created_at)}</span></div>`;
+                }
                 prevMsgTime = c.created_at;
 
                 const officialBadge = isOfficial ? '<span class="official-badge">官方</span>' : '';
                 const deletedClass = isDeleted ? 'deleted' : '';
-                const revokeBtn = (isAdmin || (currentUser && c.user_id === currentUser.id)) && !isDeleted ? `<button class="revoke-btn" data-id="${c.id}" data-author="${escapeHtml(c.author)}" data-self="${isSelf}">撤回</button>` : '';
+                const revokeBtn = (isAdmin || (currentUser && c.user_id === currentUser.id)) && !isDeleted ? 
+                    `<button class="revoke-btn" data-id="${c.id}" data-author="${escapeHtml(c.author)}" data-self="${isSelf}">撤回</button>` : '';
                 const contextHint = !isDeleted ? '<span class="context-hint">(长按/右键可撤回)</span>' : '';
 
                 let finalContent = '';
                 if (isDeleted) {
                     const contentText = c.content || '';
-                    finalContent = `<span class="chat-text">${escapeHtml(contentText)}</span>`;
+                    const match = contentText.match(/^(.*?) 的消息被 (.*?) 撤回了$/);
+                    if (match) {
+                        const revokedName = match[1];
+                        const revokerName = match[2];
+                        finalContent = `<span class="chat-text">${escapeHtml(revokedName)} 的消息被 <span class="deleted-by">${escapeHtml(revokerName)}</span> 撤回了</span>`;
+                    } else if (contentText.includes('撤回了一条消息')) {
+                        const name = contentText.replace(' 撤回了一条消息', '');
+                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(name)}</span> 撤回了一条消息</span>`;
+                    } else {
+                        finalContent = `<span class="chat-text">${escapeHtml(contentText)}</span>`;
+                    }
                 } else {
                     finalContent = `<span class="chat-text">${escapeHtml(c.content)}</span>`;
                 }
@@ -380,10 +379,10 @@
                     </div>
                 `;
             });
+
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
 
-            // 绑定撤回按钮
             container.querySelectorAll('.revoke-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -469,14 +468,10 @@
             });
         }
 
-        // ============================================================
-        // 初始化
-        // ============================================================
         (function init() {
             updateBannedBanner();
             loadAllData();
 
-            // 更新最后查看时间，清除红点
             if (currentUser && currentUser.id) {
                 updateLastChatRead(currentUser.id).then(() => {
                     updateChatBadge();
@@ -487,7 +482,6 @@
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
             }
 
-            // 实时订阅
             window.sb.channel('chats-page-realtime')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
                     console.log('收到新消息:', payload.new);
@@ -503,7 +497,6 @@
                 })
                 .subscribe();
 
-            // 跨页面同步
             function syncUser() {
                 const session = getSessionUser();
                 if (session && session.id) {
