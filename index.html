@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
     <style>
-        /* ===== 样式 ===== */
+        /* ===== 样式（保持不变） ===== */
         * {
             margin: 0;
             padding: 0;
@@ -514,7 +514,8 @@
                     if (bannedUntil && bannedUntil > now) {
                         console.warn('用户已被封禁，仍可浏览');
                     }
-                    window.location.href = '/liuyanban/posts.html';
+                    // ★★★ 修复：改为相对路径 ★★★
+                    window.location.href = 'posts.html';
                 })
                 .catch(err => {
                     loginError.textContent = err.message || '登录失败';
@@ -563,7 +564,8 @@
                 try {
                     const user = JSON.parse(session);
                     if (user && user.id) {
-                        window.location.href = '/liuyanban/posts.html';
+                        // ★★★ 修复：改为相对路径 ★★★
+                        window.location.href = 'posts.html';
                         return;
                     }
                 } catch (e) {}
