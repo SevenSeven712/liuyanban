@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8" />
@@ -32,6 +32,8 @@
         }
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
+
+        /* ===== 公共头部样式（由 common.js 生成，但保留定义） ===== */
         .app-header {
             flex-shrink: 0; padding: 12px 20px 8px 20px;
             background: var(--bg-card); border-bottom: 1px solid var(--border);
@@ -55,10 +57,8 @@
         .app-header .user-area:hover { background: var(--primary-bg); }
         .app-header .avatar {
             width: 32px; height: 32px; border-radius: 50%;
-            display: grid;
-            place-items: center;
-            font-weight: 700;
-            font-size: 14px;
+            display: grid; place-items: center;
+            font-weight: 700; font-size: 14px;
             color: #fff;
             background: var(--primary);
             flex-shrink: 0;
@@ -73,6 +73,52 @@
         .app-header .chevron { color: var(--text-muted); font-size: 0.7em; transition: transform 0.3s; }
         .app-header .chevron.open { transform: rotate(180deg); }
 
+        /* ===== 公共底部样式 ===== */
+        .app-tabs {
+            flex-shrink: 0;
+            display: flex;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 6px 0 calc(6px + var(--safe-bottom));
+            z-index: 50;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.96);
+        }
+        .tab-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            font-family: var(--font);
+            font-size: 0.6em;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 4px 0;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+            text-decoration: none;
+        }
+        .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; top: -1px;
+            left: 30%; right: 30%; height: 3px;
+            background: var(--primary); border-radius: 0 0 4px 4px;
+        }
+        .tab-btn .badge {
+            position: absolute; top: 0; right: 20%;
+            background: var(--primary); color: #fff;
+            font-size: 0.6em; font-weight: 700;
+            padding: 1px 6px; border-radius: 99px;
+            min-width: 16px; text-align: center;
+            transform: translateY(-4px);
+        }
+
+        /* ===== 封禁横幅 ===== */
         .banned-banner {
             flex-shrink: 0;
             background: #ffebee;
@@ -86,6 +132,7 @@
         }
         .banned-banner.active { display: block; }
 
+        /* ===== 帖子页面内容 ===== */
         .app-content {
             flex: 1;
             min-height: 0;
@@ -236,50 +283,6 @@
             color: var(--official-blue);
         }
 
-        .app-tabs {
-            flex-shrink: 0;
-            display: flex;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border);
-            padding: 6px 0 calc(6px + var(--safe-bottom));
-            z-index: 50;
-            backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, 0.96);
-        }
-        .tab-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            background: none;
-            border: none;
-            font-family: var(--font);
-            font-size: 0.6em;
-            font-weight: 600;
-            color: var(--text-muted);
-            padding: 4px 0;
-            cursor: pointer;
-            transition: color 0.2s;
-            position: relative;
-            text-decoration: none;
-        }
-        .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
-        .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after {
-            content: ''; position: absolute; top: -1px;
-            left: 30%; right: 30%; height: 3px;
-            background: var(--primary); border-radius: 0 0 4px 4px;
-        }
-        .tab-btn .badge {
-            position: absolute; top: 0; right: 20%;
-            background: var(--primary); color: #fff;
-            font-size: 0.6em; font-weight: 700;
-            padding: 1px 6px; border-radius: 99px;
-            min-width: 16px; text-align: center;
-            transform: translateY(-4px);
-        }
-
         .icon-svg { width: 1.2em; height: 1.2em; fill: currentColor; flex-shrink: 0; }
         .icon-btn {
             background: none; border: none; cursor: pointer;
@@ -329,62 +332,6 @@
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.3s ease; }
-
-        /* ===== 个人资料弹窗 ===== */
-        .profile-overlay {
-            position: fixed; inset: 0; z-index: 200;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(6px);
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .profile-overlay.active { opacity: 1; pointer-events: auto; }
-        .profile-card {
-            background: var(--bg-card); border-radius: var(--radius);
-            padding: 2em 2.2em; max-width: 90vw; width: 22em;
-            box-shadow: var(--shadow); border: 1px solid var(--border);
-            transform: scale(0.9) translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .profile-overlay.active .profile-card { transform: scale(1) translateY(0); }
-        .profile-card .profile-avatar {
-            width: 64px; height: 64px; border-radius: 50%;
-            background: var(--primary); color: #fff;
-            display: grid; place-items: center;
-            font-size: 28px; font-weight: 700; margin: 0 auto 12px;
-            object-fit: cover;
-        }
-        .profile-card .avatar-upload { text-align: center; margin-top: 4px; }
-        .profile-card .avatar-upload label { font-size: 0.7em; color: var(--primary); cursor: pointer; text-decoration: underline; }
-        .profile-card .avatar-upload input[type="file"] { display: none; }
-        .profile-card h3 { text-align: center; font-size: 1.1em; margin-bottom: 4px; }
-        .profile-card .sub { text-align: center; color: var(--text-muted); font-size: 0.75em; margin-bottom: 16px; }
-        .profile-card .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-        .profile-card .field label {
-            font-size: 0.7em; font-weight: 600; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .profile-card .field input {
-            padding: 8px 12px; border-radius: var(--radius-sm);
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.9em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
-        }
-        .profile-card .field input:focus { border-color: var(--primary); }
-        .profile-card .actions {
-            display: flex; gap: 8px; margin-top: 8px;
-        }
-        .profile-card .actions button {
-            flex: 1; padding: 8px; border-radius: var(--radius-sm);
-            border: none; font-weight: 700; font-size: 0.8em;
-            cursor: pointer; transition: all 0.2s; font-family: inherit;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-        }
-        .profile-card .actions .save-btn { background: var(--primary); color: #fff; }
-        .profile-card .actions .save-btn:hover { background: var(--primary-light); }
-        .profile-card .actions .logout-btn { background: #ffebee; color: #c62828; }
-        .profile-card .actions .logout-btn:hover { background: #ffcdd2; }
-        .profile-card .actions .close-btn { background: var(--bg-input); color: var(--text-muted); }
-        .profile-card .actions .close-btn:hover { background: var(--border); }
 
         /* ===== 帖子详情 ===== */
         .detail-overlay {
@@ -556,6 +503,7 @@
         .detail-input-area button:hover { background: var(--primary-light); }
         .detail-input-area button:disabled { opacity: 0.5; pointer-events: none; }
 
+        /* ===== 分类管理弹窗 ===== */
         .category-manager-overlay {
             position: fixed; inset: 0; z-index: 1000;
             background: var(--bg-card); display: none;
@@ -627,6 +575,7 @@
         }
         .category-manager-add button:hover { background: var(--primary-light); }
 
+        /* ===== 管理面板 ===== */
         .admin-panel-overlay {
             position: fixed; inset: 0; z-index: 1000;
             background: var(--bg-card); display: none;
@@ -749,6 +698,7 @@
         }
         .admin-role-add button:hover { background: var(--primary-light); }
 
+        /* ===== 自定义弹窗 ===== */
         .custom-modal {
             position: fixed; inset: 0; z-index: 2000;
             background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
@@ -870,17 +820,8 @@
 <body>
     <!-- ===== 主应用 ===== -->
     <div id="mainApp">
-        <header class="app-header">
-            <div class="brand" id="brandArea">
-                🌿 <span id="brandName">Seven</span>戚
-                <small>帖子广场</small>
-            </div>
-            <div class="user-area" onclick="openProfile()">
-                <div class="avatar" id="headerAvatar">S</div>
-                <span class="user-name" id="headerName">用户</span>
-                <span class="chevron" id="chevronIcon">▼</span>
-            </div>
-        </header>
+        <!-- 顶部由 common.js 渲染 -->
+        <div id="header-container"></div>
 
         <div class="banned-banner" id="bannedBanner">
             ⚠️ 账号已被封禁，无法发布新帖或评论。解封时间：<span id="bannedUntilDisplay"></span>
@@ -905,39 +846,8 @@
             <div id="postList"></div>
         </div>
 
-        <div class="app-tabs">
-            <a href="/liuyanban/posts.html" class="tab-btn active">
-                <span class="tab-icon">📰</span> 帖子
-            </a>
-            <a href="/liuyanban/messages.html" class="tab-btn">
-                <span class="tab-icon">💌</span> 留言板
-            </a>
-            <a href="/liuyanban/chats.html" class="tab-btn">
-                <span class="tab-icon">💬</span> 聊天群
-            </a>
-        </div>
-    </div>
-
-    <!-- ===== 个人资料弹窗 ===== -->
-    <div class="profile-overlay" id="profileOverlay" onclick="closeProfileOutside(event)">
-        <div class="profile-card" onclick="event.stopPropagation()">
-            <img class="profile-avatar" id="profileAvatar" src="" alt="avatar" />
-            <div class="avatar-upload">
-                <label for="avatarFileInput">📷 更换头像</label>
-                <input type="file" id="avatarFileInput" accept="image/*" />
-            </div>
-            <h3 id="profileNameDisplay">用户</h3>
-            <div class="sub">Seven戚 社区成员</div>
-            <div class="field">
-                <label>修改昵称</label>
-                <input type="text" id="profileNameInput" maxlength="12" />
-            </div>
-            <div class="actions">
-                <button class="save-btn" onclick="saveProfile()">保存</button>
-                <button class="logout-btn" onclick="logout()">退出</button>
-                <button class="close-btn" onclick="closeProfile()">关闭</button>
-            </div>
-        </div>
+        <!-- 底部由 common.js 渲染 -->
+        <div id="footer-container"></div>
     </div>
 
     <!-- ===== 帖子详情 ===== -->
@@ -1067,7 +977,14 @@
 
     <div id="toast"></div>
 
+    <script src="common.js"></script>
     <script>
+        // ============================================================
+        // 渲染公共头部和底部（在页面加载后调用）
+        // ============================================================
+        renderHeader('帖子广场', 'posts');
+        renderFooter('posts');
+
         // ============================================================
         // Supabase 配置
         // ============================================================
@@ -1112,7 +1029,7 @@
             return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
 
-        // 头像上传
+        // 头像上传（保留用于其他页面，但帖子页不再使用，因为头像功能已移至 profile.html）
         async function uploadAvatar(file, userId) {
             const fileExt = file.name.split('.').pop();
             const fileName = `avatars/${userId}/profile.${fileExt}`;
@@ -2158,6 +2075,28 @@
             try {
                 const isOfficial = isAdmin || currentUser.phone === '17355394710';
                 await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content, isOfficial);
+                
+                // ===== 添加评论通知（新增代码） =====
+                try {
+                    const post = posts.find(p => p.id === currentDetailPostId);
+                    if (post && post.user_id !== currentUser.id) {
+                        const postTitle = post.title || (post.content ? post.content.substring(0, 30) + (post.content.length > 30 ? '…' : '') : '帖子');
+                        const notificationContent = `${currentUser.nickname} 给你的帖子“${postTitle}”评论了，快去看看吧`;
+                        await window.sb
+                            .from('notifications')
+                            .insert([{
+                                user_id: post.user_id,
+                                type: 'comment',
+                                content: notificationContent,
+                                link: `posts.html?post=${post.id}`,
+                                is_read: false
+                            }]);
+                    }
+                } catch (notiErr) {
+                    console.error('插入通知失败:', notiErr);
+                }
+                // ===== 通知代码结束 =====
+
                 detailCommentInput.value = '';
                 await renderDetail(currentDetailPostId);
                 await loadAllData();
@@ -2358,7 +2297,8 @@
                 setSessionUser(data);
                 currentUser = data;
                 isAdmin = (currentUser.phone === '17355394710');
-                updateHeader();
+                renderHeader('帖子广场', 'posts');
+                renderFooter('posts');
                 await loadUserRoles();
                 await loadAllData();
                 closeAdminPanel();
@@ -2445,120 +2385,6 @@
         }
 
         // ============================================================
-        // 个人资料（含头像上传 + 禁止普通用户设置 Seven戚）
-        // ============================================================
-        function openProfile() {
-            if (!currentUser) return;
-            document.getElementById('profileNameInput').value = currentUser.nickname;
-            if (currentUser.avatar_url) {
-                document.getElementById('profileAvatar').src = currentUser.avatar_url;
-            } else {
-                const initial = currentUser.nickname.charAt(0).toUpperCase() || 'U';
-                document.getElementById('profileAvatar').src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%232e7d32" rx="50"/><text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text></svg>`;
-            }
-            document.getElementById('profileNameDisplay').textContent = currentUser.nickname;
-            document.getElementById('profileOverlay').classList.add('active');
-            document.getElementById('chevronIcon').classList.add('open');
-        }
-
-        function closeProfile() {
-            document.getElementById('profileOverlay').classList.remove('active');
-            document.getElementById('chevronIcon').classList.remove('open');
-        }
-
-        function closeProfileOutside(e) {
-            if (e.target === e.currentTarget) closeProfile();
-        }
-
-        // ★★★ 头像上传事件 ★★★
-        document.getElementById('avatarFileInput').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                showToast('⏳ 正在上传头像...');
-                const avatarUrl = await uploadAvatar(file, currentUser.id);
-                await updateUser(currentUser.id, { avatar_url: avatarUrl });
-                currentUser.avatar_url = avatarUrl;
-                setSessionUser(currentUser);
-                updateHeader();
-                document.getElementById('profileAvatar').src = avatarUrl;
-                showToast('✅ 头像已更新');
-                await loadAllData();
-            } catch (err) {
-                if (err.message && (err.message.includes('row-level security policy') || err.message.includes('new row violates'))) {
-                    showToast('❌ 上传失败：请管理员在 Supabase 中为 avatars 存储桶配置 RLS 策略（允许用户上传自己的头像）');
-                } else {
-                    showToast('上传失败：' + err.message);
-                }
-                console.error(err);
-            }
-            this.value = '';
-        });
-
-        // ★★★ 保存昵称时禁止普通用户设置 Seven戚 ★★★
-        function saveProfile() {
-            const newName = document.getElementById('profileNameInput').value.trim();
-            if (!newName) { showToast('请输入昵称'); return; }
-            if (newName.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') {
-                showToast('该昵称不可用，请使用其他名称');
-                return;
-            }
-            try {
-                updateUser(currentUser.id, { nickname: newName })
-                    .then(() => {
-                        currentUser.nickname = newName;
-                        setSessionUser(currentUser);
-                        updateHeader();
-                        loadAllData();
-                        closeProfile();
-                        showToast('✅ 昵称已更新');
-                    })
-                    .catch(err => showToast('更新失败：' + err.message));
-            } catch (err) {
-                showToast('更新失败：' + err.message);
-            }
-        }
-
-        // ★★★ 修复：头像显示逻辑（去除 "vata" 字样）★★★
-        function updateHeader() {
-            if (currentUser) {
-                const initial = currentUser.nickname.charAt(0).toUpperCase() || 'U';
-                document.getElementById('headerName').textContent = currentUser.nickname;
-                const avatarEl = document.getElementById('headerAvatar');
-                if (currentUser.avatar_url && currentUser.avatar_url.startsWith('http')) {
-                    avatarEl.style.backgroundImage = `url(${currentUser.avatar_url})`;
-                    avatarEl.style.backgroundSize = 'cover';
-                    avatarEl.style.backgroundPosition = 'center';
-                    avatarEl.textContent = '';
-                } else {
-                    avatarEl.style.backgroundImage = '';
-                    avatarEl.style.backgroundSize = '';
-                    avatarEl.textContent = initial;
-                }
-                // 个人资料弹窗头像
-                const profileAvatar = document.getElementById('profileAvatar');
-                if (currentUser.avatar_url) {
-                    profileAvatar.src = currentUser.avatar_url;
-                } else {
-                    profileAvatar.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%232e7d32" rx="50"/><text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text></svg>`;
-                }
-                document.getElementById('profileNameDisplay').textContent = currentUser.nickname;
-                document.getElementById('profileNameInput').value = currentUser.nickname;
-            }
-        }
-
-        function logout() {
-            showConfirm('退出登录', '确定要退出登录吗？', () => {
-                closeProfile();
-                clearSession();
-                showToast('👋 已退出登录');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
-            });
-        }
-
-        // ============================================================
         // 初始化
         // ============================================================
         (function init() {
@@ -2569,7 +2395,6 @@
             }
             currentUser = session;
             isAdmin = (currentUser.phone === '17355394710');
-            updateHeader();
             updateBannedBanner();
             if (isUserBanned()) document.getElementById('newPostBtn').disabled = true;
             loadUserRoles()
@@ -2606,7 +2431,6 @@
                 })
                 .subscribe();
 
-            // 跨页面同步
             function syncUser() {
                 const session = getSessionUser();
                 if (session && session.id) {
@@ -2615,7 +2439,8 @@
                         currentUser.nickname !== session.nickname) {
                         currentUser = session;
                         isAdmin = (currentUser.phone === '17355394710');
-                        updateHeader();
+                        renderHeader('帖子广场', 'posts');
+                        renderFooter('posts');
                         updateBannedBanner();
                         if (isUserBanned()) document.getElementById('newPostBtn').disabled = true;
                         loadUserRoles()
