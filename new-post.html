@@ -1,374 +1,592 @@
-// ============================================================
-// 初始化 Supabase 客户端（确保全局可用）
-// ============================================================
-if (!window.sb) {
-    var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
-    var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
-    window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Seven戚 · 发帖</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        :root {
+            --bg: #f5faf5;
+            --bg-card: #ffffff;
+            --bg-input: #eaf3ea;
+            --border: #c8e0c8;
+            --text: #1e3a2e;
+            --text-muted: #5a7a6a;
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-bg: #e8f5e9;
+            --shadow: 0 8px 32px rgba(46,125,50,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+            --danger: #e57373;
+            --official-blue: #2b6cff;
+        }
+        html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
+        #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
-// ============================================================
-// 会话管理
-// ============================================================
-function getSessionUser() {
-    const stored = localStorage.getItem('sq_user_session');
-    if (stored) {
-        try { return JSON.parse(stored); } catch { return null; }
-    }
-    return null;
-}
+        .app-header {
+            flex-shrink: 0; padding: 12px 20px;
+            background: rgba(255,255,255,0.92);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 56px; z-index: 50;
+        }
+        .app-header .back-btn {
+            background: none; border: none; cursor: pointer; color: var(--text);
+            display: flex; align-items: center; padding: 4px;
+            text-decoration: none;
+        }
+        .app-header .back-btn svg {
+            width: 24px; height: 24px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .app-header .title { font-weight: 700; font-size: 1em; }
+        .app-header .placeholder { width: 32px; }
 
-function setSessionUser(user) {
-    localStorage.setItem('sq_user_session', JSON.stringify(user));
-}
-
-function clearSession() {
-    localStorage.removeItem('sq_user_session');
-}
-
-// ============================================================
-// 通用工具函数
-// ============================================================
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.classList.add('show');
-    clearTimeout(window.toastTimer);
-    window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-function escapeHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
-    });
-}
-
-function getUserAvatar(user) {
-    if (user && user.avatar_url) return user.avatar_url;
-    const name = user ? user.nickname : 'U';
-    const color = '#2e7d32';
-    const initial = name.charAt(0).toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-        <rect width="100" height="100" fill="${color}" rx="50"/>
-        <text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text>
-    </svg>`;
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-}
-
-// ============================================================
-// 渲染头部（✅ 修复版：无嵌套模板字符串）
-// ============================================================
-function renderHeader(title, activeTab) {
-    const user = getSessionUser();
-    const headerContainer = document.getElementById('header-container');
-    if (!headerContainer) return;
-
-    let userAreaHtml = '';
-    if (user && user.id) {
-        const avatar = user.avatar_url || getUserAvatar(user);
-        const displayName = user.nickname || '用户';
-
-        // ✅ 先计算 avatar 的样式和内容
-        let avatarStyle = '';
-        let avatarContent = '';
-        if (avatar && avatar.startsWith('http')) {
-            avatarStyle = `background-image:url(${avatar});background-size:cover;background-position:center;`;
-        } else {
-            avatarContent = displayName.charAt(0).toUpperCase();
+        .app-content {
+            flex: 1; overflow-y: auto; padding: 16px 20px;
+            -webkit-overflow-scrolling: touch;
         }
 
-        userAreaHtml = `
-            <div class="user-area" onclick="window.location.href='profile.html'">
-                <div class="avatar" style="${avatarStyle}">${avatarContent}</div>
-                <span class="user-name">${escapeHtml(displayName)}</span>
-                <span class="chevron">▾</span>
-            </div>
-        `;
-    } else {
-        userAreaHtml = `<div class="user-area" onclick="window.location.href='index.html'">登录</div>`;
-    }
+        .field-group { margin-bottom: 16px; }
+        .field-group label {
+            display: block; font-size: 0.7em; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 4px;
+        }
+        .field-group input, .field-group select {
+            width: 100%; padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background: var(--bg-input);
+            font-family: inherit; font-size: 0.9em;
+            outline: none; color: var(--text);
+        }
+        .field-group input:focus, .field-group select:focus { border-color: var(--primary); }
 
-    headerContainer.innerHTML = `
+        .editor-container { position: relative; }
+        .editor-toolbar {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            margin-bottom: 8px; padding: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+        .editor-toolbar button {
+            background: none; border: none; cursor: pointer;
+            padding: 6px 8px; border-radius: 6px;
+            color: var(--text-muted);
+            transition: background 0.2s;
+            display: flex; align-items: center;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .editor-toolbar button:hover, .editor-toolbar button.active {
+            background: var(--primary-bg); color: var(--primary);
+        }
+        .editor-toolbar button svg {
+            width: 18px; height: 18px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .editor-content {
+            min-height: 200px; max-height: 400px;
+            overflow-y: auto; border: 2px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px;
+            background: var(--bg-input); font-size: 0.9em;
+            line-height: 1.6; outline: none; word-break: break-word;
+        }
+        .editor-content img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
+        .editor-content a { color: var(--official-blue); text-decoration: underline; cursor: pointer; }
+        .editor-content .chapter-block {
+            display: block; margin: 8px 0; padding: 8px 12px;
+            border-left: 4px solid; background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+        }
+
+        .editor-container.fullscreen-mode {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #fff; display: flex; flex-direction: column;
+        }
+        .editor-container.fullscreen-mode .editor-toolbar {
+            flex-shrink: 0; margin: 12px;
+        }
+        .editor-container.fullscreen-mode .editor-content {
+            flex: 1; max-height: none; margin: 0 12px 12px 12px;
+        }
+        .editor-container.fullscreen-mode .fullscreen-exit {
+            display: flex !important;
+        }
+        .fullscreen-exit {
+            display: none; position: absolute; top: 20px; right: 20px;
+            z-index: 10000; background: var(--primary); color: #fff;
+            border: none; border-radius: 99px; padding: 8px 16px;
+            cursor: pointer; font-weight: 600; font-size: 0.85em;
+            align-items: center; gap: 4px;
+        }
+        .fullscreen-exit svg {
+            width: 16px; height: 16px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .poll-builder {
+            margin-top: 12px; padding: 12px;
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+        }
+        .poll-builder label { font-weight: 600; font-size: 0.85em; }
+        .poll-builder input[type="text"] {
+            width: 100%; margin: 6px 0; padding: 8px;
+            border: 2px solid var(--border); border-radius: 6px;
+            font-size: 0.85em; outline: none;
+        }
+        .poll-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .poll-option-row input {
+            flex: 1; padding: 8px 10px;
+            border: 2px solid var(--border); border-radius: 6px;
+            font-size: 0.85em; outline: none;
+        }
+        .poll-option-row button {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 1.2em; padding: 0 4px;
+        }
+        .poll-builder .add-option-btn {
+            margin-top: 4px; background: var(--primary-bg);
+            color: var(--primary); border: none; border-radius: 6px;
+            padding: 6px 12px; cursor: pointer; font-size: 0.8em;
+        }
+
+        .actions { display: flex; gap: 8px; margin-top: 16px; }
+        .actions button {
+            flex: 1; padding: 12px; border-radius: var(--radius-sm);
+            border: none; font-weight: 700; font-size: 1em;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .actions .btn-primary { background: var(--primary); color: #fff; }
+        .actions .btn-primary:hover { background: var(--primary-light); }
+        .actions .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+        .actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text); color: #fff;
+            padding: 0.7em 1.6em; border-radius: 2em;
+            font-weight: 600; font-size: 0.85em;
+            opacity: 0; transition: all 0.4s ease;
+            z-index: 99999; pointer-events: none;
+            white-space: nowrap; box-shadow: var(--shadow);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* 自定义链接弹窗 */
+        .link-modal-overlay {
+            position: fixed; inset: 0; z-index: 20000;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .link-modal-overlay.active { display: flex; }
+        .link-modal-box {
+            background: #fff; border-radius: 16px;
+            max-width: 400px; width: 100%; padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .link-modal-box h3 { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; }
+        .link-modal-box .form-group { margin-bottom: 12px; }
+        .link-modal-box .form-group label {
+            display: block; font-size: 0.75em; font-weight: 600;
+            color: #5a7a6a; margin-bottom: 4px;
+        }
+        .link-modal-box .form-group input {
+            width: 100%; padding: 8px 12px;
+            border: 2px solid #c8e0c8; border-radius: 8px;
+            font-size: 0.9em; outline: none;
+        }
+        .link-modal-box .form-group input:focus { border-color: #2e7d32; }
+        .link-modal-box .modal-actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+            margin-top: 16px;
+        }
+        .link-modal-box .modal-actions button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            font-weight: 600; font-size: 0.85em; cursor: pointer;
+        }
+        .link-modal-box .modal-actions .btn-cancel {
+            background: #eaf3ea; color: #5a7a6a;
+        }
+        .link-modal-box .modal-actions .btn-confirm {
+            background: #2e7d32; color: #fff;
+        }
+
+        @media (max-width: 480px) {
+            .app-header { padding: 10px 14px; }
+            .app-content { padding: 12px 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="mainApp">
         <div class="app-header">
-            <div class="brand" onclick="window.location.href='posts.html'">
-                Seven<span>戚</span><small>· ${escapeHtml(title)}</small>
-            </div>
-            ${userAreaHtml}
+            <!-- 左上角返回按钮：直接跳转到帖子列表 -->
+            <a href="posts.html" class="back-btn" title="返回帖子广场">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </a>
+            <span class="title">📝 发帖</span>
+            <div class="placeholder"></div>
         </div>
-    `;
-}
 
-// ============================================================
-// 渲染底部导航（基础版，立即执行，不带红点）
-// ============================================================
-function renderFooterBase(activeTab) {
-    const tabs = [
-        { id: 'posts', label: '📰 帖子', href: '/liuyanban/posts.html' },
-        { id: 'messages', label: '💌 留言板', href: '/liuyanban/messages.html' },
-        { id: 'chats', label: '💬 聊天群', href: '/liuyanban/chats.html' },
-        { id: 'profile', label: '👤 个人', href: '/liuyanban/profile.html' }
-    ];
+        <div class="app-content">
+            <div class="field-group">
+                <label>标题（选填）</label>
+                <input type="text" id="postTitleInput" maxlength="100" placeholder="输入帖子标题..." />
+            </div>
 
-    let footerHtml = `<div class="app-tabs">`;
-    tabs.forEach(tab => {
-        const activeClass = (tab.id === activeTab) ? 'active' : '';
-        footerHtml += `<a href="${tab.href}" class="tab-btn ${activeClass}" style="position:relative;">
-            <span class="tab-icon">${tab.label.split(' ')[0]}</span>
-            ${tab.label.split(' ').slice(1).join(' ')}
-        </a>`;
-    });
-    footerHtml += `</div>`;
+            <div class="field-group">
+                <label>分类</label>
+                <select id="postCategorySelect"></select>
+            </div>
 
-    const footerContainer = document.getElementById('footer-container');
-    if (footerContainer) {
-        footerContainer.innerHTML = footerHtml;
-    }
-}
+            <div class="field-group">
+                <label>正文（支持富文本）</label>
+                <div class="editor-container" id="editorContainer">
+                    <div class="editor-toolbar" id="editorToolbar">
+                        <button type="button" onclick="execCommand('bold')" title="粗体">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6zM6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('italic')" title="斜体">
+                            <svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('underline')" title="下划线">
+                            <svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyLeft')" title="左对齐">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyCenter')" title="居中">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyRight')" title="右对齐">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="addChapter()" title="章节模式">
+                            <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+                        </button>
+                        <button type="button" onclick="insertImage()" title="插入图片">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        </button>
+                        <button type="button" onclick="showLinkModal()" title="插入链接" id="linkBtn">
+                            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        </button>
+                        <button type="button" onclick="addPoll()" title="添加投票">
+                            <svg viewBox="0 0 24 24"><path d="M9 11V6a2 2 0 0 1 4 0v5"/><path d="M13 11V6a2 2 0 0 1 4 0v5"/><path d="M17 11V5a2 2 0 0 1 4 0v7a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6V9"/></svg>
+                        </button>
+                        <button type="button" onclick="toggleFullscreen()" title="全屏编辑">
+                            <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        </button>
+                    </div>
+                    <div class="editor-content" id="richEditor" contenteditable="true"></div>
+                    <button class="fullscreen-exit" id="fullscreenExitBtn" onclick="toggleFullscreen()">
+                        <svg viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        退出全屏
+                    </button>
+                </div>
+                <div id="pollBuilderContainer"></div>
+            </div>
 
-// ============================================================
-// 获取聊天未读消息数量
-// ============================================================
-async function getUnreadChatCount(userId) {
-    if (!userId || !window.sb) return 0;
-    try {
-        const { data: userData, error: userError } = await window.sb
-            .from('users')
-            .select('last_chat_read_at')
-            .eq('id', userId)
-            .single();
-        if (userError) throw userError;
+            <div class="actions">
+                <button class="btn-secondary" onclick="window.location.href='/liuyanban/posts.html'">取消</button>
+                <button class="btn-primary" id="submitPostBtn">发布</button>
+            </div>
+        </div>
+    </div>
 
-        const lastRead = userData?.last_chat_read_at || new Date(0).toISOString();
+    <!-- 自定义链接弹窗 -->
+    <div class="link-modal-overlay" id="linkModalOverlay">
+        <div class="link-modal-box">
+            <h3>🔗 插入链接</h3>
+            <div class="form-group">
+                <label>链接地址（必填，以 https:// 开头）</label>
+                <input type="text" id="linkUrlInput" placeholder="https://example.com" />
+            </div>
+            <div class="form-group">
+                <label>链接文字（选填，留空显示网址）</label>
+                <input type="text" id="linkTextInput" placeholder="输入链接显示文字..." />
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeLinkModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmInsertLink()">确定</button>
+            </div>
+        </div>
+    </div>
 
-        const { count, error } = await window.sb
-            .from('chats')
-            .select('*', { count: 'exact', head: true })
-            .gt('created_at', lastRead)
-            .neq('user_id', userId);
-        if (error) throw error;
-        return count || 0;
-    } catch (e) {
-        console.error('获取未读聊天数失败:', e);
-        return 0;
-    }
-}
+    <div id="toast"></div>
 
-// ============================================================
-// 更新底部聊天红点
-// ============================================================
-async function updateChatBadge(activeTab) {
-    const user = getSessionUser();
-    if (!user || !user.id || !window.sb) return;
+    <script src="/liuyanban/common.js"></script>
+    <script>
+        renderHeader('发帖', 'posts');
 
-    if (!activeTab) {
-        activeTab = document.querySelector('.tab-btn.active')?.getAttribute('href')?.replace('.html', '') || 'chats';
-    }
+        // 强制初始化 Supabase 客户端
+        var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+        var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
+        window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let unreadChatCount = 0;
-    try {
-        unreadChatCount = await getUnreadChatCount(user.id);
-    } catch (e) {
-        console.error('更新红点失败:', e);
-        return;
-    }
-
-    const footerContainer = document.getElementById('footer-container');
-    if (!footerContainer) return;
-    const chatTab = footerContainer.querySelector('a[href="chats.html"]');
-    if (!chatTab) return;
-
-    if (unreadChatCount > 0) {
-        const oldBadge = chatTab.querySelector('.badge');
-        if (oldBadge) oldBadge.remove();
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.style.cssText = 'position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:0.5em;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;transform:translateY(-2px);';
-        badge.textContent = unreadChatCount > 9 ? '9+' : unreadChatCount;
-        chatTab.appendChild(badge);
-    } else {
-        const oldBadge = chatTab.querySelector('.badge');
-        if (oldBadge) oldBadge.remove();
-    }
-}
-
-// ============================================================
-// 渲染底部导航（先显示基础，再异步更新红点）
-// ============================================================
-function renderFooter(activeTab) {
-    renderFooterBase(activeTab);
-    if (getSessionUser() && window.sb) {
-        updateChatBadge(activeTab);
-    }
-}
-
-// ============================================================
-// 更新最后查看聊天的时间
-// ============================================================
-async function updateLastChatRead(userId) {
-    if (!userId || !window.sb) return;
-    try {
-        await window.sb
-            .from('users')
-            .update({ last_chat_read_at: new Date().toISOString() })
-            .eq('id', userId);
-    } catch (e) {
-        console.error('更新最后查看时间失败:', e);
-    }
-}
-
-// ============================================================
-// 提醒音效播放（使用 Web Audio API，短促提示音）
-// ============================================================
-function playReminderSound() {
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.08);
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.28);
-        setTimeout(() => ctx.close(), 400);
-    } catch (e) {
-        console.log('音效播放失败:', e);
-    }
-}
-
-function getSoundEnabled() {
-    return localStorage.getItem('sq_sound_enabled') !== 'false';
-}
-
-// ============================================================
-// 顶部消息提醒横幅
-// ============================================================
-let chatNotificationBanner = null;
-
-function showChatNotificationBanner() {
-    if (chatNotificationBanner) {
-        chatNotificationBanner.remove();
-        clearTimeout(chatNotificationBanner._timeout);
-        chatNotificationBanner = null;
-    }
-
-    const banner = document.createElement('div');
-    banner.style.cssText = `
-        position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #2e7d32;
-        color: white;
-        padding: 12px 28px;
-        border-radius: 50px;
-        z-index: 99999;
-        cursor: pointer;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        animation: slideDown 0.3s ease;
-        font-family: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-        font-weight: 600;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        white-space: nowrap;
-    `;
-    banner.textContent = '🔔 收到一条新消息';
-    banner.addEventListener('click', () => {
-        window.location.href = 'chats.html';
-        banner.remove();
-        clearTimeout(banner._timeout);
-        chatNotificationBanner = null;
-    });
-
-    document.body.appendChild(banner);
-    chatNotificationBanner = banner;
-
-    banner._timeout = setTimeout(() => {
-        banner.remove();
-        if (chatNotificationBanner === banner) chatNotificationBanner = null;
-    }, 3000);
-}
-
-// 添加横幅动画样式（仅一次）
-(function injectBannerStyles() {
-    if (document.getElementById('banner-animation-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'banner-animation-styles';
-    style.textContent = `
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
         }
-    `;
-    document.head.appendChild(style);
-})();
 
-// ============================================================
-// 全局聊天实时监听（支持用户变化重新订阅）
-// ============================================================
-let globalChatChannel = null;
-let globalChatListenerInitialized = false;
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
+            });
+        }
 
-async function initializeGlobalChatListener() {
-    const user = getSessionUser();
-    if (!user || !user.id) return;
+        var currentUser = getSessionUser();
+        if (!currentUser || !currentUser.id) {
+            window.location.href = '/liuyanban/index.html';
+        }
+        var isAdmin = (currentUser.phone === '17355394710');
 
-    if (globalChatChannel) {
-        await window.sb.removeChannel(globalChatChannel);
-        globalChatChannel = null;
-        globalChatListenerInitialized = false;
-    }
+        var categories = [];
+        var pollOptions = [];
+        var savedRange = null; // 保存选区
 
-    if (globalChatListenerInitialized) return;
+        async function loadCategories() {
+            try {
+                const { data, error } = await window.sb
+                    .from('categories')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+                if (error) throw error;
+                categories = data || [];
+                const select = document.getElementById('postCategorySelect');
+                const available = categories.filter(c => c.name !== '未分类' && (isAdmin || c.is_public !== false));
+                select.innerHTML = available.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            } catch (err) {
+                showToast('分类加载失败：' + err.message);
+            }
+        }
 
-    globalChatChannel = window.sb.channel('global-chats-listener-' + user.id)
-        .on('postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'chats' }, 
-            (payload) => {
-                const newMsg = payload.new;
-                if (!newMsg) return;
-                if (newMsg.user_id === user.id) return;
+        function execCommand(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('richEditor').focus();
+        }
 
-                updateChatBadge();
+        // ============================================================
+        // 图片上传功能
+        // ============================================================
+        async function uploadImage(file) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `posts/${Date.now()}.${fileExt}`;
+            const { data, error } = await window.sb.storage.from('posts').upload(fileName, file);
+            if (error) throw error;
+            const { data: urlData } = window.sb.storage.from('posts').getPublicUrl(fileName);
+            return urlData.publicUrl;
+        }
 
-                if (getSoundEnabled()) {
-                    playReminderSound();
+        function insertImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    showToast('⏳ 正在上传图片...');
+                    const url = await uploadImage(file);
+                    document.execCommand('insertImage', false, url);
+                } catch (err) {
+                    showToast('图片上传失败：' + err.message);
+                }
+            };
+            input.click();
+        }
+
+        // ============================================================
+        // 超链接功能（修复版）
+        // ============================================================
+        function showLinkModal() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                savedRange = selection.getRangeAt(0).cloneRange();
+            } else {
+                savedRange = null;
+            }
+            document.getElementById('linkUrlInput').value = '';
+            document.getElementById('linkTextInput').value = '';
+            document.getElementById('linkModalOverlay').classList.add('active');
+            document.getElementById('linkUrlInput').focus();
+        }
+
+        function closeLinkModal() {
+            document.getElementById('linkModalOverlay').classList.remove('active');
+        }
+
+        function confirmInsertLink() {
+            const url = document.getElementById('linkUrlInput').value.trim();
+            const text = document.getElementById('linkTextInput').value.trim();
+
+            if (!url) {
+                showToast('❌ 请输入链接地址');
+                return;
+            }
+            if (!/^https:\/\/[\w\-]+(\.[\w\-]+)+([\/\w\-.,@?^=%&:~+#]*)*$/.test(url)) {
+                showToast('❌ 链接必须以 https:// 开头且格式正确');
+                return;
+            }
+
+            closeLinkModal();
+            const editor = document.getElementById('richEditor');
+            editor.focus();
+
+            if (savedRange) {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+                const selectedText = selection.toString();
+                if (selectedText) {
+                    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(selectedText)}</a>`);
+                } else {
+                    const displayText = text || url;
+                    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
+                }
+            } else {
+                const displayText = text || url;
+                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
+            }
+            savedRange = null;
+            editor.focus();
+        }
+
+        document.getElementById('linkModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeLinkModal();
+        });
+
+        function addChapter() {
+            const borderColor = prompt('请输入章节边框颜色（例如 #2e7d32）：') || '#2e7d32';
+            const textColor = prompt('请输入章节文字颜色（例如 #1e3a2e）：') || '#1e3a2e';
+            const html = `<div class="chapter-block" style="border-color:${borderColor};color:${textColor}">章节内容</div>`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('editorContainer');
+            container.classList.toggle('fullscreen-mode');
+            if (container.classList.contains('fullscreen-mode')) {
+                document.getElementById('richEditor').focus();
+            }
+        }
+
+        function addPoll() {
+            pollOptions = ['', ''];
+            renderPollBuilder();
+        }
+
+        function addPollOption() {
+            if (pollOptions.length >= 10) { showToast('最多10个选项'); return; }
+            pollOptions.push('');
+            renderPollBuilder();
+        }
+
+        function removePollOption(index) {
+            pollOptions.splice(index, 1);
+            renderPollBuilder();
+        }
+
+        function renderPollBuilder() {
+            const container = document.getElementById('pollBuilderContainer');
+            if (!container) return;
+            let html = '<div class="poll-builder"><label>📊 投票</label>';
+            html += '<input type="text" id="pollTitle" placeholder="投票标题（必填）" />';
+            html += '<input type="text" id="pollDescription" placeholder="投票简介（选填）" />';
+            pollOptions.forEach((opt, index) => {
+                html += `<div class="poll-option-row"><input type="text" value="${escapeHtml(opt)}" placeholder="选项 ${index+1}" oninput="pollOptions[${index}]=this.value" /><button type="button" onclick="removePollOption(${index})">✕</button></div>`;
+            });
+            html += '<button type="button" class="add-option-btn" onclick="addPollOption()">+ 添加选项</button>';
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        document.getElementById('submitPostBtn').addEventListener('click', async function() {
+            const title = document.getElementById('postTitleInput').value.trim();
+            const category_id = parseInt(document.getElementById('postCategorySelect').value);
+            const content = document.getElementById('richEditor').innerHTML.trim();
+            if (!content || content === '<br>') { showToast('请输入正文内容'); return; }
+            if (currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
+                showToast('账号已被封禁，无法发布');
+                return;
+            }
+
+            let pollData = null;
+            const pollTitle = document.getElementById('pollTitle')?.value.trim();
+            if (pollTitle) {
+                const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+                if (validOptions.length < 2) { showToast('投票至少需要2个有效选项'); return; }
+                pollData = {
+                    title: pollTitle,
+                    description: document.getElementById('pollDescription')?.value.trim() || '',
+                    options: validOptions
+                };
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '发布中...';
+
+            try {
+                const isOfficial = isAdmin || currentUser.phone === '17355394710';
+                const { data: postData, error: postError } = await window.sb
+                    .from('posts')
+                    .insert([{
+                        title: title,
+                        content: content,
+                        category_id: category_id,
+                        author: currentUser.nickname,
+                        user_id: currentUser.id,
+                        is_official: isOfficial,
+                        is_pinned: false
+                    }])
+                    .select();
+                if (postError) throw postError;
+
+                if (pollData && postData && postData.length > 0) {
+                    const postId = postData[0].id;
+                    await window.sb.from('post_polls').insert([{
+                        post_id: postId,
+                        title: pollData.title,
+                        description: pollData.description
+                    }]);
+                    for (const opt of pollData.options) {
+                        await window.sb.from('poll_options').insert([{
+                            post_id: postId,
+                            option_text: opt
+                        }]);
+                    }
                 }
 
-                const isChatPage = window.location.href.includes('chats.html');
-                if (!isChatPage) {
-                    showChatNotificationBanner();
-                }
+                showToast('✅ 帖子发布成功！');
+                setTimeout(() => {
+                    window.location.href = '/liuyanban/posts.html';
+                }, 1000);
+            } catch (err) {
+                showToast('发布失败：' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '发布';
             }
-        )
-        .on('postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'chats' },
-            (payload) => {
-                updateChatBadge();
-            }
-        )
-        .subscribe();
+        });
 
-    globalChatListenerInitialized = true;
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeGlobalChatListener);
-} else {
-    initializeGlobalChatListener();
-}
-
-window.addEventListener('storage', function(e) {
-    if (e.key === 'sq_user_session') {
-        initializeGlobalChatListener();
-    }
-});
+        loadCategories();
+    </script>
+</body>
+</html>
