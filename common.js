@@ -50,10 +50,10 @@ function getUserAvatar(user) {
     const name = user ? user.nickname : 'U';
     const color = '#2e7d32';
     const initial = name.charAt(0).toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-        <rect width="100" height="100" fill="${color}" rx="50"/>
-        <text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text>
-    </svg>`;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+        '<rect width="100" height="100" fill="' + color + '" rx="50"/>' +
+        '<text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">' + initial + '</text>' +
+        '</svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
@@ -70,34 +70,29 @@ function renderHeader(title, activeTab) {
         const avatar = user.avatar_url || getUserAvatar(user);
         const displayName = user.nickname || '用户';
 
-        // ✅ 先计算 avatar 的样式和内容
         let avatarStyle = '';
         let avatarContent = '';
         if (avatar && avatar.startsWith('http')) {
-            avatarStyle = `background-image:url(${avatar});background-size:cover;background-position:center;`;
+            avatarStyle = 'background-image:url(' + avatar + ');background-size:cover;background-position:center;';
         } else {
             avatarContent = displayName.charAt(0).toUpperCase();
         }
 
-        userAreaHtml = `
-            <div class="user-area" onclick="window.location.href='profile.html'">
-                <div class="avatar" style="${avatarStyle}">${avatarContent}</div>
-                <span class="user-name">${escapeHtml(displayName)}</span>
-                <span class="chevron">▾</span>
-            </div>
-        `;
+        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'profile.html\'">' +
+            '<div class="avatar" style="' + avatarStyle + '">' + avatarContent + '</div>' +
+            '<span class="user-name">' + escapeHtml(displayName) + '</span>' +
+            '<span class="chevron">▾</span>' +
+            '</div>';
     } else {
-        userAreaHtml = `<div class="user-area" onclick="window.location.href='index.html'">登录</div>`;
+        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'index.html\'">登录</div>';
     }
 
-    headerContainer.innerHTML = `
-        <div class="app-header">
-            <div class="brand" onclick="window.location.href='posts.html'">
-                Seven<span>戚</span><small>· ${escapeHtml(title)}</small>
-            </div>
-            ${userAreaHtml}
-        </div>
-    `;
+    headerContainer.innerHTML = '<div class="app-header">' +
+        '<div class="brand" onclick="window.location.href=\'posts.html\'">' +
+        'Seven<span>戚</span><small>· ' + escapeHtml(title) + '</small>' +
+        '</div>' +
+        userAreaHtml +
+        '</div>';
 }
 
 // ============================================================
@@ -111,17 +106,17 @@ function renderFooterBase(activeTab) {
         { id: 'profile', label: '👤 个人', href: '/liuyanban/profile.html' }
     ];
 
-    let footerHtml = `<div class="app-tabs">`;
-    tabs.forEach(tab => {
-        const activeClass = (tab.id === activeTab) ? 'active' : '';
-        footerHtml += `<a href="${tab.href}" class="tab-btn ${activeClass}" style="position:relative;">
-            <span class="tab-icon">${tab.label.split(' ')[0]}</span>
-            ${tab.label.split(' ').slice(1).join(' ')}
-        </a>`;
+    let footerHtml = '<div class="app-tabs">';
+    tabs.forEach(function(tab) {
+        var activeClass = (tab.id === activeTab) ? 'active' : '';
+        footerHtml += '<a href="' + tab.href + '" class="tab-btn ' + activeClass + '" style="position:relative;">' +
+            '<span class="tab-icon">' + tab.label.split(' ')[0] + '</span>' +
+            tab.label.split(' ').slice(1).join(' ') +
+            '</a>';
     });
-    footerHtml += `</div>`;
+    footerHtml += '</div>';
 
-    const footerContainer = document.getElementById('footer-container');
+    var footerContainer = document.getElementById('footer-container');
     if (footerContainer) {
         footerContainer.innerHTML = footerHtml;
     }
@@ -163,7 +158,9 @@ async function updateChatBadge(activeTab) {
     if (!user || !user.id || !window.sb) return;
 
     if (!activeTab) {
-        activeTab = document.querySelector('.tab-btn.active')?.getAttribute('href')?.replace('.html', '') || 'chats';
+        var activeEl = document.querySelector('.tab-btn.active');
+        if (activeEl) activeTab = activeEl.getAttribute('href')?.replace('.html', '') || 'chats';
+        else activeTab = 'chats';
     }
 
     let unreadChatCount = 0;
@@ -174,22 +171,20 @@ async function updateChatBadge(activeTab) {
         return;
     }
 
-    const footerContainer = document.getElementById('footer-container');
+    var footerContainer = document.getElementById('footer-container');
     if (!footerContainer) return;
-    const chatTab = footerContainer.querySelector('a[href="chats.html"]');
+    var chatTab = footerContainer.querySelector('a[href="chats.html"]');
     if (!chatTab) return;
 
+    var oldBadge = chatTab.querySelector('.badge');
+    if (oldBadge) oldBadge.remove();
+
     if (unreadChatCount > 0) {
-        const oldBadge = chatTab.querySelector('.badge');
-        if (oldBadge) oldBadge.remove();
-        const badge = document.createElement('span');
+        var badge = document.createElement('span');
         badge.className = 'badge';
         badge.style.cssText = 'position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:0.5em;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;transform:translateY(-2px);';
         badge.textContent = unreadChatCount > 9 ? '9+' : unreadChatCount;
         chatTab.appendChild(badge);
-    } else {
-        const oldBadge = chatTab.querySelector('.badge');
-        if (oldBadge) oldBadge.remove();
     }
 }
 
@@ -223,11 +218,11 @@ async function updateLastChatRead(userId) {
 // ============================================================
 function playReminderSound() {
     try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+        var ctx = new AudioCtx();
+        var oscillator = ctx.createOscillator();
+        var gainNode = ctx.createGain();
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
         oscillator.type = 'sine';
@@ -237,7 +232,7 @@ function playReminderSound() {
         gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.28);
-        setTimeout(() => ctx.close(), 400);
+        setTimeout(function() { ctx.close(); }, 400);
     } catch (e) {
         console.log('音效播放失败:', e);
     }
@@ -250,7 +245,7 @@ function getSoundEnabled() {
 // ============================================================
 // 顶部消息提醒横幅
 // ============================================================
-let chatNotificationBanner = null;
+var chatNotificationBanner = null;
 
 function showChatNotificationBanner() {
     if (chatNotificationBanner) {
@@ -259,30 +254,10 @@ function showChatNotificationBanner() {
         chatNotificationBanner = null;
     }
 
-    const banner = document.createElement('div');
-    banner.style.cssText = `
-        position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #2e7d32;
-        color: white;
-        padding: 12px 28px;
-        border-radius: 50px;
-        z-index: 99999;
-        cursor: pointer;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        animation: slideDown 0.3s ease;
-        font-family: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-        font-weight: 600;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        white-space: nowrap;
-    `;
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position: fixed;top: 80px;left: 50%;transform: translateX(-50%);background: #2e7d32;color: white;padding: 12px 28px;border-radius: 50px;z-index: 99999;cursor: pointer;box-shadow: 0 8px 24px rgba(0,0,0,0.3);animation: slideDown 0.3s ease;font-family: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;font-weight: 600;font-size: 0.9em;display: flex;align-items: center;gap: 8px;white-space: nowrap;';
     banner.textContent = '🔔 收到一条新消息';
-    banner.addEventListener('click', () => {
+    banner.addEventListener('click', function() {
         window.location.href = 'chats.html';
         banner.remove();
         clearTimeout(banner._timeout);
@@ -292,34 +267,28 @@ function showChatNotificationBanner() {
     document.body.appendChild(banner);
     chatNotificationBanner = banner;
 
-    banner._timeout = setTimeout(() => {
+    banner._timeout = setTimeout(function() {
         banner.remove();
         if (chatNotificationBanner === banner) chatNotificationBanner = null;
     }, 3000);
 }
 
-// 添加横幅动画样式（仅一次）
 (function injectBannerStyles() {
     if (document.getElementById('banner-animation-styles')) return;
-    const style = document.createElement('style');
+    var style = document.createElement('style');
     style.id = 'banner-animation-styles';
-    style.textContent = `
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-    `;
+    style.textContent = '@keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }';
     document.head.appendChild(style);
 })();
 
 // ============================================================
-// 全局聊天实时监听（支持用户变化重新订阅）
+// 全局聊天实时监听
 // ============================================================
-let globalChatChannel = null;
-let globalChatListenerInitialized = false;
+var globalChatChannel = null;
+var globalChatListenerInitialized = false;
 
 async function initializeGlobalChatListener() {
-    const user = getSessionUser();
+    var user = getSessionUser();
     if (!user || !user.id) return;
 
     if (globalChatChannel) {
@@ -331,31 +300,18 @@ async function initializeGlobalChatListener() {
     if (globalChatListenerInitialized) return;
 
     globalChatChannel = window.sb.channel('global-chats-listener-' + user.id)
-        .on('postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'chats' }, 
-            (payload) => {
-                const newMsg = payload.new;
-                if (!newMsg) return;
-                if (newMsg.user_id === user.id) return;
-
-                updateChatBadge();
-
-                if (getSoundEnabled()) {
-                    playReminderSound();
-                }
-
-                const isChatPage = window.location.href.includes('chats.html');
-                if (!isChatPage) {
-                    showChatNotificationBanner();
-                }
-            }
-        )
-        .on('postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'chats' },
-            (payload) => {
-                updateChatBadge();
-            }
-        )
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, function(payload) {
+            var newMsg = payload.new;
+            if (!newMsg) return;
+            if (newMsg.user_id === user.id) return;
+            updateChatBadge();
+            if (getSoundEnabled()) playReminderSound();
+            var isChatPage = window.location.href.includes('chats.html');
+            if (!isChatPage) showChatNotificationBanner();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, function() {
+            updateChatBadge();
+        })
         .subscribe();
 
     globalChatListenerInitialized = true;
