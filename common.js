@@ -58,7 +58,7 @@ function getUserAvatar(user) {
 }
 
 // ============================================================
-// 渲染头部（同步）
+// 渲染头部（✅ 修复版：无嵌套模板字符串）
 // ============================================================
 function renderHeader(title, activeTab) {
     const user = getSessionUser();
@@ -69,9 +69,19 @@ function renderHeader(title, activeTab) {
     if (user && user.id) {
         const avatar = user.avatar_url || getUserAvatar(user);
         const displayName = user.nickname || '用户';
+
+        // ✅ 先计算 avatar 的样式和内容
+        let avatarStyle = '';
+        let avatarContent = '';
+        if (avatar && avatar.startsWith('http')) {
+            avatarStyle = `background-image:url(${avatar});background-size:cover;background-position:center;`;
+        } else {
+            avatarContent = displayName.charAt(0).toUpperCase();
+        }
+
         userAreaHtml = `
             <div class="user-area" onclick="window.location.href='profile.html'">
-                <div class="avatar" style="${avatar && avatar.startsWith('http') ? `background-image:url(${avatar});background-size:cover;background-position:center;` : ''}">${avatar && !avatar.startsWith('http') ? displayName.charAt(0).toUpperCase() : ''}</div>
+                <div class="avatar" style="${avatarStyle}">${avatarContent}</div>
                 <span class="user-name">${escapeHtml(displayName)}</span>
                 <span class="chevron">▾</span>
             </div>
@@ -233,7 +243,6 @@ function playReminderSound() {
     }
 }
 
-// 获取音效开关状态
 function getSoundEnabled() {
     return localStorage.getItem('sq_sound_enabled') !== 'false';
 }
@@ -244,7 +253,6 @@ function getSoundEnabled() {
 let chatNotificationBanner = null;
 
 function showChatNotificationBanner() {
-    // 移除已有横幅
     if (chatNotificationBanner) {
         chatNotificationBanner.remove();
         clearTimeout(chatNotificationBanner._timeout);
@@ -284,7 +292,6 @@ function showChatNotificationBanner() {
     document.body.appendChild(banner);
     chatNotificationBanner = banner;
 
-    // 3秒后自动关闭
     banner._timeout = setTimeout(() => {
         banner.remove();
         if (chatNotificationBanner === banner) chatNotificationBanner = null;
@@ -313,9 +320,8 @@ let globalChatListenerInitialized = false;
 
 async function initializeGlobalChatListener() {
     const user = getSessionUser();
-    if (!user || !user.id) return; // 未登录不监听
+    if (!user || !user.id) return;
 
-    // 如果已经存在订阅，先移除旧订阅
     if (globalChatChannel) {
         await window.sb.removeChannel(globalChatChannel);
         globalChatChannel = null;
@@ -330,19 +336,14 @@ async function initializeGlobalChatListener() {
             (payload) => {
                 const newMsg = payload.new;
                 if (!newMsg) return;
-
-                // 忽略自己发送的消息
                 if (newMsg.user_id === user.id) return;
 
-                // 立即更新红点
                 updateChatBadge();
 
-                // 播放音效（如果开启）
                 if (getSoundEnabled()) {
                     playReminderSound();
                 }
 
-                // 判断当前是否在聊天页面
                 const isChatPage = window.location.href.includes('chats.html');
                 if (!isChatPage) {
                     showChatNotificationBanner();
@@ -352,7 +353,6 @@ async function initializeGlobalChatListener() {
         .on('postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'chats' },
             (payload) => {
-                // 更新红点（例如撤回消息后未读数可能变化）
                 updateChatBadge();
             }
         )
@@ -361,14 +361,12 @@ async function initializeGlobalChatListener() {
     globalChatListenerInitialized = true;
 }
 
-// 在页面加载时初始化监听
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeGlobalChatListener);
 } else {
     initializeGlobalChatListener();
 }
 
-// 监听用户切换（例如一键登录或退出登录后重新订阅）
 window.addEventListener('storage', function(e) {
     if (e.key === 'sq_user_session') {
         initializeGlobalChatListener();
