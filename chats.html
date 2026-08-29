@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Seven戚 · 帖子广场</title>
+    <title>Seven戚 · 聊天群</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
@@ -23,34 +23,30 @@
             --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
             --danger: #e57373;
-            --danger-bg: #ffebee;
             --official-blue: #2b6cff;
         }
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
         .app-header {
-            flex-shrink: 0; padding: 12px 20px 8px 20px;
-            background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border);
+            flex-shrink: 0; padding: 12px 20px;
+            background: rgba(255,255,255,0.92);
+            border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            z-index: 50; min-height: 56px;
+            min-height: 56px; z-index: 50;
         }
         .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; cursor: default; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.3em; }
         .app-header .user-area { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; }
         .app-header .user-area:hover { background: var(--primary-bg); }
-        .app-header .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: var(--primary); color: #fff;
-            display: grid; place-items: center; font-weight: 700; font-size: 14px;
-            background-size: cover; background-position: center;
-        }
+        .app-header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
         .app-header .user-name { font-weight: 600; font-size: 0.85em; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; }
 
         .app-tabs {
             flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96);
-            border-top: 1px solid var(--border); padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+            border-top: 1px solid var(--border); padding: 6px 0 calc(6px + env(safe-area-inset-bottom,0px));
             z-index: 50;
         }
         .tab-btn {
@@ -69,150 +65,88 @@
         }
         .banned-banner.active { display: block; }
 
-        .app-content { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
-        .posts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
-        .posts-header .left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 100%; }
-        .category-btn {
-            padding: 4px 14px; border-radius: 99px; border: 1.5px solid var(--border);
-            background: transparent; color: var(--text-muted); font-size: 0.7em; font-weight: 600;
-            cursor: pointer; white-space: nowrap;
+        .app-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px 20px 8px 20px;
+            display: flex; flex-direction: column; gap: 4px;
+            -webkit-overflow-scrolling: touch;
         }
-        .category-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .new-post-btn {
-            padding: 6px 18px; border-radius: 99px; border: none; background: var(--primary); color: #fff;
-            font-weight: 700; font-size: 0.75em; cursor: pointer; text-decoration: none;
-            display: inline-flex; align-items: center; justify-content: center;
-        }
-        .new-post-btn:hover { background: var(--primary-light); }
+        .time-divider { text-align: center; font-size: 0.7em; color: var(--text-light); padding: 6px 0; position: relative; }
+        .time-divider span { background: var(--bg); padding: 0 12px; }
+        .time-divider::before { content: ''; position: absolute; left: 10%; right: 10%; top: 50%; height: 1px; background: var(--border); z-index: 0; }
+        .time-divider span { position: relative; z-index: 1; }
 
-        .post-card {
-            background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px 16px;
-            margin-bottom: 12px; border: 1px solid var(--border); cursor: pointer; transition: box-shadow 0.2s;
+        .chat-msg {
+            max-width: 85%; padding: 8px 12px; border-radius: var(--radius-sm);
+            background: var(--bg-card); border: 1px solid var(--border);
+            align-self: flex-start; flex-shrink: 0; position: relative;
         }
-        .post-card:hover { box-shadow: var(--shadow); }
-        .post-card .post-author { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; flex-wrap: wrap; }
-        .post-card .post-author .avatar {
-            width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-            font-weight: 700; font-size: 14px; color: #fff; background: var(--primary);
+        .chat-msg.self { align-self: flex-end; background: var(--primary-bg); border-color: var(--primary); }
+        .chat-msg.deleted { opacity: 0.6; background: #f0f0f0; border-color: #ccc; }
+        .chat-msg.deleted .chat-text { color: var(--text-muted); font-style: italic; }
+        .chat-msg.deleted .deleted-by { color: var(--official-blue); font-weight: 600; }
+        .chat-msg .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .chat-msg .msg-header .avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--primary); color: #fff; display: grid; place-items: center;
+            font-weight: 700; font-size: 12px; flex-shrink: 0;
             background-size: cover; background-position: center;
         }
-        .post-card .post-author .name { font-weight: 600; font-size: 0.9em; }
-        .post-card .post-author .official-tag { background: #2b6cff; color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; }
-        .post-card .post-author .role-tag { color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; background: var(--primary); }
-        .post-card .post-author .time { font-size: 0.7em; color: var(--text-muted); margin-left: auto; }
-        .post-card .post-title { font-weight: 700; font-size: 1em; margin: 4px 0 2px 0; }
-        .post-card .post-content { font-size: 0.85em; color: var(--text); line-height: 1.6; margin-bottom: 6px; }
-        .post-card .post-footer {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 8px; font-size: 0.65em; color: var(--text-light);
-            border-top: 1px solid var(--border); padding-top: 8px;
-        }
-        .post-card .post-footer .actions { display: flex; gap: 12px; }
-        .post-card .post-footer .actions span { cursor: pointer; }
+        .chat-msg .msg-header .name { font-weight: 600; font-size: 0.85em; }
+        .chat-msg .msg-header .official-badge { font-size: 0.5em; background: var(--primary); color: #fff; padding: 0 6px; border-radius: 99px; line-height: 16px; }
+        .chat-msg .chat-text { font-size: 0.85em; line-height: 1.5; word-break: break-word; }
 
+        .fixed-input-area {
+            flex-shrink: 0; padding: 10px 20px calc(10px + env(safe-area-inset-bottom,0px));
+            background: var(--bg); border-top: 1px solid var(--border);
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        }
+        .fixed-input-area .input-wrapper { flex: 1; display: flex; gap: 8px; min-width: 0; }
+        .fixed-input-area input {
+            flex: 1; padding: 10px 14px; border-radius: 99px;
+            border: 2px solid var(--border); background: var(--bg-input);
+            font-family: inherit; font-size: 0.85em; outline: none; min-width: 0;
+        }
+        .fixed-input-area input:focus { border-color: var(--primary); }
+        .fixed-input-area input:disabled { opacity: 0.5; }
+        .fixed-input-area button {
+            padding: 8px 20px; border-radius: 99px; border: none;
+            background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em;
+            cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px;
+        }
+        .fixed-input-area button:hover { background: var(--primary-light); }
+        .fixed-input-area button:disabled { opacity: 0.5; pointer-events: none; }
+        .fixed-input-area .admin-clear-btn {
+            background: var(--danger); color: #fff; padding: 6px 12px;
+            border-radius: 99px; border: none; font-size: 0.7em; cursor: pointer; display: none;
+        }
+
+        .icon-svg { width: 1.2em; height: 1.2em; fill: currentColor; flex-shrink: 0; }
+        .btn-text { margin-left: 2px; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.85em; }
         .empty-state .big { font-size: 2.8em; margin-bottom: 8px; opacity: 0.5; }
         .loading-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.9em; }
-        .loading-state .spinner {
-            display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border);
-            border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
-        }
+        .loading-state .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 10px 24px; border-radius: 99px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
 
-        #toast {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px);
-            background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em;
-            font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease;
-            z-index: 9999; pointer-events: none; white-space: nowrap;
-        }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        .detail-overlay {
-            position: fixed; inset: 0; z-index: 999; background: var(--bg-card);
-            display: none; flex-direction: column;
-        }
-        .detail-overlay.active { display: flex; }
-        .detail-panel { display: flex; flex-direction: column; height: 100%; width: 100%; background: var(--bg); }
-        .detail-header {
-            display: flex; align-items: center; padding: 12px 16px;
-            background: var(--bg-card); border-bottom: 1px solid var(--border);
-        }
-        .detail-header .back-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text); }
-        .detail-header .detail-title { flex: 1; text-align: center; font-weight: 600; font-size: 1em; }
-        .detail-content { flex: 1; overflow-y: auto; padding: 16px 20px; }
-        .detail-post { margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-        .detail-post .post-author { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
-        .detail-post .post-author .avatar {
-            width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-            font-weight: 700; font-size: 14px; color: #fff; background: var(--primary);
-            background-size: cover; background-position: center;
-        }
-        .detail-post .post-author .name { font-weight: 600; font-size: 0.9em; }
-        .detail-post .post-author .official-tag { background: #2b6cff; color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; }
-        .detail-post .post-author .role-tag { color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; background: var(--primary); }
-        .detail-post .post-author .time { font-size: 0.7em; color: var(--text-muted); margin-left: auto; }
-        .detail-post .post-title { font-weight: 700; font-size: 1.1em; margin: 4px 0 2px 0; }
-        .detail-post .post-content { font-size: 0.95em; color: var(--text); line-height: 1.6; }
-        .detail-comments { flex: 1; margin-top: 8px; }
-        .detail-comments .comment-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .detail-comments .comment-item .avatar {
-            width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-            font-weight: 700; font-size: 12px; color: #fff; background: var(--primary);
-            background-size: cover; background-position: center;
-        }
-        .detail-comments .comment-item .body { flex: 1; }
-        .detail-comments .comment-item .meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .detail-comments .comment-item .meta .name { font-weight: 600; font-size: 0.85em; }
-        .detail-comments .comment-item .meta .official-tag { background: #2b6cff; color: #fff; font-size: 0.5em; padding: 0 4px; border-radius: 99px; }
-        .detail-comments .comment-item .meta .time { font-size: 0.65em; color: var(--text-muted); }
-        .detail-comments .comment-item .txt { font-size: 0.85em; line-height: 1.5; margin-top: 2px; }
-        .detail-input-area {
-            display: flex; gap: 8px; border-top: 1px solid var(--border);
-            padding: 12px 16px; background: var(--bg-card);
-        }
-        .detail-input-area input {
-            flex: 1; padding: 8px 14px; border-radius: 99px; border: 2px solid var(--border);
-            background: var(--bg-input); font-family: inherit; font-size: 0.85em; outline: none;
-        }
-        .detail-input-area button {
-            padding: 8px 18px; border-radius: 99px; border: none; background: var(--primary);
-            color: #fff; font-weight: 700; font-size: 0.85em; cursor: pointer;
-        }
-
-        .custom-modal {
-            position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5);
-            display: none; align-items: center; justify-content: center; padding: 20px;
-        }
+        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 20px; }
         .custom-modal.active { display: flex; }
-        .custom-modal .modal-box {
-            background: var(--bg-card); border-radius: var(--radius); max-width: 420px;
-            width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
-        }
+        .custom-modal .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
         .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; }
-        .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+        .modal-body { font-size: 0.95em; color: var(--text-muted); margin-bottom: 16px; }
         .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
         .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
         .modal-actions .btn-danger { background: var(--danger); color: #fff; }
         .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
 
-        .poll-container {
-            margin: 16px 0; padding: 16px; background: #f8faf8;
-            border-radius: 12px; border: 1px solid var(--border);
-        }
-        .poll-option { margin-bottom: 12px; }
-        .poll-option-header { display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 4px; }
-        .poll-option-bar { display: flex; align-items: center; gap: 8px; }
-        .poll-option-progress { flex: 1; height: 20px; background: var(--primary-bg); border-radius: 10px; overflow: hidden; }
-        .poll-option-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s; }
-        .poll-option-vote-btn {
-            padding: 2px 8px; background: var(--primary); color: #fff;
-            border: none; border-radius: 4px; cursor: pointer; font-size: 0.7em;
-        }
-        .poll-option-vote-btn.voted { background: var(--text-muted); }
-
         @media (max-width: 480px) {
-            .app-header { padding: 10px 14px 6px 14px; }
-            .app-content { padding: 12px 14px; }
+            .app-header { padding: 10px 14px; }
+            .chat-messages { padding: 12px 14px 4px 14px; }
+            .fixed-input-area { padding: 8px 14px; flex-direction: column; }
+            .fixed-input-area .input-wrapper { width: 100%; }
+            .chat-msg { max-width: 90%; }
         }
     </style>
 </head>
@@ -220,58 +154,31 @@
     <div id="mainApp">
         <div id="header-container"></div>
         <div class="banned-banner" id="bannedBanner">
-            ⚠️ 账号已被封禁，无法发布新帖或评论。解封时间：<span id="bannedUntilDisplay"></span>
+            ⚠️ 账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span>
         </div>
-        <div class="app-content" id="postContent">
-            <div class="posts-header">
-                <div class="left" id="categoryFilter">
-                    <button class="category-btn active" data-cat="全部" onclick="setCategory('全部', this)">全部</button>
+        <div class="app-content">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="fixed-input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="chatInput" placeholder="说点什么…" maxlength="200" />
+                    <button id="sendChatBtn">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        <span class="btn-text">发送</span>
+                    </button>
                 </div>
-                <div style="display:flex; gap:6px;">
-                    <button class="new-post-btn" id="adminPanelBtn" style="display:none; background:var(--danger);" onclick="openAdminPanel()">管理</button>
-                    <a href="/liuyanban/new-post.html" class="new-post-btn" id="newPostBtn">发帖</a>
-                </div>
+                <button class="admin-clear-btn" id="clearChatBtn" onclick="clearAllChats()">🗑️ 清空聊天</button>
             </div>
-            <div id="postList"></div>
         </div>
         <div id="footer-container"></div>
-    </div>
-
-    <div class="detail-overlay" id="detailOverlay">
-        <div class="detail-panel">
-            <div class="detail-header">
-                <button class="back-btn" id="closeDetail">←</button>
-                <span class="detail-title">帖子详情</span>
-            </div>
-            <div class="detail-content" id="detailContent"></div>
-            <div class="detail-input-area">
-                <input type="text" id="detailCommentInput" placeholder="写评论…" maxlength="200" />
-                <button id="detailSendCommentBtn">发送</button>
-            </div>
-        </div>
     </div>
 
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
-            <div class="modal-body" id="confirmBody"></div>
+            <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="confirmCancel">取消</button>
                 <button class="btn-danger" id="confirmOk">确定</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="custom-modal" id="promptModal">
-        <div class="modal-box">
-            <div class="modal-title" id="promptTitle">输入</div>
-            <div class="modal-body">
-                <p id="promptMessage"></p>
-                <input type="text" id="promptInput" />
-            </div>
-            <div class="modal-actions">
-                <button class="btn-secondary" id="promptCancel">取消</button>
-                <button class="btn-primary" id="promptOk">确定</button>
             </div>
         </div>
     </div>
@@ -280,8 +187,8 @@
 
     <script src="/liuyanban/common.js"></script>
     <script>
-        renderHeader('帖子广场', 'posts');
-        renderFooter('posts');
+        renderHeader('聊天群', 'chats');
+        renderFooter('chats');
 
         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
         var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
@@ -306,283 +213,366 @@
         if (!currentUser || !currentUser.id) window.location.href = 'index.html';
         var isAdmin = (currentUser.phone === '17355394710');
 
-        var categories = [];
-        var posts = [];
-        var currentCategory = '全部';
+        var isAuthorMode = false;
+        var AUTHOR_PASSWORD = "7592";
 
-        async function fetchCategories() {
-            const { data, error } = await window.sb.from('categories').select('*').order('sort_order');
-            if (error) throw error;
-            return data || [];
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        async function fetchPosts() {
-            const { data, error } = await window.sb
-                .from('posts')
-                .select('*, users!posts_user_id_fkey (id, nickname, avatar_url)')
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            return data || [];
+        var brandClickCount = 0;
+        var brandClickTimer = null;
+        document.getElementById('mainApp').addEventListener('click', async function(e) {
+            const brandArea = e.target.closest('.brand');
+            if (brandArea) {
+                brandClickCount++;
+                clearTimeout(brandClickTimer);
+                brandClickTimer = setTimeout(() => { brandClickCount = 0; }, 800);
+                if (brandClickCount === 3) {
+                    brandClickCount = 0;
+                    if (!isAuthorMode) {
+                        var pwd = prompt('请输入作者密码：');
+                        if (pwd === null) return;
+                        var hash = await sha256(pwd);
+                        var correctHash = await sha256(AUTHOR_PASSWORD);
+                        if (hash === correctHash) {
+                            isAuthorMode = true;
+                            showToast('👑 作者模式已激活');
+                        } else {
+                            showToast('❌ 密码错误');
+                        }
+                    } else {
+                        isAuthorMode = false;
+                        showToast('已退出作者模式');
+                    }
+                }
+            }
+        });
+
+        function updateBannedBanner() {
+            const banner = document.getElementById('bannedBanner');
+            const display = document.getElementById('bannedUntilDisplay');
+            if (currentUser && currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
+                banner.classList.add('active');
+                const until = new Date(currentUser.banned_until);
+                display.textContent = until.toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                document.getElementById('sendChatBtn').disabled = true;
+                document.getElementById('chatInput').disabled = true;
+                document.getElementById('chatInput').placeholder = '账号已被封禁，无法发送消息';
+            } else {
+                banner.classList.remove('active');
+                document.getElementById('sendChatBtn').disabled = false;
+                document.getElementById('chatInput').disabled = false;
+                document.getElementById('chatInput').placeholder = '说点什么…';
+            }
         }
 
-        async function fetchComments(postId) {
+        var chats = [];
+        var chatsLoading = false;
+        var usersCache = {};
+
+        async function fetchChats() {
             const { data, error } = await window.sb
-                .from('post_comments')
-                .select('*, users!post_comments_user_id_fkey (id, nickname, avatar_url)')
-                .eq('post_id', postId)
+                .from('chats')
+                .select('*, users(id, nickname, avatar_url)')
                 .order('created_at', { ascending: true });
             if (error) throw error;
+            data.forEach(item => {
+                if (item.users) {
+                    usersCache[item.users.id] = {
+                        nickname: item.users.nickname,
+                        avatar_url: item.users.avatar_url
+                    };
+                }
+            });
             return data || [];
         }
 
-        async function addComment(postId, author, user_id, content) {
+        async function addChat(userId, author, content, isOfficial) {
             const { data, error } = await window.sb
-                .from('post_comments')
-                .insert([{ post_id: postId, author, user_id, content }]);
+                .from('chats')
+                .insert([{ user_id: userId, author, content, is_official: isOfficial, is_deleted: false, deleted_by: null }]);
             if (error) throw error;
             return data;
         }
 
-        async function deletePost(id) {
-            const { error } = await window.sb.from('posts').delete().eq('id', id);
+        async function revokeChat(id, author, revoker, isSelf) {
+            let newContent;
+            if (isSelf) {
+                newContent = `${author} 撤回了一条消息`;
+            } else {
+                newContent = `${author} 的消息被 ${revoker} 撤回了`;
+            }
+            const { error } = await window.sb
+                .from('chats')
+                .update({ is_deleted: true, content: newContent, deleted_by: revoker })
+                .eq('id', id);
             if (error) throw error;
         }
 
-        async function loadCategories() {
-            try {
-                categories = await fetchCategories();
-                renderCategoryFilter();
-            } catch (err) {
-                showToast('分类加载失败');
-            }
-        }
-
-        function renderCategoryFilter() {
-            const container = document.getElementById('categoryFilter');
-            let html = `<button class="category-btn active" data-cat="全部" onclick="setCategory('全部', this)">全部</button>`;
-            categories.filter(c => c.name !== '未分类').forEach(c => {
-                html += `<button class="category-btn" data-cat="${c.id}" onclick="setCategory(${c.id}, this)">${escapeHtml(c.name)}</button>`;
+        async function clearAllChats() {
+            if (!isAdmin) { showToast('权限不足'); return; }
+            showConfirm('清空聊天', '确定要删除所有聊天消息吗？此操作不可恢复！', async () => {
+                try {
+                    const { error } = await window.sb.from('chats').delete().not('id', 'is', null);
+                    if (error) throw error;
+                    showToast('🗑️ 所有聊天消息已清空');
+                    await loadAllData();
+                } catch (err) {
+                    showToast('清空失败：' + err.message);
+                }
             });
-            container.innerHTML = html;
         }
 
-        function setCategory(cat, btn) {
-            document.querySelectorAll('#categoryFilter .category-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategory = cat;
-            renderPosts();
+        function formatTimeDivider(date) {
+            const now = new Date();
+            const d = new Date(date);
+            const isSameYear = d.getFullYear() === now.getFullYear();
+            const isSameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+            if (isSameDay) return d.toTimeString().slice(0,5);
+            else if (isSameYear) return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + d.toTimeString().slice(0,5);
+            else return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 ' + d.toTimeString().slice(0,5);
         }
 
-        async function renderPosts() {
-            const container = document.getElementById('postList');
-            container.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>正在加载帖子...</div></div>';
+        function shouldShowTimeDivider(prevTime, currentTime) {
+            if (!prevTime) return true;
+            const diff = (new Date(currentTime) - new Date(prevTime)) / (1000 * 60);
+            return diff > 30;
+        }
 
-            let filtered = posts;
-            if (currentCategory !== '全部') {
-                filtered = posts.filter(p => p.category_id === currentCategory);
+        function renderChat() {
+            const container = document.getElementById('chatMessages');
+            if (chatsLoading) {
+                container.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>正在加载聊天内容...</div></div>';
+                return;
             }
-
-            if (!filtered.length) {
-                container.innerHTML = '<div class="empty-state"><div class="big">📭</div>还没有帖子</div>';
+            if (!chats.length) {
+                container.innerHTML = '<div class="empty-state"><div class="big">💬</div>还没有聊天消息，来打个招呼吧！</div>';
                 return;
             }
 
             let html = '';
-            for (const p of filtered) {
-                const userInfo = p.users || null;
-                const displayName = userInfo ? userInfo.nickname : p.author;
-                const avatar = userInfo?.avatar_url || '';
-                const timeStr = new Date(p.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            let prevMsgTime = null;
+
+            chats.forEach(c => {
+                const isSelf = currentUser && c.user_id === currentUser.id;
+                const isOfficial = c.is_official || c.author === 'Seven戚';
+                const isDeleted = c.is_deleted === true;
+
+                let userInfo = usersCache[c.user_id] || null;
+                let displayName = userInfo ? userInfo.nickname : c.author;
+                let avatarUrl = userInfo ? userInfo.avatar_url : null;
+
+                const showDivider = shouldShowTimeDivider(prevMsgTime, c.created_at);
+                if (showDivider) {
+                    html += `<div class="time-divider"><span>${formatTimeDivider(c.created_at)}</span></div>`;
+                }
+                prevMsgTime = c.created_at;
+
+                const officialBadge = isOfficial ? '<span class="official-badge">官方</span>' : '';
+                const deletedClass = isDeleted ? 'deleted' : '';
+
+                let finalContent = '';
+                if (isDeleted) {
+                    const contentText = c.content || '';
+                    const match = contentText.match(/^(.*?) 的消息被 (.*?) 撤回了$/);
+                    if (match) {
+                        const revokedName = match[1];
+                        const revokerName = match[2];
+                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(revokedName)}</span> 的消息被 <span class="deleted-by">${escapeHtml(revokerName)}</span> 撤回了</span>`;
+                    } else if (contentText.includes('撤回了一条消息')) {
+                        const name = contentText.replace(' 撤回了一条消息', '');
+                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(name)}</span> 撤回了一条消息</span>`;
+                    } else {
+                        finalContent = `<span class="chat-text">${escapeHtml(contentText)}</span>`;
+                    }
+                } else {
+                    finalContent = `<span class="chat-text">${escapeHtml(c.content)}</span>`;
+                }
+
+                let avatarHtml;
+                if (avatarUrl) {
+                    avatarHtml = `<div class="avatar" style="background-image:url(${escapeHtml(avatarUrl)});background-size:cover;background-position:center;text-indent:-9999px;"> </div>`;
+                } else {
+                    const initial = displayName.charAt(0).toUpperCase();
+                    avatarHtml = `<div class="avatar">${initial}</div>`;
+                }
 
                 html += `
-                    <div class="post-card" onclick="openPostDetail('${p.id}')">
-                        <div class="post-author">
-                            <div class="avatar" style="${avatar ? `background-image:url(${avatar});background-size:cover;` : ''}">${!avatar ? displayName.charAt(0).toUpperCase() : ''}</div>
+                    <div class="chat-msg ${isSelf ? 'self' : ''} ${deletedClass}" data-id="${c.id}" data-author="${escapeHtml(c.author)}" data-self="${isSelf}">
+                        <div class="msg-header">
+                            ${avatarHtml}
                             <span class="name">${escapeHtml(displayName)}</span>
-                            ${p.is_official ? '<span class="official-tag">官方</span>' : ''}
-                            <span class="time">${timeStr}</span>
+                            ${officialBadge}
                         </div>
-                        ${p.title ? `<div class="post-title">${escapeHtml(p.title)}</div>` : ''}
-                        <div class="post-content">${p.content}</div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        async function loadPollData(postId) {
-            try {
-                const { data, error } = await window.sb
-                    .from('post_polls')
-                    .select('*, poll_options(*), poll_votes(option_id, user_id)')
-                    .eq('post_id', postId)
-                    .single();
-                if (error) return null;
-                return data;
-            } catch (err) { return null; }
-        }
-
-        async function votePoll(optionId) {
-            if (!currentUser) { showToast('请先登录'); return; }
-            try {
-                await window.sb.from('poll_votes').upsert(
-                    [{ option_id: optionId, user_id: currentUser.id }],
-                    { onConflict: 'option_id,user_id' }
-                );
-                showToast('✅ 投票成功');
-                if (currentDetailPostId) await renderDetail(currentDetailPostId);
-            } catch (err) {
-                showToast('投票失败：' + err.message);
-            }
-        }
-
-        function renderPollUI(pollData) {
-            if (!pollData || !pollData.poll_options?.length) return '';
-            const totalVotes = (pollData.poll_votes || []).length;
-            const userVoted = (pollData.poll_votes || []).find(v => v.user_id === currentUser?.id)?.option_id;
-
-            let html = `<div class="poll-container"><div style="font-weight:700;margin-bottom:4px;">📊 ${escapeHtml(pollData.title)}</div>`;
-            if (pollData.description) html += `<div style="font-size:0.8em;color:var(--text-muted);margin-bottom:8px;">${escapeHtml(pollData.description)}</div>`;
-            html += `<div style="font-size:0.7em;color:var(--text-muted);margin-bottom:8px;">总票数：${totalVotes}</div>`;
-
-            pollData.poll_options.forEach(opt => {
-                const votes = (pollData.poll_votes || []).filter(v => v.option_id === opt.id).length;
-                const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-                const isVoted = userVoted === opt.id;
-                html += `
-                    <div class="poll-option">
-                        <div class="poll-option-header">
-                            <span>${escapeHtml(opt.option_text)}</span>
-                            <span>${votes}票 (${percent}%)</span>
-                        </div>
-                        <div class="poll-option-bar">
-                            <div class="poll-option-progress"><div class="poll-option-fill" style="width:${percent}%"></div></div>
-                            <button class="poll-option-vote-btn ${isVoted ? 'voted' : ''}" onclick="votePoll('${opt.id}')">${isVoted ? '已投' : '投票'}</button>
-                        </div>
+                        ${finalContent}
                     </div>
                 `;
             });
-            html += '</div>';
-            return html;
+
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+
+            // 为每条消息绑定长按和右键事件
+            container.querySelectorAll('.chat-msg:not(.deleted)').forEach(msgEl => {
+                // 右键
+                msgEl.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    const id = this.dataset.id;
+                    const author = this.dataset.author;
+                    const isSelf = this.dataset.self === 'true';
+                    if (!currentUser) return;
+                    if (!isAdmin && !isSelf) { showToast('您只能撤回自己的消息'); return; }
+                    showConfirm('撤回消息', '确定撤回此消息吗？', () => doRevoke(id, author, isSelf));
+                });
+
+                // 长按（移动端）
+                let longPressTimer = null;
+                msgEl.addEventListener('touchstart', function(e) {
+                    longPressTimer = setTimeout(() => {
+                        const id = this.dataset.id;
+                        const author = this.dataset.author;
+                        const isSelf = this.dataset.self === 'true';
+                        if (!currentUser) return;
+                        if (!isAdmin && !isSelf) { showToast('您只能撤回自己的消息'); return; }
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        showConfirm('撤回消息', '确定撤回此消息吗？', () => doRevoke(id, author, isSelf));
+                        longPressTimer = null;
+                    }, 600);
+                });
+                msgEl.addEventListener('touchend', function() {
+                    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                });
+                msgEl.addEventListener('touchmove', function() {
+                    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                });
+            });
         }
 
-        var detailOverlay = document.getElementById('detailOverlay');
-        var detailContent = document.getElementById('detailContent');
-        var detailCommentInput = document.getElementById('detailCommentInput');
-        var detailSendCommentBtn = document.getElementById('detailSendCommentBtn');
-        var closeDetailBtn = document.getElementById('closeDetail');
-        var currentDetailPostId = null;
-
-        async function openPostDetail(postId) {
-            currentDetailPostId = postId;
-            detailOverlay.classList.add('active');
-            await renderDetail(postId);
-        }
-
-        function closeDetailPanel() {
-            detailOverlay.classList.remove('active');
-            currentDetailPostId = null;
-        }
-        closeDetailBtn.addEventListener('click', closeDetailPanel);
-
-        async function renderDetail(postId) {
-            const post = posts.find(p => p.id === postId);
-            if (!post) { detailContent.innerHTML = '<div class="empty-state">帖子不存在</div>'; return; }
-
-            const comments = await fetchComments(postId);
-            const userInfo = post.users || null;
-            const displayName = userInfo ? userInfo.nickname : post.author;
-            const avatar = userInfo?.avatar_url || '';
-            const timeStr = new Date(post.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-            const pollData = await loadPollData(postId);
-            const pollHtml = renderPollUI(pollData);
-
-            let commentsHtml = '';
-            if (!comments.length) {
-                commentsHtml = '<div class="comment-empty">还没有评论</div>';
-            } else {
-                commentsHtml = comments.map(c => {
-                    const cUser = c.users || null;
-                    const cName = cUser ? cUser.nickname : c.author;
-                    const cAvatar = cUser?.avatar_url || '';
-                    const cTime = new Date(c.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                    return `
-                        <div class="comment-item">
-                            <div class="avatar" style="${cAvatar ? `background-image:url(${cAvatar});background-size:cover;` : ''}">${!cAvatar ? cName.charAt(0).toUpperCase() : ''}</div>
-                            <div class="body">
-                                <div class="meta">
-                                    <span class="name">${escapeHtml(cName)}</span>
-                                    ${c.is_official ? '<span class="official-tag">官方</span>' : ''}
-                                    <span class="time">${cTime}</span>
-                                </div>
-                                <div class="txt">${escapeHtml(c.content)}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            detailContent.innerHTML = `
-                <div class="detail-post">
-                    <div class="post-author">
-                        <div class="avatar" style="${avatar ? `background-image:url(${avatar});background-size:cover;` : ''}">${!avatar ? displayName.charAt(0).toUpperCase() : ''}</div>
-                        <span class="name">${escapeHtml(displayName)}</span>
-                        ${post.is_official ? '<span class="official-tag">官方</span>' : ''}
-                        <span class="time">${timeStr}</span>
-                    </div>
-                    ${post.title ? `<div class="post-title">${escapeHtml(post.title)}</div>` : ''}
-                    <div class="post-content">${post.content}</div>
-                    ${pollHtml}
-                </div>
-                <div class="detail-comments">
-                    <div style="font-weight:600;margin-bottom:8px;">💬 评论 (${comments.length})</div>
-                    ${commentsHtml}
-                </div>
-            `;
-        }
-
-        detailSendCommentBtn.addEventListener('click', async function() {
-            if (!currentUser) { showToast('请先登录'); return; }
-            if (!currentDetailPostId) return;
-            const content = detailCommentInput.value.trim();
-            if (!content) { showToast('请输入评论内容'); return; }
-
+        async function doRevoke(id, author, isSelf) {
             try {
-                await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content);
-                detailCommentInput.value = '';
-                await renderDetail(currentDetailPostId);
-                showToast('💬 评论已发送');
+                const revoker = currentUser.nickname;
+                await revokeChat(id, author, revoker, isSelf);
+                showToast('✅ 消息已撤回');
+                await loadAllData();
             } catch (err) {
-                showToast('评论失败：' + err.message);
+                showToast('撤回失败：' + err.message);
             }
-        });
+        }
+
+        function sendChat() {
+            if (!currentUser) { showToast('请先登录'); return; }
+            if (currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) { showToast('账号已被封禁，无法发送消息'); return; }
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            if (!content) { showToast('请输入内容'); return; }
+            const btn = document.getElementById('sendChatBtn');
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '发送中...';
+
+            const isOfficial = currentUser.nickname === 'Seven戚' || isAuthorMode;
+            addChat(currentUser.id, currentUser.nickname, content, isOfficial)
+                .then(() => {
+                    input.value = '';
+                    loadAllData();
+                    showToast('💬 消息已发送');
+                })
+                .catch(err => showToast('发送失败：' + err.message))
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                });
+        }
 
         async function loadAllData() {
+            chatsLoading = true;
+            renderChat();
             try {
-                posts = await fetchPosts();
-                await renderPosts();
+                const data = await fetchChats();
+                chats = data;
             } catch (err) {
-                showToast('帖子加载失败');
+                console.error('加载聊天失败:', err);
+                showToast('聊天加载失败');
+            } finally {
+                chatsLoading = false;
+                renderChat();
             }
+        }
+
+        function showConfirm(title, body, onOk) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmBody').textContent = body;
+            modal.classList.add('active');
+            const cancelBtn = document.getElementById('confirmCancel');
+            const okBtn = document.getElementById('confirmOk');
+            const cleanup = () => {
+                modal.classList.remove('active');
+                cancelBtn.removeEventListener('click', cancelHandler);
+                okBtn.removeEventListener('click', okHandler);
+            };
+            const cancelHandler = () => cleanup();
+            const okHandler = () => { if (onOk) onOk(); cleanup(); };
+            cancelBtn.addEventListener('click', cancelHandler);
+            okBtn.addEventListener('click', okHandler);
+            modal.addEventListener('click', function bgClick(e) {
+                if (e.target === modal) { cleanup(); modal.removeEventListener('click', bgClick); }
+            });
         }
 
         (function init() {
-            if (!currentUser || !currentUser.id) window.location.href = 'index.html';
-            loadCategories().then(() => loadAllData());
+            updateBannedBanner();
+            loadAllData();
 
-            window.sb.channel('public-posts')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, () => loadAllData())
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, () => loadAllData())
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, () => loadAllData())
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'post_comments' }, () => {
-                    if (currentDetailPostId) renderDetail(currentDetailPostId);
+            if (currentUser && currentUser.id) {
+                updateLastChatRead(currentUser.id).then(() => {
+                    updateChatBadge();
+                });
+            }
+
+            if (isAdmin) {
+                document.getElementById('clearChatBtn').style.display = 'inline-block';
+            }
+
+            window.sb.channel('chats-page-realtime')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
+                    loadAllData();
                 })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'poll_votes' }, () => {
-                    if (currentDetailPostId) renderDetail(currentDetailPostId);
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, (payload) => {
+                    loadAllData();
+                })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload) => {
+                    loadAllData();
                 })
                 .subscribe();
+
+            function syncUser() {
+                const session = getSessionUser();
+                if (session && session.id) {
+                    if (!currentUser || currentUser.id !== session.id ||
+                        currentUser.avatar_url !== session.avatar_url ||
+                        currentUser.nickname !== session.nickname) {
+                        currentUser = session;
+                        isAdmin = (currentUser.phone === '17355394710');
+                        renderHeader('聊天群', 'chats');
+                        renderFooter('chats');
+                        updateBannedBanner();
+                        loadAllData();
+                        if (isAdmin) document.getElementById('clearChatBtn').style.display = 'inline-block';
+                    }
+                }
+            }
+            window.addEventListener('focus', syncUser);
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) syncUser();
+            });
         })();
+
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
 </html>
