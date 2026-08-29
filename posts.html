@@ -4,10 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 帖子广场</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 全局样式 ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --bg: #f5faf5;
@@ -19,13 +17,11 @@
             --text-light: #8aaa9a;
             --primary: #2e7d32;
             --primary-light: #4caf50;
-            --primary-glow: rgba(76, 175, 80, 0.25);
             --primary-bg: #e8f5e9;
-            --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+            --shadow: 0 8px 32px rgba(46,125,50,0.12);
             --radius: 16px;
             --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
             --danger: #e57373;
             --danger-bg: #ffebee;
             --official-blue: #2b6cff;
@@ -33,878 +29,232 @@
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
-        /* ===== 公共头部样式（由 common.js 生成，但保留定义） ===== */
         .app-header {
             flex-shrink: 0; padding: 12px 20px 8px 20px;
-            background: var(--bg-card); border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            z-index: 50; backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, 0.92);
-            min-height: 56px;
+            z-index: 50; min-height: 56px;
         }
-        .app-header .brand {
-            font-weight: 900; font-size: 1.1em; color: var(--text);
-            display: flex; align-items: center; gap: 0.4em;
-            cursor: default; user-select: none;
-        }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; cursor: default; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.3em; }
-        .app-header .user-area {
-            display: flex; align-items: center; gap: 10px;
-            cursor: pointer; padding: 4px 10px 4px 6px;
-            border-radius: 99px; transition: background 0.2s;
-        }
+        .app-header .user-area { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; }
         .app-header .user-area:hover { background: var(--primary-bg); }
         .app-header .avatar {
             width: 32px; height: 32px; border-radius: 50%;
-            display: grid; place-items: center;
-            font-weight: 700; font-size: 14px;
-            color: #fff;
-            background: var(--primary);
-            flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-            text-align: center;
+            background: var(--primary); color: #fff;
+            display: grid; place-items: center; font-weight: 700; font-size: 14px;
+            background-size: cover; background-position: center;
         }
-        .app-header .user-name {
-            font-weight: 600; font-size: 0.85em;
-            max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; transition: transform 0.3s; }
-        .app-header .chevron.open { transform: rotate(180deg); }
+        .app-header .user-name { font-weight: 600; font-size: 0.85em; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* ===== 公共底部样式 ===== */
         .app-tabs {
-            flex-shrink: 0;
-            display: flex;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border);
-            padding: 6px 0 calc(6px + var(--safe-bottom));
+            flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96);
+            border-top: 1px solid var(--border); padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
             z-index: 50;
-            backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, 0.96);
         }
         .tab-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            background: none;
-            border: none;
-            font-family: var(--font);
-            font-size: 0.6em;
-            font-weight: 600;
-            color: var(--text-muted);
-            padding: 4px 0;
-            cursor: pointer;
-            transition: color 0.2s;
-            position: relative;
-            text-decoration: none;
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+            background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600;
+            color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none; position: relative;
         }
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
         .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after {
-            content: ''; position: absolute; top: -1px;
-            left: 30%; right: 30%; height: 3px;
-            background: var(--primary); border-radius: 0 0 4px 4px;
-        }
-        .tab-btn .badge {
-            position: absolute; top: 0; right: 20%;
-            background: var(--primary); color: #fff;
-            font-size: 0.6em; font-weight: 700;
-            padding: 1px 6px; border-radius: 99px;
-            min-width: 16px; text-align: center;
-            transform: translateY(-4px);
-        }
+        .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
 
-        /* ===== 封禁横幅 ===== */
         .banned-banner {
-            flex-shrink: 0;
-            background: #ffebee;
-            color: #c62828;
-            padding: 6px 16px;
-            font-size: 0.8em;
-            font-weight: 600;
-            text-align: center;
-            border-bottom: 1px solid #ffcdd2;
-            display: none;
+            flex-shrink: 0; background: #ffebee; color: #c62828;
+            padding: 6px 16px; font-size: 0.8em; font-weight: 600;
+            text-align: center; border-bottom: 1px solid #ffcdd2; display: none;
         }
         .banned-banner.active { display: block; }
 
-        /* ===== 帖子页面内容 ===== */
-        .app-content {
-            flex: 1;
-            min-height: 0;
-            position: relative;
-            overflow-y: auto;
-            padding: 16px 20px 16px 20px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .posts-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .posts-header .left {
-            display: flex;
-            gap: 6px;
-            flex-wrap: nowrap;
-            align-items: center;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 4px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            max-width: 100%;
-        }
-        .posts-header .left::-webkit-scrollbar { height: 4px; }
-        .posts-header .left::-webkit-scrollbar-track { background: transparent; }
-        .posts-header .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+        .app-content { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+        .posts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .posts-header .left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 100%; }
         .category-btn {
-            padding: 4px 14px;
-            border-radius: 99px;
-            border: 1.5px solid var(--border);
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 0.7em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-            flex-shrink: 0;
+            padding: 4px 14px; border-radius: 99px; border: 1.5px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 0.7em; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
         }
         .category-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .category-btn:hover:not(.active) { background: var(--primary-bg); }
         .new-post-btn {
-            padding: 6px 18px;
-            border-radius: 99px;
-            border: none;
-            background: var(--primary);
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.75em;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
+            padding: 6px 18px; border-radius: 99px; border: none; background: var(--primary); color: #fff;
+            font-weight: 700; font-size: 0.75em; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
         }
-        .new-post-btn:hover { background: var(--primary-light); transform: scale(1.02); }
-        .new-post-btn:disabled { opacity: 0.5; pointer-events: none; }
+        .new-post-btn:hover { background: var(--primary-light); }
 
         .post-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-sm);
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-            transition: box-shadow 0.2s;
-            cursor: pointer;
+            background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px 16px;
+            margin-bottom: 12px; border: 1px solid var(--border); cursor: pointer; transition: box-shadow 0.2s;
         }
         .post-card:hover { box-shadow: var(--shadow); }
-        .post-card .post-author {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 2px;
-            flex-wrap: wrap;
-        }
+        .post-card .post-author { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; flex-wrap: wrap; }
         .post-card .post-author .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            display: grid;
-            place-items: center;
-            font-weight: 700; font-size: 14px; color: #fff;
-            background: var(--primary); flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-            text-align: center;
+            width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+            font-weight: 700; font-size: 14px; color: #fff; background: var(--primary);
+            background-size: cover; background-position: center;
         }
         .post-card .post-author .name { font-weight: 600; font-size: 0.9em; }
-        .post-card .post-author .official-tag {
-            background: #2b6cff; color: #fff;
-            font-size: 0.55em; padding: 0 6px; border-radius: 99px; line-height: 16px;
-        }
-        .post-card .post-author .role-tag {
-            color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; line-height: 16px;
-            background: var(--primary);
-        }
-        .post-card .post-author .time {
-            font-size: 0.7em; color: var(--text-muted); margin-left: auto;
-        }
-        .post-card .post-category {
-            font-size: 0.6em; color: var(--primary); background: var(--primary-bg);
-            padding: 0 8px; border-radius: 99px; display: inline-block; margin-bottom: 4px;
-        }
+        .post-card .post-author .official-tag { background: #2b6cff; color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; }
+        .post-card .post-author .role-tag { color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; background: var(--primary); }
+        .post-card .post-author .time { font-size: 0.7em; color: var(--text-muted); margin-left: auto; }
         .post-card .post-title { font-weight: 700; font-size: 1em; margin: 4px 0 2px 0; }
-        .post-card .post-image {
-            max-width: 100%; max-height: 200px; border-radius: var(--radius-sm);
-            margin: 6px 0; object-fit: cover;
-        }
-        .post-card .post-content {
-            font-size: 0.85em; color: var(--text); line-height: 1.6;
-            margin-bottom: 6px; word-break: break-word; white-space: pre-wrap;
-        }
-        .post-card .post-content.clamped {
-            display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
-        }
-        .post-card .post-content .expand-link {
-            color: var(--primary); font-weight: 600; cursor: pointer; display: inline-block; margin-left: 4px;
-        }
+        .post-card .post-content { font-size: 0.85em; color: var(--text); line-height: 1.6; margin-bottom: 6px; }
         .post-card .post-footer {
             display: flex; justify-content: space-between; align-items: center;
             margin-top: 8px; font-size: 0.65em; color: var(--text-light);
             border-top: 1px solid var(--border); padding-top: 8px;
         }
-        .post-card .post-footer .actions {
-            display: flex; gap: 12px;
-        }
-        .post-card .post-footer .actions span {
-            cursor: pointer; transition: color 0.2s;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .post-card .post-footer .actions span:hover { color: var(--primary); }
-        .post-card .post-footer .actions .del { color: #e57373; }
-        .post-card .post-footer .actions .del:hover { color: #c62828; }
-        .post-card .post-footer .actions .edit { color: var(--primary); }
-        .post-card .post-footer .comment-icon {
-            display: flex; align-items: center; gap: 4px;
-        }
-        .post-card .post-footer .comment-icon.official {
-            color: var(--official-blue);
-        }
-
-        .icon-svg { width: 1.2em; height: 1.2em; fill: currentColor; flex-shrink: 0; }
-        .icon-btn {
-            background: none; border: none; cursor: pointer;
-            padding: 4px; color: var(--text-muted); transition: .2s;
-            display: flex; align-items: center; gap: 4px;
-            font-family: inherit; font-size: inherit;
-        }
-        .icon-btn:hover { color: var(--text); }
-        .icon-btn.danger { color: #e57373; }
-        .icon-btn.danger:hover { color: #c62828; }
-        .btn-text { margin-left: 2px; }
+        .post-card .post-footer .actions { display: flex; gap: 12px; }
+        .post-card .post-footer .actions span { cursor: pointer; }
 
         .empty-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.85em; }
         .empty-state .big { font-size: 2.8em; margin-bottom: 8px; opacity: 0.5; }
         .loading-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.9em; }
         .loading-state .spinner {
-            display: inline-block; width: 30px; height: 30px;
-            border: 3px solid var(--border); border-top-color: var(--primary);
-            border-radius: 50%; animation: spin 0.8s linear infinite;
-            margin-bottom: 12px;
+            display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border);
+            border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         #toast {
-            position: fixed; bottom: 80px; left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: var(--text); color: #fff;
-            padding: 0.7em 1.6em; border-radius: 2em;
-            font-weight: 600; font-size: 0.85em;
-            opacity: 0; transition: all 0.4s ease;
-            z-index: 9999 !important; pointer-events: none;
-            white-space: nowrap; box-shadow: var(--shadow);
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px);
+            background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em;
+            font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease;
+            z-index: 9999; pointer-events: none; white-space: nowrap;
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        @media (max-width: 480px) {
-            .app-header { padding: 10px 14px 6px 14px; min-height: 48px; }
-            .app-header .brand { font-size: 0.95em; }
-            .app-header .user-name { max-width: 60px; font-size: 0.75em; }
-            .app-content { padding: 12px 14px 12px 14px; }
-            .posts-header .left { gap: 4px; }
-            .category-btn { padding: 3px 10px; font-size: 0.6em; }
-            .new-post-btn { font-size: 0.65em; padding: 4px 12px; }
-        }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.3s ease; }
-
-        /* ===== 帖子详情 ===== */
         .detail-overlay {
-            position: fixed; inset: 0; z-index: 999;
-            background: var(--bg-card); display: none;
-            flex-direction: column; animation: fadeIn 0.25s ease;
+            position: fixed; inset: 0; z-index: 999; background: var(--bg-card);
+            display: none; flex-direction: column;
         }
         .detail-overlay.active { display: flex; }
-        .detail-panel {
-            display: flex; flex-direction: column; height: 100%; width: 100%;
-            background: var(--bg);
-        }
+        .detail-panel { display: flex; flex-direction: column; height: 100%; width: 100%; background: var(--bg); }
         .detail-header {
             display: flex; align-items: center; padding: 12px 16px;
-            flex-shrink: 0; background: var(--bg-card);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
+            background: var(--bg-card); border-bottom: 1px solid var(--border);
         }
-        .detail-header .back-btn {
-            background: none; border: none; font-size: 1.5em; cursor: pointer;
-            color: var(--text); display: flex; align-items: center;
-            padding: 4px 8px 4px 0; margin-right: 8px;
-        }
-        .detail-header .back-btn:hover { color: var(--primary); }
-        .detail-header .detail-title {
-            flex: 1; text-align: center; font-weight: 600; font-size: 1em;
-            color: var(--text); margin-right: 2.5em;
-        }
-        .detail-content {
-            flex: 1; overflow-y: auto; padding: 16px 20px 12px 20px;
-            -webkit-overflow-scrolling: touch;
-        }
+        .detail-header .back-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text); }
+        .detail-header .detail-title { flex: 1; text-align: center; font-weight: 600; font-size: 1em; }
+        .detail-content { flex: 1; overflow-y: auto; padding: 16px 20px; }
         .detail-post { margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-        .detail-post .post-author {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;
-        }
+        .detail-post .post-author { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
         .detail-post .post-author .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            display: grid; place-items: center; font-weight: 700; font-size: 14px;
-            color: #fff; background: var(--primary); flex-shrink: 0;
-            background-size: cover; background-position: center; text-align: center;
+            width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+            font-weight: 700; font-size: 14px; color: #fff; background: var(--primary);
+            background-size: cover; background-position: center;
         }
         .detail-post .post-author .name { font-weight: 600; font-size: 0.9em; }
-        .detail-post .post-author .official-tag {
-            background: #2b6cff; color: #fff; font-size: 0.55em;
-            padding: 0 6px; border-radius: 99px; line-height: 16px;
-        }
-        .detail-post .post-author .role-tag {
-            color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; line-height: 16px;
-            background: var(--primary);
-        }
-        .detail-post .post-author .time {
-            font-size: 0.7em; color: var(--text-muted); margin-left: auto;
-        }
+        .detail-post .post-author .official-tag { background: #2b6cff; color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; }
+        .detail-post .post-author .role-tag { color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; background: var(--primary); }
+        .detail-post .post-author .time { font-size: 0.7em; color: var(--text-muted); margin-left: auto; }
         .detail-post .post-title { font-weight: 700; font-size: 1.1em; margin: 4px 0 2px 0; }
-        .detail-post .post-image {
-            max-width: 100%; max-height: 300px; border-radius: var(--radius-sm);
-            margin: 6px 0; object-fit: cover;
-        }
-        .detail-post .post-content {
-            font-size: 0.95em; color: var(--text); line-height: 1.6;
-            word-break: break-word; white-space: pre-wrap;
-        }
+        .detail-post .post-content { font-size: 0.95em; color: var(--text); line-height: 1.6; }
         .detail-comments { flex: 1; margin-top: 8px; }
-        .detail-comments .comment-item {
-            display: flex;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-        .detail-comments .comment-item:last-child { border-bottom: none; }
+        .detail-comments .comment-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
         .detail-comments .comment-item .avatar {
-            width: 30px; height: 30px; border-radius: 50%;
-            display: grid; place-items: center; font-weight: 700; font-size: 12px;
-            color: #fff; background: var(--primary); flex-shrink: 0;
-            background-size: cover; background-position: center; text-align: center;
+            width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+            font-weight: 700; font-size: 12px; color: #fff; background: var(--primary);
+            background-size: cover; background-position: center;
         }
-        .detail-comments .comment-item .body { flex: 1; min-width: 0; }
-        .detail-comments .comment-item .meta {
-            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-        }
+        .detail-comments .comment-item .body { flex: 1; }
+        .detail-comments .comment-item .meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .detail-comments .comment-item .meta .name { font-weight: 600; font-size: 0.85em; }
-        .detail-comments .comment-item .meta .official-tag {
-            background: #2b6cff; color: #fff; font-size: 0.5em;
-            padding: 0 4px; border-radius: 99px; line-height: 14px;
-        }
-        .detail-comments .comment-item .meta .role-tag {
-            color: #fff; font-size: 0.5em; padding: 0 4px; border-radius: 99px; line-height: 14px;
-            background: var(--primary);
-        }
-        .detail-comments .comment-item .meta .time {
-            font-size: 0.65em; color: var(--text-muted);
-        }
-        .detail-comments .comment-item .meta .more-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 0 4px;
-            font-size: 1.1em;
-            line-height: 1;
-            transition: color 0.2s;
-        }
-        .detail-comments .comment-item .meta .more-btn:hover {
-            color: var(--text);
-        }
-        .comment-menu {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 4px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow);
-            z-index: 100;
-            min-width: 120px;
-            padding: 4px 0;
-            display: none;
-        }
-        .comment-menu button {
-            display: block;
-            width: 100%;
-            padding: 6px 14px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            text-align: left;
-            font-size: 0.8em;
-            color: var(--text);
-            transition: background 0.2s;
-        }
-        .comment-menu button:hover {
-            background: var(--bg-input);
-        }
-        .comment-menu button.danger {
-            color: #e57373;
-        }
-        .comment-menu button.danger:hover {
-            background: #ffebee;
-        }
-        .detail-comments .comment-item .txt {
-            font-size: 0.85em; line-height: 1.5; margin-top: 2px;
-            color: var(--text); white-space: pre-wrap; word-break: break-word;
-        }
-        .detail-comments .comment-empty { text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.85em; }
+        .detail-comments .comment-item .meta .official-tag { background: #2b6cff; color: #fff; font-size: 0.5em; padding: 0 4px; border-radius: 99px; }
+        .detail-comments .comment-item .meta .time { font-size: 0.65em; color: var(--text-muted); }
+        .detail-comments .comment-item .txt { font-size: 0.85em; line-height: 1.5; margin-top: 2px; }
         .detail-input-area {
-            display: flex; gap: 8px;
-            border-top: 1px solid var(--border);
-            padding: 12px 16px calc(12px + var(--safe-bottom));
-            flex-shrink: 0; background: var(--bg-card);
+            display: flex; gap: 8px; border-top: 1px solid var(--border);
+            padding: 12px 16px; background: var(--bg-card);
         }
         .detail-input-area input {
-            flex: 1; padding: 8px 14px; border-radius: 99px;
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.85em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
+            flex: 1; padding: 8px 14px; border-radius: 99px; border: 2px solid var(--border);
+            background: var(--bg-input); font-family: inherit; font-size: 0.85em; outline: none;
         }
-        .detail-input-area input:focus { border-color: var(--primary); }
-        .detail-input-area input:disabled { opacity: 0.5; }
         .detail-input-area button {
-            padding: 8px 18px; border-radius: 99px; border: none;
-            background: var(--primary); color: #fff;
-            font-weight: 700; font-size: 0.85em; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-            white-space: nowrap; display: flex; align-items: center; gap: 6px;
+            padding: 8px 18px; border-radius: 99px; border: none; background: var(--primary);
+            color: #fff; font-weight: 700; font-size: 0.85em; cursor: pointer;
         }
-        .detail-input-area button:hover { background: var(--primary-light); }
-        .detail-input-area button:disabled { opacity: 0.5; pointer-events: none; }
 
-        /* ===== 分类管理弹窗 ===== */
-        .category-manager-overlay {
-            position: fixed; inset: 0; z-index: 1000;
-            background: var(--bg-card); display: none;
-            flex-direction: column; animation: fadeIn 0.25s ease;
-        }
-        .category-manager-overlay.active { display: flex; }
-        .category-manager-panel {
-            display: flex; flex-direction: column; height: 100%; width: 100%;
-            background: var(--bg);
-        }
-        .category-manager-header {
-            display: flex; align-items: center; padding: 12px 16px;
-            flex-shrink: 0; background: var(--bg-card);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
-        }
-        .category-manager-header .back-btn {
-            background: none; border: none; font-size: 1.5em; cursor: pointer;
-            color: var(--text); display: flex; align-items: center;
-            padding: 4px 8px 4px 0; margin-right: 8px;
-        }
-        .category-manager-header .back-btn:hover { color: var(--primary); }
-        .category-manager-header .title {
-            flex: 1; text-align: center; font-weight: 600; font-size: 1em;
-            color: var(--text); margin-right: 2.5em;
-        }
-        .category-manager-content { flex: 1; overflow-y: auto; padding: 16px 20px; }
-        .category-manager-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 12px; margin-bottom: 6px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-        }
-        .category-manager-item .cat-name { font-weight: 600; font-size: 0.9em; }
-        .category-manager-item .cat-actions {
-            display: flex; gap: 4px; align-items: center;
-        }
-        .category-manager-item .cat-actions button {
-            background: none; border: none; cursor: pointer;
-            padding: 0 6px; font-size: 1em; transition: color 0.2s;
-            color: var(--text-muted); font-family: inherit;
-        }
-        .category-manager-item .cat-actions button:hover { color: var(--text); }
-        .category-manager-item .cat-actions .danger:hover { color: #e57373; }
-        .category-manager-item .cat-actions .move-btn { font-size: 0.9em; padding: 0 4px; }
-        .category-manager-item .cat-toggle {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 0.7em;
-        }
-        .category-manager-item .cat-toggle input[type="checkbox"] {
-            width: 16px; height: 16px; cursor: pointer;
-        }
-        .category-manager-add {
-            display: flex; gap: 8px; margin-top: 12px;
-            padding-top: 12px; border-top: 1px solid var(--border);
-        }
-        .category-manager-add input {
-            flex: 1; padding: 8px 12px; border-radius: var(--radius-sm);
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.85em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
-        }
-        .category-manager-add input:focus { border-color: var(--primary); }
-        .category-manager-add button {
-            padding: 8px 18px; border-radius: var(--radius-sm); border: none;
-            background: var(--primary); color: #fff;
-            font-weight: 700; font-size: 0.85em; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-            white-space: nowrap;
-        }
-        .category-manager-add button:hover { background: var(--primary-light); }
-
-        /* ===== 管理面板 ===== */
-        .admin-panel-overlay {
-            position: fixed; inset: 0; z-index: 1000;
-            background: var(--bg-card); display: none;
-            flex-direction: column; animation: fadeIn 0.25s ease;
-        }
-        .admin-panel-overlay.active { display: flex; }
-        .admin-panel {
-            display: flex; flex-direction: column; height: 100%; width: 100%;
-            background: var(--bg);
-        }
-        .admin-panel-header {
-            display: flex; align-items: center; padding: 12px 16px;
-            flex-shrink: 0; background: var(--bg-card);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
-        }
-        .admin-panel-header .back-btn {
-            background: none; border: none; font-size: 1.5em; cursor: pointer;
-            color: var(--text); display: flex; align-items: center;
-            padding: 4px 8px 4px 0; margin-right: 8px;
-        }
-        .admin-panel-header .back-btn:hover { color: var(--primary); }
-        .admin-panel-header .title {
-            flex: 1; text-align: center; font-weight: 600; font-size: 1em;
-            color: var(--text); margin-right: 2.5em;
-        }
-        .admin-panel-content { flex: 1; overflow-y: auto; padding: 16px 20px; }
-        .admin-section-title {
-            font-weight: 700; font-size: 1em; margin: 16px 0 8px 0;
-            color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 4px;
-        }
-        .admin-user-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 12px; margin-bottom: 6px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-        }
-        .admin-user-item .user-info {
-            display: flex; align-items: center; gap: 10px;
-        }
-        .admin-user-item .user-info .avatar {
-            width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
-            background: var(--primary);
-        }
-        .admin-user-item .user-info .details {
-            display: flex; flex-direction: column;
-        }
-        .admin-user-item .user-info .details .nickname {
-            font-weight: 600; font-size: 0.9em;
-        }
-        .admin-user-item .user-info .details .phone {
-            font-size: 0.7em; color: var(--text-muted);
-        }
-        .admin-user-item .user-info .details .uuid {
-            font-size: 0.6em; color: var(--text-light); font-family: var(--mono, monospace);
-            cursor: pointer;
-        }
-        .admin-user-item .user-info .details .uuid:hover {
-            color: var(--primary);
-        }
-        .admin-user-item .user-actions {
-            display: flex; gap: 4px; flex-wrap: wrap;
-        }
-        .admin-user-item .user-actions button {
-            padding: 4px 8px; border-radius: var(--radius-sm); border: none;
-            font-size: 0.7em; font-weight: 600; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-        }
-        .admin-user-item .user-actions .login-as { background: var(--primary-bg); color: var(--primary); }
-        .admin-user-item .user-actions .login-as:hover { background: var(--primary); color: #fff; }
-        .admin-user-item .user-actions .ban-btn { background: var(--danger-bg); color: var(--danger); }
-        .admin-user-item .user-actions .ban-btn:hover { background: var(--danger); color: #fff; }
-        .admin-user-item .user-actions .unban-btn { background: var(--primary-bg); color: var(--primary); }
-        .admin-user-item .user-actions .unban-btn:hover { background: var(--primary); color: #fff; }
-        .admin-user-item .user-actions .assign-role-btn { background: var(--primary-bg); color: var(--primary); }
-        .admin-user-item .user-actions .assign-role-btn:hover { background: var(--primary); color: #fff; }
-
-        .admin-role-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 12px; margin-bottom: 6px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-        }
-        .admin-role-item .role-info {
-            display: flex; align-items: center; gap: 10px;
-        }
-        .admin-role-item .role-info .color-preview {
-            width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border);
-        }
-        .admin-role-item .role-info .role-name { font-weight: 600; font-size: 0.9em; }
-        .admin-role-item .role-actions button {
-            padding: 4px 8px; border-radius: var(--radius-sm); border: none;
-            font-size: 0.7em; font-weight: 600; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-            background: var(--danger-bg); color: var(--danger);
-        }
-        .admin-role-item .role-actions button:hover { background: var(--danger); color: #fff; }
-
-        .admin-role-add {
-            display: flex; gap: 8px; margin-top: 12px;
-            padding-top: 12px; border-top: 1px solid var(--border);
-            flex-wrap: wrap; align-items: center;
-        }
-        .admin-role-add input[type="text"] {
-            flex: 1; min-width: 100px; padding: 6px 10px;
-            border-radius: var(--radius-sm); border: 2px solid var(--border);
-            background: var(--bg-input); font-family: inherit; font-size: 0.85em;
-            outline: none; transition: border-color 0.2s; color: var(--text);
-        }
-        .admin-role-add input[type="color"] {
-            width: 40px; height: 40px; padding: 2px;
-            border: 2px solid var(--border); border-radius: var(--radius-sm);
-            background: var(--bg-input); cursor: pointer;
-        }
-        .admin-role-add button {
-            padding: 6px 16px; border-radius: var(--radius-sm); border: none;
-            background: var(--primary); color: #fff;
-            font-weight: 700; font-size: 0.85em; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-            white-space: nowrap;
-        }
-        .admin-role-add button:hover { background: var(--primary-light); }
-
-        /* ===== 自定义弹窗 ===== */
         .custom-modal {
-            position: fixed; inset: 0; z-index: 2000;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center;
-            padding: 20px;
+            position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .custom-modal.active { display: flex; }
         .custom-modal .modal-box {
-            background: var(--bg-card); border-radius: var(--radius);
-            max-width: 420px; width: 100%; padding: 24px;
-            box-shadow: var(--shadow); border: 1px solid var(--border);
+            background: var(--bg-card); border-radius: var(--radius); max-width: 420px;
+            width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
         }
-        .custom-modal .modal-box .modal-title {
-            font-size: 1.2em; font-weight: 700; margin-bottom: 8px;
-            color: var(--text);
-        }
-        .custom-modal .modal-box .modal-body {
-            font-size: 0.95em; color: var(--text-muted);
-            line-height: 1.6; margin-bottom: 16px;
-        }
-        .custom-modal .modal-box .modal-body input,
-        .custom-modal .modal-box .modal-body textarea {
-            width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.9em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
-            margin-top: 4px;
-        }
-        .custom-modal .modal-box .modal-body input:focus,
-        .custom-modal .modal-box .modal-body textarea:focus {
-            border-color: var(--primary);
-        }
-        .custom-modal .modal-box .modal-actions {
-            display: flex; gap: 8px; justify-content: flex-end;
-        }
-        .custom-modal .modal-box .modal-actions button {
-            padding: 6px 18px; border-radius: var(--radius-sm); border: none;
-            font-weight: 600; font-size: 0.85em; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-        }
-        .custom-modal .modal-box .modal-actions .btn-danger { background: var(--danger); color: #fff; }
-        .custom-modal .modal-box .modal-actions .btn-danger:hover { background: #c62828; }
-        .custom-modal .modal-box .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
-        .custom-modal .modal-box .modal-actions .btn-secondary:hover { background: var(--border); }
-        .custom-modal .modal-box .modal-actions .btn-primary { background: var(--primary); color: #fff; }
-        .custom-modal .modal-box .modal-actions .btn-primary:hover { background: var(--primary-light); }
+        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; }
+        .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
+        .modal-actions .btn-danger { background: var(--danger); color: #fff; }
+        .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
 
-        .ban-input-group { margin-top: 8px; }
-        .ban-input-group label {
-            font-size: 0.8em; font-weight: 600; color: var(--text-muted);
-            display: block; margin-bottom: 2px;
+        .poll-container {
+            margin: 16px 0; padding: 16px; background: #f8faf8;
+            border-radius: 12px; border: 1px solid var(--border);
         }
-        .ban-input-group input, .ban-input-group textarea {
-            width: 100%; padding: 6px 10px; border-radius: var(--radius-sm);
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.85em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
+        .poll-option { margin-bottom: 12px; }
+        .poll-option-header { display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 4px; }
+        .poll-option-bar { display: flex; align-items: center; gap: 8px; }
+        .poll-option-progress { flex: 1; height: 20px; background: var(--primary-bg); border-radius: 10px; overflow: hidden; }
+        .poll-option-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s; }
+        .poll-option-vote-btn {
+            padding: 2px 8px; background: var(--primary); color: #fff;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 0.7em;
         }
-        .ban-input-group input:focus, .ban-input-group textarea:focus { border-color: var(--primary); }
-        .ban-input-group textarea { resize: vertical; min-height: 60px; }
+        .poll-option-vote-btn.voted { background: var(--text-muted); }
 
-        .fullscreen-overlay {
-            position: fixed; inset: 0; z-index: 300;
-            background: var(--bg); display: none;
-            flex-direction: column; animation: fadeIn 0.25s ease;
+        @media (max-width: 480px) {
+            .app-header { padding: 10px 14px 6px 14px; }
+            .app-content { padding: 12px 14px; }
         }
-        .fullscreen-overlay.active { display: flex; }
-        .fullscreen-header {
-            display: flex; align-items: center; padding: 12px 16px;
-            flex-shrink: 0; background: var(--bg-card);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
-        }
-        .fullscreen-header .back-btn {
-            background: none; border: none; font-size: 1.5em; cursor: pointer;
-            color: var(--text); display: flex; align-items: center;
-            padding: 4px 8px 4px 0; margin-right: 8px;
-        }
-        .fullscreen-header .back-btn:hover { color: var(--primary); }
-        .fullscreen-header .title {
-            flex: 1; text-align: center; font-weight: 600; font-size: 1em;
-            color: var(--text); margin-right: 2.5em;
-        }
-        .fullscreen-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
-        .fullscreen-body .field-group { margin-bottom: 16px; }
-        .fullscreen-body .field-group label {
-            font-size: 0.7em; font-weight: 600; color: var(--text-muted);
-            display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .fullscreen-body .field-group input, .fullscreen-body .field-group textarea, .fullscreen-body .field-group select {
-            width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.95em; outline: none;
-            transition: border-color 0.2s; color: var(--text);
-        }
-        .fullscreen-body .field-group input:focus, .fullscreen-body .field-group textarea:focus, .fullscreen-body .field-group select:focus {
-            border-color: var(--primary);
-        }
-        .fullscreen-body .field-group textarea { resize: vertical; min-height: 120px; }
-        .fullscreen-body .field-group .file-input { padding: 6px 0; }
-        .fullscreen-body .field-group .checkbox-group {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 0.9em; color: var(--text-muted);
-        }
-        .fullscreen-body .actions {
-            display: flex; gap: 8px; margin-top: 16px;
-        }
-        .fullscreen-body .actions button {
-            flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none;
-            font-weight: 700; font-size: 1em; cursor: pointer;
-            transition: background 0.2s; font-family: inherit;
-        }
-        .fullscreen-body .actions .btn-primary { background: var(--primary); color: #fff; }
-        .fullscreen-body .actions .btn-primary:hover { background: var(--primary-light); }
-        .fullscreen-body .actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
-        .fullscreen-body .actions .btn-secondary:hover { background: var(--border); }
-        .fullscreen-body .actions button:disabled { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
-    <!-- ===== 主应用 ===== -->
     <div id="mainApp">
-        <!-- 顶部由 common.js 渲染 -->
         <div id="header-container"></div>
-
         <div class="banned-banner" id="bannedBanner">
             ⚠️ 账号已被封禁，无法发布新帖或评论。解封时间：<span id="bannedUntilDisplay"></span>
         </div>
-
         <div class="app-content" id="postContent">
             <div class="posts-header">
                 <div class="left" id="categoryFilter">
                     <button class="category-btn active" data-cat="全部" onclick="setCategory('全部', this)">全部</button>
                 </div>
                 <div style="display:flex; gap:6px;">
-                    <button class="new-post-btn" id="adminPanelBtn" style="display:none; background:var(--danger);" onclick="openAdminPanel()">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span class="btn-text">管理</span>
-                    </button>
-                    <button class="new-post-btn" id="newPostBtn" onclick="openNewPost()">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        <span class="btn-text">发帖</span>
-                    </button>
+                    <button class="new-post-btn" id="adminPanelBtn" style="display:none; background:var(--danger);" onclick="openAdminPanel()">管理</button>
+                    <a href="/liuyanban/new-post.html" class="new-post-btn" id="newPostBtn">发帖</a>
                 </div>
             </div>
             <div id="postList"></div>
         </div>
-
-        <!-- 底部由 common.js 渲染 -->
         <div id="footer-container"></div>
     </div>
 
-    <!-- ===== 帖子详情 ===== -->
     <div class="detail-overlay" id="detailOverlay">
         <div class="detail-panel">
             <div class="detail-header">
-                <button class="back-btn" id="closeDetail">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
+                <button class="back-btn" id="closeDetail">←</button>
                 <span class="detail-title">帖子详情</span>
             </div>
             <div class="detail-content" id="detailContent"></div>
             <div class="detail-input-area">
                 <input type="text" id="detailCommentInput" placeholder="写评论…" maxlength="200" />
-                <button id="detailSendCommentBtn">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-                    <span class="btn-text">发送</span>
-                </button>
+                <button id="detailSendCommentBtn">发送</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== 分类管理弹窗 ===== -->
-    <div class="category-manager-overlay" id="categoryManagerOverlay">
-        <div class="category-manager-panel">
-            <div class="category-manager-header">
-                <button class="back-btn" id="closeCategoryManager">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <span class="title">分类管理</span>
-            </div>
-            <div class="category-manager-content" id="categoryManagerList"></div>
-            <div class="category-manager-add">
-                <input type="text" id="newCategoryInput" placeholder="新增分类名称" maxlength="20" />
-                <button id="addCategoryBtn">添加</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 管理面板 ===== -->
-    <div class="admin-panel-overlay" id="adminPanelOverlay">
-        <div class="admin-panel">
-            <div class="admin-panel-header">
-                <button class="back-btn" id="closeAdminPanel">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <span class="title">数据管理</span>
-            </div>
-            <div class="admin-panel-content" id="adminPanelContent"></div>
-        </div>
-    </div>
-
-    <!-- ===== 自定义确认弹窗 ===== -->
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
-            <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
+            <div class="modal-body" id="confirmBody"></div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="confirmCancel">取消</button>
                 <button class="btn-danger" id="confirmOk">确定</button>
@@ -912,13 +262,12 @@
         </div>
     </div>
 
-    <!-- ===== 自定义输入弹窗 ===== -->
     <div class="custom-modal" id="promptModal">
         <div class="modal-box">
             <div class="modal-title" id="promptTitle">输入</div>
-            <div class="modal-body" id="promptBody">
+            <div class="modal-body">
                 <p id="promptMessage"></p>
-                <input type="text" id="promptInput" placeholder="请输入..." />
+                <input type="text" id="promptInput" />
             </div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="promptCancel">取消</button>
@@ -927,74 +276,17 @@
         </div>
     </div>
 
-    <!-- ===== 封号弹窗 ===== -->
-    <div class="custom-modal" id="banModal">
-        <div class="modal-box">
-            <div class="modal-title">⛔ 封号设置</div>
-            <div class="modal-body">
-                <p>为 <span id="banTargetNickname" style="font-weight:600;"></span> 设置封号信息</p>
-                <div class="ban-input-group">
-                    <label>封号原因</label>
-                    <textarea id="banReasonInput" placeholder="输入封号原因（可选）">由于您最近的不当言论，我们已经对你进行封号处理</textarea>
-                </div>
-                <div class="ban-input-group">
-                    <label>解封时间</label>
-                    <input type="datetime-local" id="banUntilInput" />
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-secondary" id="banCancel">取消</button>
-                <button class="btn-danger" id="banConfirm">确认封号</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 全屏发帖 ===== -->
-    <div class="fullscreen-overlay" id="newPostOverlay">
-        <div class="fullscreen-header">
-            <button class="back-btn" id="closeNewPost">
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <span class="title">📝 发帖</span>
-        </div>
-        <div class="fullscreen-body" id="newPostBody">
-            <!-- 动态生成 -->
-        </div>
-    </div>
-
-    <!-- ===== 全屏编辑 ===== -->
-    <div class="fullscreen-overlay" id="editPostOverlay">
-        <div class="fullscreen-header">
-            <button class="back-btn" id="closeEditPost">
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <span class="title">✏️ 编辑帖子</span>
-        </div>
-        <div class="fullscreen-body" id="editPostBody">
-            <!-- 动态生成 -->
-        </div>
-    </div>
-
     <div id="toast"></div>
 
     <script src="/liuyanban/common.js"></script>
     <script>
-        // ============================================================
-        // 渲染公共头部和底部（在页面加载后调用）
-        // ============================================================
         renderHeader('帖子广场', 'posts');
         renderFooter('posts');
 
-        // ============================================================
-        // Supabase 配置
-        // ============================================================
         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
         var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ============================================================
-        // 工具函数
-        // ============================================================
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -1010,279 +302,27 @@
             });
         }
 
-        var COLORS = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8"];
+        var currentUser = getSessionUser();
+        if (!currentUser || !currentUser.id) window.location.href = 'index.html';
+        var isAdmin = (currentUser.phone === '17355394710');
 
-        function pickColor(hex) {
-            if (hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase() !== "#000000") return hex;
-            return COLORS[Math.floor(Math.random() * COLORS.length)];
-        }
-
-        function getUserAvatar(user) {
-            if (user && user.avatar_url) return user.avatar_url;
-            const name = user ? user.nickname : 'U';
-            const color = pickColor(null);
-            const initial = name.charAt(0).toUpperCase();
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-                <rect width="100" height="100" fill="${color}" rx="50"/>
-                <text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text>
-            </svg>`;
-            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-        }
-
-        // 头像上传（保留用于其他页面，但帖子页不再使用，因为头像功能已移至 profile.html）
-        async function uploadAvatar(file, userId) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `avatars/${userId}/profile.${fileExt}`;
-            const { data, error } = await window.sb.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-            if (error) throw error;
-            const { data: urlData } = window.sb.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
-            return urlData.publicUrl;
-        }
-
-        // 自定义弹窗
-        function showConfirm(title, body, onOk, onCancel) {
-            const modal = document.getElementById('confirmModal');
-            document.getElementById('confirmTitle').textContent = title;
-            document.getElementById('confirmBody').innerHTML = body;
-            modal.classList.add('active');
-            const cancelBtn = document.getElementById('confirmCancel');
-            const okBtn = document.getElementById('confirmOk');
-            const cleanup = () => {
-                modal.classList.remove('active');
-                cancelBtn.removeEventListener('click', cancelHandler);
-                okBtn.removeEventListener('click', okHandler);
-            };
-            const cancelHandler = () => { if (onCancel) onCancel(); cleanup(); };
-            const okHandler = () => { if (onOk) onOk(); cleanup(); };
-            cancelBtn.addEventListener('click', cancelHandler);
-            okBtn.addEventListener('click', okHandler);
-            modal.addEventListener('click', function bgClick(e) {
-                if (e.target === modal) { if (onCancel) onCancel(); cleanup(); modal.removeEventListener('click', bgClick); }
-            });
-        }
-
-        function showPrompt(title, message, placeholder, onOk, onCancel) {
-            const modal = document.getElementById('promptModal');
-            document.getElementById('promptTitle').textContent = title;
-            document.getElementById('promptMessage').textContent = message;
-            const input = document.getElementById('promptInput');
-            input.value = '';
-            input.placeholder = placeholder || '请输入...';
-            modal.classList.add('active');
-            input.focus();
-            const cancelBtn = document.getElementById('promptCancel');
-            const okBtn = document.getElementById('promptOk');
-            const cleanup = () => {
-                modal.classList.remove('active');
-                cancelBtn.removeEventListener('click', cancelHandler);
-                okBtn.removeEventListener('click', okHandler);
-                input.removeEventListener('keydown', keyHandler);
-            };
-            const cancelHandler = () => { if (onCancel) onCancel(); cleanup(); };
-            const okHandler = () => { if (onOk) onOk(input.value.trim()); cleanup(); };
-            const keyHandler = (e) => { if (e.key === 'Enter') okHandler(); };
-            cancelBtn.addEventListener('click', cancelHandler);
-            okBtn.addEventListener('click', okHandler);
-            input.addEventListener('keydown', keyHandler);
-            modal.addEventListener('click', function bgClick(e) {
-                if (e.target === modal) { if (onCancel) onCancel(); cleanup(); modal.removeEventListener('click', bgClick); }
-            });
-        }
-
-        // ============================================================
-        // 会话管理
-        // ============================================================
-        var currentUser = null;
-        var allUsers = [];
-        var isAdmin = false;
-        var userRolesMap = {};
-
-        function getSessionUser() {
-            const stored = localStorage.getItem('sq_user_session');
-            if (stored) {
-                try { return JSON.parse(stored); } catch { return null; }
-            }
-            return null;
-        }
-
-        function setSessionUser(user) {
-            localStorage.setItem('sq_user_session', JSON.stringify(user));
-        }
-
-        function clearSession() {
-            localStorage.removeItem('sq_user_session');
-        }
-
-        // ============================================================
-        // 封禁检查
-        // ============================================================
-        function isUserBanned() {
-            if (!currentUser) return false;
-            const bannedUntil = currentUser.banned_until ? new Date(currentUser.banned_until) : null;
-            return bannedUntil && bannedUntil > new Date();
-        }
-
-        function getBannedUntil() {
-            if (!currentUser || !currentUser.banned_until) return null;
-            return new Date(currentUser.banned_until);
-        }
-
-        function updateBannedBanner() {
-            const banner = document.getElementById('bannedBanner');
-            const display = document.getElementById('bannedUntilDisplay');
-            if (isUserBanned()) {
-                banner.classList.add('active');
-                const until = getBannedUntil();
-                display.textContent = until ? until.toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '未知';
-                document.getElementById('newPostBtn').disabled = true;
-            } else {
-                banner.classList.remove('active');
-                document.getElementById('newPostBtn').disabled = false;
-            }
-        }
-
-        // ============================================================
-        // 数据操作（分类、用户角色、帖子、评论、用户管理）
-        // ============================================================
         var categories = [];
+        var posts = [];
+        var currentCategory = '全部';
 
         async function fetchCategories() {
-            const { data, error } = await window.sb
-                .from('categories')
-                .select('*')
-                .order('sort_order', { ascending: true });
+            const { data, error } = await window.sb.from('categories').select('*').order('sort_order');
             if (error) throw error;
             return data || [];
-        }
-
-        async function addCategory(name, isPublic) {
-            const maxOrder = categories.reduce((max, c) => Math.max(max, c.sort_order || 0), 0);
-            const { data, error } = await window.sb
-                .from('categories')
-                .insert([{ name, sort_order: maxOrder + 1, is_public: isPublic }]);
-            if (error) throw error;
-            return data;
-        }
-
-        async function updateCategory(id, updates) {
-            const { data, error } = await window.sb
-                .from('categories')
-                .update(updates)
-                .eq('id', id);
-            if (error) throw error;
-            return data;
-        }
-
-        async function deleteCategory(id) {
-            const uncat = categories.find(c => c.name === '未分类');
-            if (!uncat) throw new Error('未分类不存在');
-            await window.sb
-                .from('posts')
-                .update({ category_id: uncat.id })
-                .eq('category_id', id);
-            const { error } = await window.sb
-                .from('categories')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
-        }
-
-        async function swapCategoryOrder(id1, id2) {
-            const cat1 = categories.find(c => c.id === id1);
-            const cat2 = categories.find(c => c.id === id2);
-            if (!cat1 || !cat2) return;
-            const temp = cat1.sort_order;
-            await window.sb
-                .from('categories')
-                .update({ sort_order: cat2.sort_order })
-                .eq('id', id1);
-            await window.sb
-                .from('categories')
-                .update({ sort_order: temp })
-                .eq('id', id2);
-        }
-
-        async function fetchUserRoles() {
-            const { data, error } = await window.sb
-                .from('user_roles')
-                .select('*');
-            if (error) throw error;
-            return data || [];
-        }
-
-        async function assignRole(userId, roleName, roleColor) {
-            if (!userId || userId.length < 10) throw new Error('无效的用户ID');
-            const { data, error } = await window.sb
-                .from('user_roles')
-                .insert([{ user_id: userId, role_name: roleName, role_color: roleColor, created_by: currentUser.id }]);
-            if (error) throw error;
-            return data;
-        }
-
-        async function removeRole(userId) {
-            const { error } = await window.sb
-                .from('user_roles')
-                .delete()
-                .eq('user_id', userId);
-            if (error) throw error;
         }
 
         async function fetchPosts() {
             const { data, error } = await window.sb
                 .from('posts')
-                .select('*, users!posts_user_id_fkey (id, nickname, avatar_url, phone)')
+                .select('*, users!posts_user_id_fkey (id, nickname, avatar_url)')
                 .order('created_at', { ascending: false });
             if (error) throw error;
             return data || [];
-        }
-
-        async function addPost(title, content, image_url, category_id, author, user_id, isOfficial, isPinned) {
-            if (isAdmin) {
-                const { data } = await window.sb
-                    .from('users')
-                    .select('id')
-                    .eq('phone', '17355394710')
-                    .single();
-                if (data) { author = "Seven戚"; user_id = data.id; isOfficial = true; }
-            }
-            const insertObj = {
-                title: title || '',
-                content: content || '',
-                author: author || '匿名',
-                user_id: user_id,
-                is_official: isOfficial === true,
-                is_pinned: isPinned === true,
-                category_id: category_id ? parseInt(category_id) : null
-            };
-            if (image_url && image_url.trim()) {
-                insertObj.image_url = image_url.trim();
-            }
-            const { data, error } = await window.sb
-                .from('posts')
-                .insert([insertObj]);
-            if (error) throw error;
-            return data;
-        }
-
-        async function updatePost(postId, updates) {
-            const { data, error } = await window.sb
-                .from('posts')
-                .update(updates)
-                .eq('id', postId);
-            if (error) throw error;
-            return data;
-        }
-
-        async function deletePost(id) {
-            const { error } = await window.sb
-                .from('posts')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
         }
 
         async function fetchComments(postId) {
@@ -1295,591 +335,137 @@
             return data || [];
         }
 
-        async function addComment(postId, author, user_id, content, isOfficial) {
-            if (isAdmin) {
-                const { data } = await window.sb
-                    .from('users')
-                    .select('id')
-                    .eq('phone', '17355394710')
-                    .single();
-                if (data) { author = "Seven戚"; user_id = data.id; isOfficial = true; }
-            }
+        async function addComment(postId, author, user_id, content) {
             const { data, error } = await window.sb
                 .from('post_comments')
-                .insert([{ post_id: postId, author, user_id, content, is_official: isOfficial }]);
+                .insert([{ post_id: postId, author, user_id, content }]);
             if (error) throw error;
             return data;
         }
 
-        async function deleteComment(commentId) {
-            const { error } = await window.sb
-                .from('post_comments')
-                .delete()
-                .eq('id', commentId);
+        async function deletePost(id) {
+            const { error } = await window.sb.from('posts').delete().eq('id', id);
             if (error) throw error;
         }
 
-        async function toggleCommentPin(commentId, pinned) {
-            const { error } = await window.sb
-                .from('post_comments')
-                .update({ is_pinned: pinned })
-                .eq('id', commentId);
-            if (error) throw error;
-        }
-
-        async function uploadImage(file) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `posts/${Date.now()}.${fileExt}`;
-            const { data, error } = await window.sb.storage
-                .from('posts')
-                .upload(fileName, file);
-            if (error) throw error;
-            const { data: urlData } = window.sb.storage
-                .from('posts')
-                .getPublicUrl(fileName);
-            return urlData.publicUrl;
-        }
-
-        async function fetchAllUsers() {
-            const { data, error } = await window.sb
-                .from('users')
-                .select('*');
-            if (error) throw error;
-            return data || [];
-        }
-
-        async function updateUser(userId, updates) {
-            const { data, error } = await window.sb
-                .from('users')
-                .update(updates)
-                .eq('id', userId);
-            if (error) throw error;
-            return data;
-        }
-
-        async function banUser(userId, reason, until) {
-            const { data, error } = await window.sb
-                .from('users')
-                .update({ banned_reason: reason, banned_until: until })
-                .eq('id', userId);
-            if (error) throw error;
-            return data;
-        }
-
-        async function unbanUser(userId) {
-            const { data, error } = await window.sb
-                .from('users')
-                .update({ banned_reason: null, banned_until: null })
-                .eq('id', userId);
-            if (error) throw error;
-            return data;
-        }
-
-        // ============================================================
-        // 全局状态
-        // ============================================================
-        var posts = [];
-        var currentCategory = '全部';
-        var userRoles = {};
-
-        // ============================================================
-        // 加载分类
-        // ============================================================
         async function loadCategories() {
-            try {
+            尝试 {
                 categories = await fetchCategories();
-                let uncat = categories.find(c => c.name === '未分类');
-                if (!uncat) {
-                    await window.sb.from('categories').insert([{ name: '未分类', sort_order: 999, is_public: true }]);
-                    categories = await fetchCategories();
-                    uncat = categories.find(c => c.name === '未分类');
-                }
-                if (uncat && uncat.is_public === false) {
-                    await updateCategory(uncat.id, { is_public: true });
-                    categories = await fetchCategories();
-                }
                 renderCategoryFilter();
-                renderCategoryManager();
             } catch (err) {
-                console.error('加载分类失败:', err);
                 showToast('分类加载失败');
             }
         }
 
-        function renderCategoryFilter() {
+        函数 renderCategoryFilter() {
             const container = document.getElementById('categoryFilter');
-            let allCats = categories.filter(c => c.name !== '未分类');
             let html = `<button class="category-btn active" data-cat="全部" onclick="setCategory('全部', this)">全部</button>`;
-            allCats.forEach(c => {
-                const isActive = (currentCategory === c.id);
-                html += `<button class="category-btn ${isActive ? 'active' : ''}" data-cat="${c.id}" onclick="setCategory(${c.id}, this)">${escapeHtml(c.name)}</button>`;
+            分类.筛选(c => c.名称 !== '未分类').遍历(c => {
+                html += `<button class="category-btn" data-cat="${c.id}" onclick="setCategory(${c.id}, this)">${escapeHtml(c.name)}</button>`;
             });
-            if (isAdmin) {
-                html += `
-                    <button class="category-btn" style="border-color:var(--primary);color:var(--primary);" onclick="openCategoryManager()">⚙️ 管理分类</button>
-                `;
-            }
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // 分类管理
-        // ============================================================
-        var categoryManagerOverlay = document.getElementById('categoryManagerOverlay');
-        var categoryManagerList = document.getElementById('categoryManagerList');
-        var closeCategoryManagerBtn = document.getElementById('closeCategoryManager');
-        var newCategoryInput = document.getElementById('newCategoryInput');
-        var addCategoryBtn = document.getElementById('addCategoryBtn');
-
-        function openCategoryManager() {
-            if (!isAdmin) { showToast('权限不足'); return; }
-            categoryManagerOverlay.classList.add('active');
-            renderCategoryManager();
-            newCategoryInput.value = '';
-        }
-
-        function closeCategoryManager() {
-            categoryManagerOverlay.classList.remove('active');
-        }
-        closeCategoryManagerBtn.addEventListener('click', closeCategoryManager);
-
-        async function toggleCategoryPublic(id, current) {
-            if (!isAdmin) return;
-            try {
-                await updateCategory(id, { is_public: !current });
-                await loadCategories();
-                renderCategoryManager();
-                renderPosts();
-                showToast('✅ 分类权限已更新');
-            } catch (err) {
-                showToast('更新失败：' + err.message);
-            }
-        }
-
-        async function moveCategoryUp(id) {
-            if (!isAdmin) return;
-            const idx = categories.findIndex(c => c.id === id);
-            if (idx <= 0) return;
-            const prev = categories[idx - 1];
-            if (prev.name === '未分类') return;
-            await swapCategoryOrder(id, prev.id);
-            await loadCategories();
-            renderPosts();
-            showToast('✅ 分类顺序已更新');
-        }
-
-        async function moveCategoryDown(id) {
-            if (!isAdmin) return;
-            const idx = categories.findIndex(c => c.id === id);
-            if (idx === -1 || idx >= categories.length - 1) return;
-            const next = categories[idx + 1];
-            if (next.name === '未分类') return;
-            await swapCategoryOrder(id, next.id);
-            await loadCategories();
-            renderPosts();
-            showToast('✅ 分类顺序已更新');
-        }
-
-        function renderCategoryManager() {
-            const list = categories.filter(c => c.name !== '未分类');
-            if (!list.length) {
-                categoryManagerList.innerHTML = `<div class="empty-state">暂无分类，添加一个吧</div>`;
-                return;
-            }
-            let html = '';
-            list.forEach((c, index) => {
-                const canUp = index > 0 && list[index - 1].name !== '未分类';
-                const canDown = index < list.length - 1 && list[index + 1].name !== '未分类';
-                const isPublic = c.is_public !== false;
-                html += `
-                    <div class="category-manager-item" data-id="${c.id}">
-                        <span class="cat-name">${escapeHtml(c.name)}</span>
-                        <div class="cat-actions">
-                            <span class="cat-toggle">
-                                <label style="font-size:0.7em;">公开</label>
-                                <input type="checkbox" ${isPublic ? 'checked' : ''} 
-                                       onchange="toggleCategoryPublic('${c.id}', ${isPublic})" />
-                            </span>
-                            ${canUp ? `<button class="move-btn" onclick="moveCategoryUp(${c.id})" title="上移">↑</button>` : ''}
-                            ${canDown ? `<button class="move-btn" onclick="moveCategoryDown(${c.id})" title="下移">↓</button>` : ''}
-                            <button onclick="deleteCategoryById(${c.id})" class="danger" title="删除分类">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-            categoryManagerList.innerHTML = html;
-        }
-
-        async function deleteCategoryById(id) {
-            if (!isAdmin) return;
-            const cat = categories.find(c => c.id === id);
-            if (!cat) return;
-            showConfirm('删除分类', `确定删除分类“${escapeHtml(cat.name)}”？其下的帖子将移到“未分类”`, async () => {
-                try {
-                    await deleteCategory(id);
-                    await loadCategories();
-                    renderCategoryManager();
-                    renderPosts();
-                    showToast('🗑️ 分类已删除');
-                } catch (err) {
-                    showToast('删除失败：' + err.message);
-                }
-            });
-        }
-
-        addCategoryBtn.addEventListener('click', async function() {
-            if (!isAdmin) return;
-            const name = newCategoryInput.value.trim();
-            if (!name) { showToast('请输入分类名'); return; }
-            if (categories.find(c => c.name === name)) { showToast('分类已存在'); return; }
-            try {
-                await addCategory(name, true);
-                newCategoryInput.value = '';
-                await loadCategories();
-                renderCategoryManager();
-                renderPosts();
-                showToast('✅ 分类已添加');
-            } catch (err) {
-                showToast('添加失败：' + err.message);
-            }
-        });
-        newCategoryInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') addCategoryBtn.click();
-        });
-
-        // ============================================================
-        // 设置分类筛选
-        // ============================================================
         function setCategory(cat, btn) {
-            if (!btn) return;
             document.querySelectorAll('#categoryFilter .category-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentCategory = cat;
             renderPosts();
         }
 
-        // ============================================================
-        // 加载用户身份
-        // ============================================================
-        async function loadUserRoles() {
-            try {
-                const roles = await fetchUserRoles();
-                userRoles = {};
-                roles.forEach(r => {
-                    userRoles[r.user_id] = { name: r.role_name, color: r.role_color };
-                });
-            } catch (err) {
-                console.error('加载身份失败:', err);
-            }
-        }
-
-        function getUserRole(userId) {
-            return userRoles[userId] || null;
-        }
-
-        // ============================================================
-        // 渲染帖子列表
-        // ============================================================
-        async function renderPosts() {
+        异步 函数 renderPosts() {
             const container = document.getElementById('postList');
-            container.innerHTML = `
-                <div class="loading-state">
-                    <div class="spinner"></div>
-                    <div>正在加载帖子...</div>
-                </div>
-            `;
+            container.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>正在加载帖子...</div></div>';
 
             let filtered = posts;
-            if (currentCategory !== '全部') {
-                filtered = posts.filter(p => p.category_id === currentCategory);
+            如果 (currentCategory !== '全部') {
+                筛选后的 = 文章.筛选(p => p.分类ID === 当前分类);
             }
-            filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-            if (!filtered.length) {
-                container.innerHTML = `<div class="empty-state"><div class="big">📭</div>还没有帖子，来发第一篇吧！</div>`;
+            如果 (!filtered.长度) {
+                container.innerHTML = '<div class="empty-state"><div class="big">📭</div>还没有帖子</div>';
                 return;
             }
 
-            const postIds = filtered.map(p => p.id);
-            const { data: commentsData, error: commentsError } = await window.sb
-                .from('post_comments')
-                .select('post_id, is_official')
-                .in('post_id', postIds);
-            if (commentsError) throw commentsError;
-
-            const commentInfo = {};
-            postIds.forEach(id => {
-                const related = commentsData.filter(c => c.post_id === id);
-                commentInfo[id] = {
-                    count: related.length,
-                    hasOfficial: related.some(c => c.is_official === true)
-                };
-            });
-
             let html = '';
             for (const p of filtered) {
-                const count = commentInfo[p.id]?.count || 0;
-                const hasOfficial = commentInfo[p.id]?.hasOfficial || false;
-                const isOfficial = p.is_official === true;
-                const timeStr = new Date(p.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const userInfo = p.users || null;
-                const avatar = userInfo ? (userInfo.avatar_url || getUserAvatar(userInfo)) : getUserAvatar({ nickname: p.author });
                 const displayName = userInfo ? userInfo.nickname : p.author;
-                const userId = userInfo ? userInfo.id : null;
-                const role = userId ? getUserRole(userId) : null;
-
-                const officialTag = isOfficial ? `<span class="official-tag">官方</span>` : '';
-                const roleTag = role ? `<span class="role-tag" style="background:${escapeHtml(role.color)}">${escapeHtml(role.name)}</span>` : '';
-
-                let delBtn = '';
-                let editBtn = '';
-                if (isAdmin || (currentUser && currentUser.id === p.user_id)) {
-                    delBtn = `<span class="del" onclick="event.stopPropagation(); deletePostById('${p.id}')">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        删除
-                    </span>`;
-                    if (currentUser && currentUser.id === p.user_id) {
-                        editBtn = `<span class="edit" onclick="event.stopPropagation(); openEditPost('${p.id}')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            编辑
-                        </span>`;
-                    }
-                }
-
-                let categoryHtml = '';
-                if (p.category_id) {
-                    const cat = categories.find(c => c.id === p.category_id);
-                    if (cat && cat.name !== '未分类') {
-                        categoryHtml = `<div class="post-category">${escapeHtml(cat.name)}</div>`;
-                    }
-                }
-                const imageHtml = p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="post-image" loading="lazy" onerror="this.style.display='none'" />` : '';
-                const contentDisplay = p.content || '<span style="color:var(--text-muted);font-style:italic;">（无正文内容）</span>';
-                const lines = (p.content || '').split('\n').length;
-                const showExpand = lines > 5;
-                const contentClass = showExpand ? 'clamped' : '';
-                const expandLink = showExpand ? `<span class="expand-link" onclick="event.stopPropagation(); openPostDetail('${p.id}')">详情</span>` : '';
-
-                const commentIconClass = hasOfficial ? 'comment-icon official' : 'comment-icon';
+                const avatar = userInfo?.avatar_url || '';
+                const timeStr = new Date(p.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: ‘2位数’, 分钟: ‘2位数’ });
 
                 html += `
-                    <div class="post-card" data-id="${p.id}" onclick="openPostDetail('${p.id}')">
+                    <div class="post-card" onclick="openPostDetail('${p.id}')">
                         <div class="post-author">
-                            <div class="avatar" style="${avatar && avatar.startsWith('http') ? `background-image:url(${avatar});background-size:cover;background-position:center;` : ''}">${avatar && !avatar.startsWith('http') ? displayName.charAt(0).toUpperCase() : ''}</div>
+                            <div class="avatar" style="${avatar ? `background-image:url(${avatar});background-size:cover;` : ''}">${!avatar ? displayName.charAt(0).toUpperCase() : ''}</div>
                             <span class="name">${escapeHtml(displayName)}</span>
-                            ${officialTag}
-                            ${roleTag}
+                            ${p.is_official ? '<span class="official-tag">官方</span>' : ''}
                             <span class="time">${timeStr}</span>
                         </div>
-                        ${categoryHtml}
                         ${p.title ? `<div class="post-title">${escapeHtml(p.title)}</div>` : ''}
-                        <div class="post-content ${contentClass}">${escapeHtml(contentDisplay)}${expandLink}</div>
-                        ${imageHtml}
-                        <div class="post-footer">
-                            <span class="${commentIconClass}">💬 ${count} 条回复</span>
-                            <div class="actions">
-                                ${editBtn}
-                                ${delBtn}
-                            </div>
-                        </div>
+                        <div class="post-content">${p.content}</div>
                     </div>
                 `;
             }
             container.innerHTML = html;
         }
 
-        function deletePostById(id) {
-            showConfirm('删除帖子', '确定要删除此帖子吗？', async () => {
-                try {
-                    await deletePost(id);
-                    await loadAllData();
-                    showToast('🗑️ 帖子已删除');
-                } catch (err) {
-                    showToast('删除失败：' + err.message);
-                }
-            });
+        async function loadPollData(postId) {
+            尝试 {
+                const { data, error } = await window.sb
+                    .from('post_polls')
+                    .select('*, poll_options(*), poll_votes(option_id, user_id)')
+                    .eq('post_id', postId)
+                    .single();
+                如果 (错误) 返回 空;
+                返回 数据;
+            } catch (err) { return null; }
         }
 
-        // ============================================================
-        // 编辑帖子
-        // ============================================================
-        var editPostOverlay = document.getElementById('editPostOverlay');
-        var editPostBody = document.getElementById('editPostBody');
-        var closeEditPostBtn = document.getElementById('closeEditPost');
-        var editPostId = null;
-
-        function openEditPost(postId) {
-            const post = posts.find(p => p.id === postId);
-            if (!post) { showToast('帖子不存在'); return; }
-            if (!currentUser || (currentUser.id !== post.user_id && !isAdmin)) {
-                showToast('无权限编辑');
-                return;
-            }
-            editPostId = postId;
-            let catOptions = '';
-            const available = categories.filter(c => c.name !== '未分类' && (isAdmin || c.is_public !== false));
-            available.forEach(c => {
-                const selected = (c.id === post.category_id) ? 'selected' : '';
-                catOptions += `<option value="${c.id}" ${selected}>${escapeHtml(c.name)}</option>`;
-            });
-            editPostBody.innerHTML = `
-                <div class="field-group">
-                    <label>标题（选填）</label>
-                    <input type="text" id="editPostTitle" value="${escapeHtml(post.title || '')}" />
-                </div>
-                <div class="field-group">
-                    <label>分类</label>
-                    <select id="editPostCategory">${catOptions}</select>
-                </div>
-                <div class="field-group">
-                    <label>正文（必填）</label>
-                    <textarea id="editPostContent" rows="6">${escapeHtml(post.content || '')}</textarea>
-                </div>
-                <div class="field-group">
-                    <label>图片（选填）</label>
-                    <input type="file" id="editPostImage" accept="image/*" class="file-input" />
-                    ${post.image_url ? `<div style="margin-top:4px;font-size:0.8em;color:var(--text-muted);">当前图片：<a href="${escapeHtml(post.image_url)}" target="_blank">查看</a></div>` : ''}
-                </div>
-                <div class="actions">
-                    <button class="btn-secondary" id="editPostCancelBtn">取消</button>
-                    <button class="btn-primary" id="editPostSaveBtn">保存</button>
-                </div>
-            `;
-            editPostOverlay.classList.add('active');
-
-            document.getElementById('editPostCancelBtn').addEventListener('click', closeEditPost);
-            document.getElementById('editPostSaveBtn').addEventListener('click', saveEditPost);
-        }
-
-        function closeEditPost() {
-            editPostOverlay.classList.remove('active');
-            editPostId = null;
-        }
-        closeEditPostBtn.addEventListener('click', closeEditPost);
-
-        async function saveEditPost() {
-            if (!editPostId) return;
-            const title = document.getElementById('editPostTitle').value.trim();
-            const category_id = parseInt(document.getElementById('editPostCategory').value);
-            const content = document.getElementById('editPostContent').value.trim();
-            if (!content) { showToast('正文不能为空'); return; }
-            let image_url = null;
-            const file = document.getElementById('editPostImage').files[0];
-            try {
-                if (file) {
-                    showToast('⏳ 正在上传图片...');
-                    image_url = await uploadImage(file);
-                }
-                const updates = { title, content, category_id };
-                if (image_url) updates.image_url = image_url;
-                await updatePost(editPostId, updates);
-                closeEditPost();
-                await loadAllData();
-                showToast('✅ 帖子已更新');
+        async function votePoll(optionId) {
+            如果 (!当前用户) { 显示Toast('请先登录'); 返回; }
+            尝试 {
+                await window.sb.from('poll_votes').upsert(
+                    [{ option_id: optionId, user_id: currentUser.id }],
+                    { onConflict: 'option_id,user_id' }
+                );
+                showToast('✅ 投票成功');
+                如果 (currentDetailPostId) 等待 renderDetail(currentDetailPostId);
             } catch (err) {
-                showToast('更新失败：' + err.message);
+                showToast('投票失败：' + err.message);
             }
         }
 
-        // ============================================================
-        // 发帖
-        // ============================================================
-        var newPostOverlay = document.getElementById('newPostOverlay');
-        var newPostBody = document.getElementById('newPostBody');
-        var closeNewPostBtn = document.getElementById('closeNewPost');
+        函数 renderPollUI(pollData) {
+            如果 (!pollData || !pollData.poll_options?.length) 返回 '';
+            const totalVotes = (pollData.poll_votes || []).length;
+            const userVoted = (pollData.poll_votes || []).find(v => v.user_id === currentUser?.id)?.option_id;
 
-        function openNewPost() {
-            if (!currentUser) { showToast('请先登录'); return; }
-            if (isUserBanned()) { showToast('账号已被封禁，无法发布帖子'); return; }
-            let catOptions = '';
-            const available = categories.filter(c => c.name !== '未分类' && (isAdmin || c.is_public !== false));
-            available.forEach(c => {
-                catOptions += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+            let html = `<div class="poll-container"><div style="font-weight:700;margin-bottom:4px;">📊 ${escapeHtml(pollData.title)}</div>`;
+            如果 (pollData.description) html += `<div style="font-size:0.8em;color:var(--text-muted);margin-bottom:8px;">${escapeHtml(pollData.description)}</div>`;
+            html += `<div style="font-size:0.7em;color:var(--text-muted);margin-bottom:8px;">总票数：${totalVotes}</div>`;
+
+            pollData.poll_options.forEach(opt => {
+                const votes = (pollData.poll_votes || []).filter(v => v.option_id === opt.id).length;
+                const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                const isVoted = userVoted === opt.id;
+                html += `
+                    <div class="poll-option">
+                        <div class="poll-option-header">
+                            <span>${escapeHtml(opt.option_text)}</span>
+                            <span>${votes}票 (${percent}%)</span>
+                        </div>
+                        <div class="poll-option-bar">
+                            <div class="poll-option-progress"><div class="poll-option-fill" style="width:${percent}%"></div></div>
+                            <button class="poll-option-vote-btn ${isVoted ? 'voted' : ''}" onclick="votePoll('${opt.id}')">${isVoted ? '已投' : '投票'}</button>
+                        </div>
+                    </div>
+                `;
             });
-            const pinnedCheckbox = isAdmin ? `
-                <div class="field-group checkbox-group">
-                    <input type="checkbox" id="postPinnedCheck" />
-                    <label for="postPinnedCheck">📌 置顶此帖子</label>
-                </div>
-            ` : '';
-            newPostBody.innerHTML = `
-                <div class="field-group">
-                    <label>标题（选填）</label>
-                    <input type="text" id="postTitleInput" />
-                </div>
-                <div class="field-group">
-                    <label>分类</label>
-                    <select id="postCategorySelect">${catOptions}</select>
-                </div>
-                <div class="field-group">
-                    <label>正文（必填）</label>
-                    <textarea id="postContentInput" rows="6"></textarea>
-                </div>
-                <div class="field-group">
-                    <label>图片（选填）</label>
-                    <input type="file" id="postImageFile" accept="image/*" class="file-input" />
-                    <div style="font-size:0.7em;color:var(--text-muted);margin-top:2px;">支持 jpg, png, gif</div>
-                </div>
-                ${pinnedCheckbox}
-                <div class="actions">
-                    <button class="btn-secondary" id="newPostCancelBtn">取消</button>
-                    <button class="btn-primary" id="newPostSubmitBtn">发布</button>
-                </div>
-            `;
-            newPostOverlay.classList.add('active');
-            document.getElementById('postTitleInput').focus();
-
-            document.getElementById('newPostCancelBtn').addEventListener('click', closeNewPost);
-            document.getElementById('newPostSubmitBtn').addEventListener('click', submitNewPost);
+            html += '</div>';
+            return html;
         }
 
-        function closeNewPost() {
-            newPostOverlay.classList.remove('active');
-        }
-        closeNewPostBtn.addEventListener('click', closeNewPost);
-
-        async function submitNewPost() {
-            const title = document.getElementById('postTitleInput').value.trim();
-            const content = document.getElementById('postContentInput').value.trim();
-            const category_id = parseInt(document.getElementById('postCategorySelect').value);
-            const fileInput = document.getElementById('postImageFile');
-            let image_url = null;
-
-            if (!content) { showToast('请输入正文内容'); return; }
-            if (isUserBanned()) { showToast('账号已被封禁，无法发布'); return; }
-
-            const btn = document.getElementById('newPostSubmitBtn');
-            btn.disabled = true;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<span class="spinner" style="display:inline-block;width:1em;height:1em;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;"></span> 发布中...`;
-
-            try {
-                if (fileInput.files && fileInput.files[0]) {
-                    showToast('⏳ 正在上传图片...');
-                    image_url = await uploadImage(fileInput.files[0]);
-                }
-                const isOfficial = isAdmin || currentUser.phone === '17355394710';
-                let isPinned = false;
-                const pinnedCheck = document.getElementById('postPinnedCheck');
-                if (isAdmin && pinnedCheck) {
-                    isPinned = pinnedCheck.checked;
-                }
-                await addPost(title, content, image_url, category_id, currentUser.nickname, currentUser.id, isOfficial, isPinned);
-                closeNewPost();
-                await loadAllData();
-                showToast('📝 帖子发布成功！');
-            } catch (err) {
-                showToast('发布失败：' + err.message);
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        }
-
-        // ============================================================
-        // 帖子详情
-        // ============================================================
         var detailOverlay = document.getElementById('detailOverlay');
         var detailContent = document.getElementById('detailContent');
         var detailCommentInput = document.getElementById('detailCommentInput');
@@ -1891,94 +477,46 @@
             currentDetailPostId = postId;
             detailOverlay.classList.add('active');
             await renderDetail(postId);
-            detailCommentInput.value = '';
-            if (isUserBanned()) {
-                detailCommentInput.disabled = true;
-                detailSendCommentBtn.disabled = true;
-                detailCommentInput.placeholder = '账号已被封禁，无法评论';
-            } else {
-                detailCommentInput.disabled = false;
-                detailSendCommentBtn.disabled = false;
-                detailCommentInput.placeholder = '写评论…';
-            }
-            detailCommentInput.focus();
         }
 
-        function closeDetailPanel() {
+        函数 closeDetailPanel() {
             detailOverlay.classList.remove('active');
             currentDetailPostId = null;
         }
         closeDetailBtn.addEventListener('click', closeDetailPanel);
 
-        async function renderDetail(postId) {
+        异步 函数 renderDetail(帖子ID) {
             const post = posts.find(p => p.id === postId);
-            if (!post) {
-                detailContent.innerHTML = '<div class="empty-state">帖子不存在</div>';
-                return;
-            }
-            let comments = [];
-            try {
-                comments = await fetchComments(postId);
-                comments.sort((a, b) => {
-                    if (a.is_pinned && !b.is_pinned) return -1;
-                    if (!a.is_pinned && b.is_pinned) return 1;
-                    return new Date(a.created_at) - new Date(b.created_at);
-                });
-            } catch (e) { console.error('加载评论失败:', e); }
+            if (!post) { detailContent.innerHTML = '<div class="empty-state">帖子不存在</div>'; return; }
 
-            const isOfficial = post.is_official === true;
-            const timeStr = new Date(post.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const comments = await fetchComments(postId);
             const userInfo = post.users || null;
-            const avatar = userInfo ? (userInfo.avatar_url || getUserAvatar(userInfo)) : getUserAvatar({ nickname: post.author });
             const displayName = userInfo ? userInfo.nickname : post.author;
-            const userId = userInfo ? userInfo.id : null;
-            const role = userId ? getUserRole(userId) : null;
-            const officialTag = isOfficial ? `<span class="official-tag">官方</span>` : '';
-            const roleTag = role ? `<span class="role-tag" style="background:${escapeHtml(role.color)}">${escapeHtml(role.name)}</span>` : '';
-            const imageHtml = post.image_url ? `<img src="${escapeHtml(post.image_url)}" class="post-image" loading="lazy" onerror="this.style.display='none'" />` : '';
-            const titleHtml = post.title ? `<div class="post-title">${escapeHtml(post.title)}</div>` : '';
+            const avatar = userInfo?.avatar_url || '';
+            const timeStr = new Date(post.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            const pollData = await loadPollData(postId);
+            const pollHtml = renderPollUI(pollData);
 
             let commentsHtml = '';
-            if (comments.length === 0) {
-                commentsHtml = '<div class="comment-empty">还没有评论，来抢沙发吧</div>';
+            如果 (!comments.length) {
+                commentsHtml = '<div class="comment-empty">还没有评论</div>';
             } else {
                 commentsHtml = comments.map(c => {
                     const cUser = c.users || null;
-                    const cAvatar = cUser ? (cUser.avatar_url || getUserAvatar(cUser)) : getUserAvatar({ nickname: c.author });
                     const cName = cUser ? cUser.nickname : c.author;
-                    const cUserId = cUser ? cUser.id : null;
-                    const cRole = cUserId ? getUserRole(cUserId) : null;
-                    const cOfficial = c.is_official ? `<span class="official-tag">官方</span>` : '';
-                    const cRoleTag = cRole ? `<span class="role-tag" style="background:${escapeHtml(cRole.color)}">${escapeHtml(cRole.name)}</span>` : '';
+                    const cAvatar = cUser?.avatar_url || '';
                     const cTime = new Date(c.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                    const canDelete = isAdmin || (currentUser && currentUser.id === c.user_id);
-                    const canPin = isAdmin;
-                    let menuHtml = '';
-                    if (canDelete || canPin) {
-                        menuHtml = `
-                            <button class="more-btn" onclick="event.stopPropagation(); toggleCommentMenu('${c.id}')">
-                                ⋮
-                            </button>
-                            <div class="comment-menu" id="commentMenu_${c.id}">
-                                ${canPin ? `<button onclick="pinComment('${c.id}', true)">📌 置顶</button>` : ''}
-                                ${canPin ? `<button onclick="pinComment('${c.id}', false)">↗️ 取消置顶</button>` : ''}
-                                ${canDelete ? `<button class="danger" onclick="deleteCommentById('${c.id}')">🗑️ 删除</button>` : ''}
-                            </div>
-                        `;
-                    }
-                    const pinnedBadge = c.is_pinned ? '📌 ' : '';
-                    return `
-                        <div class="comment-item" data-id="${c.id}">
-                            <div class="avatar" style="${cAvatar && cAvatar.startsWith('http') ? `background-image:url(${cAvatar});background-size:cover;background-position:center;` : ''}">${cAvatar && !cAvatar.startsWith('http') ? cName.charAt(0).toUpperCase() : ''}</div>
+                    返回 `
+                        <div class="comment-item">
+                            <div class="avatar" style="${cAvatar ? `background-image:url(${cAvatar});background-size:cover;` : ''}">${!cAvatar ? cName.charAt(0).toUpperCase() : ''}</div>
                             <div class="body">
                                 <div class="meta">
                                     <span class="name">${escapeHtml(cName)}</span>
-                                    ${cOfficial}
-                                    ${cRoleTag}
+                                    ${c.is_official ? '<span class="official-tag">官方</span>' : ''}
                                     <span class="time">${cTime}</span>
-                                    ${menuHtml}
                                 </div>
-                                <div class="txt">${pinnedBadge}${escapeHtml(c.content)}</div>
+                                <div class="txt">${escapeHtml(c.content)}</div>
                             </div>
                         </div>
                     `;
@@ -1988,476 +526,65 @@
             detailContent.innerHTML = `
                 <div class="detail-post">
                     <div class="post-author">
-                        <div class="avatar" style="${avatar && avatar.startsWith('http') ? `background-image:url(${avatar});background-size:cover;background-position:center;` : ''}">${avatar && !avatar.startsWith('http') ? displayName.charAt(0).toUpperCase() : ''}</div>
+                        <div class="avatar" style="${avatar ? `background-image:url(${avatar});background-size:cover;` : ''}">${!avatar ? displayName.charAt(0).toUpperCase() : ''}</div>
                         <span class="name">${escapeHtml(displayName)}</span>
-                        ${officialTag}
-                        ${roleTag}
+                        ${post.is_official ? '<span class="official-tag">官方</span>' : ''}
                         <span class="time">${timeStr}</span>
                     </div>
-                    ${titleHtml}
-                    ${imageHtml}
-                    <div class="post-content">${escapeHtml(post.content)}</div>
+                    ${post.title ? `<div class="post-title">${escapeHtml(post.title)}</div>` : ''}
+                    <div class="post-content">${post.content}</div>
+                    ${pollHtml}
                 </div>
                 <div class="detail-comments">
-                    <div style="font-weight:600;font-size:0.85em;margin-bottom:8px;">💬 评论 (${comments.length})</div>
+                    
+ 评论 (${comments.length}
+
                     ${commentsHtml}
                 </div>
             `;
         }
 
-        var activeMenuId = null;
-
-        function toggleCommentMenu(commentId) {
-            const menu = document.getElementById(`commentMenu_${commentId}`);
-            if (!menu) return;
-            if (activeMenuId && activeMenuId !== commentId) {
-                const old = document.getElementById(`commentMenu_${activeMenuId}`);
-                if (old) old.style.display = 'none';
-            }
-            if (menu.style.display === 'block') {
-                menu.style.display = 'none';
-                activeMenuId = null;
-            } else {
-                document.querySelectorAll('.comment-menu').forEach(m => m.style.display = 'none');
-                menu.style.display = 'block';
-                activeMenuId = commentId;
-                document.addEventListener('click', function closeMenu(e) {
-                    if (!e.target.closest('.comment-item')) {
-                        document.querySelectorAll('.comment-menu').forEach(m => m.style.display = 'none');
-                        activeMenuId = null;
-                        document.removeEventListener('click', closeMenu);
-                    }
-                });
-            }
-        }
-
-        async function pinComment(commentId, pinned) {
-            if (!isAdmin) { showToast('权限不足'); return; }
-            try {
-                await toggleCommentPin(commentId, pinned);
-                showToast(pinned ? '✅ 已置顶' : '已取消置顶');
-                if (currentDetailPostId) {
-                    await renderDetail(currentDetailPostId);
-                    await loadAllData();
-                }
-            } catch (err) {
-                showToast('操作失败：' + err.message);
-            }
-        }
-
-        async function deleteCommentById(commentId) {
-            showConfirm('删除评论', '确定要删除此评论吗？', async () => {
-                try {
-                    await deleteComment(commentId);
-                    showToast('🗑️ 评论已删除');
-                    if (currentDetailPostId) {
-                        await renderDetail(currentDetailPostId);
-                        await loadAllData();
-                    }
-                } catch (err) {
-                    showToast('删除失败：' + err.message);
-                }
-            });
-        }
-
         detailSendCommentBtn.addEventListener('click', async function() {
-            if (!currentUser) { showToast('请先登录'); return; }
-            if (!currentDetailPostId) return;
-            if (isUserBanned()) { showToast('账号已被封禁，无法评论'); return; }
+            如果 (!当前用户) { 显示Toast('请先登录'); 返回; }
+            如果 (!currentDetailPostId) 返回;
             const content = detailCommentInput.value.trim();
-            if (!content) { showToast('请输入评论内容'); return; }
+            如果 (!content) { showToast('请输入评论内容'); 返回; }
 
-            const btn = this;
-            btn.disabled = true;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<span class="spinner" style="display:inline-block;width:1em;height:1em;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:4px;"></span> 发送中...`;
-
-            try {
-                const isOfficial = isAdmin || currentUser.phone === '17355394710';
-                await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content, isOfficial);
-                
-                // ===== 添加评论通知（新增代码） =====
-                try {
-                    const post = posts.find(p => p.id === currentDetailPostId);
-                    if (post && post.user_id !== currentUser.id) {
-                        const postTitle = post.title || (post.content ? post.content.substring(0, 30) + (post.content.length > 30 ? '…' : '') : '帖子');
-                        const notificationContent = `${currentUser.nickname} 给你的帖子“${postTitle}”评论了，快去看看吧`;
-                        await window.sb
-                            .from('notifications')
-                            .insert([{
-                                user_id: post.user_id,
-                                type: 'comment',
-                                content: notificationContent,
-                                link: `posts.html?post=${post.id}`,
-                                is_read: false
-                            }]);
-                    }
-                } catch (notiErr) {
-                    console.error('插入通知失败:', notiErr);
-                }
-                // ===== 通知代码结束 =====
-
+            尝试 {
+                await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content);
                 detailCommentInput.value = '';
                 await renderDetail(currentDetailPostId);
-                await loadAllData();
                 showToast('💬 评论已发送');
             } catch (err) {
                 showToast('评论失败：' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        });
-        detailCommentInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') detailSendCommentBtn.click();
-        });
-
-        // ============================================================
-        // 管理面板
-        // ============================================================
-        var adminPanelOverlay = document.getElementById('adminPanelOverlay');
-        var adminPanelContent = document.getElementById('adminPanelContent');
-        var closeAdminPanelBtn = document.getElementById('closeAdminPanel');
-
-        function openAdminPanel() {
-            if (!isAdmin) { showToast('权限不足'); return; }
-            adminPanelOverlay.classList.add('active');
-            renderAdminPanel();
-        }
-
-        function closeAdminPanel() {
-            adminPanelOverlay.classList.remove('active');
-        }
-        closeAdminPanelBtn.addEventListener('click', closeAdminPanel);
-
-        async function renderAdminPanel() {
-            try {
-                const users = await fetchAllUsers();
-                allUsers = users;
-                const roles = await fetchUserRoles();
-                const userRoleMap = {};
-                roles.forEach(r => { userRoleMap[r.user_id] = r; });
-
-                let html = '';
-                html += `<div class="admin-section-title">👥 用户管理</div>`;
-                if (!users.length) {
-                    html += '<div class="empty-state">暂无用户</div>';
-                } else {
-                    users.forEach(u => {
-                        const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
-                        const avatar = u.avatar_url || getUserAvatar(u);
-                        const banStatus = isBanned ? `<span style="color:var(--danger);font-size:0.7em;">已封禁</span>` : `<span style="color:var(--primary);font-size:0.7em;">正常</span>`;
-                        const role = userRoleMap[u.id];
-                        const roleDisplay = role ? `<span style="background:${role.role_color};color:#fff;padding:0 6px;border-radius:99px;font-size:0.6em;margin-left:4px;">${escapeHtml(role.role_name)}</span>` : '';
-                        const shortId = u.id.substring(0,8);
-                        html += `
-                            <div class="admin-user-item">
-                                <div class="user-info">
-                                    <div class="avatar" style="${avatar && avatar.startsWith('http') ? `background-image:url(${avatar});background-size:cover;background-position:center;` : ''}">${avatar && !avatar.startsWith('http') ? u.nickname.charAt(0).toUpperCase() : ''}</div>
-                                    <div class="details">
-                                        <span class="nickname">${escapeHtml(u.nickname)} ${roleDisplay}</span>
-                                        <span class="phone">${escapeHtml(u.phone)} ${banStatus}</span>
-                                        <span class="uuid" onclick="navigator.clipboard.writeText('${u.id}'); showToast('已复制用户ID')">🆔 ${shortId}…</span>
-                                    </div>
-                                </div>
-                                <div class="user-actions">
-                                    <button class="login-as" onclick="loginAsUser('${u.id}')">一键登录</button>
-                                    ${isBanned ? `<button class="unban-btn" onclick="unbanUserById('${u.id}')">解封</button>` : `<button class="ban-btn" onclick="openBanModal('${u.id}','${escapeHtml(u.nickname)}')">封号</button>`}
-                                    <button class="assign-role-btn" onclick="openAssignRole('${u.id}','${escapeHtml(u.nickname)}')">分配身份</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-
-                html += `<div class="admin-section-title">🏷️ 身份管理</div>`;
-                const uniqueRoles = {};
-                roles.forEach(r => {
-                    const key = r.role_name + '|' + r.role_color;
-                    if (!uniqueRoles[key]) {
-                        uniqueRoles[key] = { name: r.role_name, color: r.role_color, users: [] };
-                    }
-                    uniqueRoles[key].users.push(r.user_id);
-                });
-                if (Object.keys(uniqueRoles).length === 0) {
-                    html += '<div class="empty-state">暂无身份，请先分配</div>';
-                } else {
-                    for (const key in uniqueRoles) {
-                        const role = uniqueRoles[key];
-                        html += `
-                            <div class="admin-role-item">
-                                <div class="role-info">
-                                    <div class="color-preview" style="background:${role.color};"></div>
-                                    <span class="role-name">${escapeHtml(role.name)}</span>
-                                    <span style="font-size:0.7em;color:var(--text-muted);">（${role.users.length} 人）</span>
-                                </div>
-                                <div class="role-actions">
-                                    <button onclick="removeRoleFromAll('${escapeHtml(role.name)}')">删除此身份</button>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-                html += `
-                    <div class="admin-role-add">
-                        <input type="text" id="newRoleName" placeholder="身份名称" maxlength="20" />
-                        <input type="color" id="newRoleColor" value="#2e7d32" />
-                        <button onclick="createAndAssignRole()">创建并分配给用户</button>
-                        <span style="font-size:0.7em;color:var(--text-muted);">（在下方选择用户）</span>
-                    </div>
-                `;
-
-                adminPanelContent.innerHTML = html;
-            } catch (err) {
-                adminPanelContent.innerHTML = `<div class="empty-state">加载失败：${err.message}</div>`;
-            }
-        }
-
-        // ============================================================
-        // 身份分配、登录、封号等辅助功能
-        // ============================================================
-        function openAssignRole(userId, nickname) {
-            showPrompt(
-                '分配身份',
-                `为用户“${nickname}”分配身份`,
-                '身份名称（例如：频道主）',
-                (name) => {
-                    if (!name) { showToast('请输入身份名称'); return; }
-                    showPrompt(
-                        '身份颜色',
-                        `为“${name}”选择颜色`,
-                        '#2e7d32',
-                        (color) => {
-                            if (!color || !/^#[0-9a-f]{6}$/i.test(color)) { showToast('颜色格式不正确，示例：#2e7d32'); return; }
-                            assignRoleToUser(userId, name, color);
-                        }
-                    );
-                }
-            );
-        }
-
-        async function assignRoleToUser(userId, roleName, roleColor) {
-            try {
-                await removeRole(userId);
-                await assignRole(userId, roleName, roleColor);
-                await loadUserRoles();
-                await renderAdminPanel();
-                await loadAllData();
-                showToast('✅ 身份已分配');
-            } catch (err) {
-                showToast('分配失败：' + err.message);
-            }
-        }
-
-        async function createAndAssignRole() {
-            const nameInput = document.getElementById('newRoleName');
-            const colorInput = document.getElementById('newRoleColor');
-            const name = nameInput.value.trim();
-            const color = colorInput.value;
-            if (!name) { showToast('请输入身份名称'); return; }
-            showPrompt(
-                '分配身份',
-                '请输入要分配该身份的用户ID（可在用户列表中复制）',
-                '用户UUID',
-                (userId) => {
-                    if (!userId) { showToast('请输入用户ID'); return; }
-                    if (userId.length < 10) { showToast('无效的用户ID，请复制正确的UUID'); return; }
-                    assignRoleToUser(userId, name, color);
-                }
-            );
-        }
-
-        async function removeRoleFromAll(roleName) {
-            showConfirm('删除身份', `确定要删除身份“${roleName}”吗？所有拥有该身份的用户将失去此身份。`, async () => {
-                try {
-                    const roles = await fetchUserRoles();
-                    const toRemove = roles.filter(r => r.role_name === roleName);
-                    for (const r of toRemove) {
-                        await removeRole(r.user_id);
-                    }
-                    await loadUserRoles();
-                    await renderAdminPanel();
-                    await loadAllData();
-                    showToast('🗑️ 身份已删除');
-                } catch (err) {
-                    showToast('删除失败：' + err.message);
-                }
-            });
-        }
-
-        async function loginAsUser(userId) {
-            try {
-                const { data, error } = await window.sb
-                    .from('users')
-                    .select('*')
-                    .eq('id', userId)
-                    .single();
-                if (error) throw error;
-                if (!data) { showToast('用户不存在'); return; }
-                setSessionUser(data);
-                currentUser = data;
-                isAdmin = (currentUser.phone === '17355394710');
-                renderHeader('帖子广场', 'posts');
-                renderFooter('posts');
-                await loadUserRoles();
-                await loadAllData();
-                closeAdminPanel();
-                showToast('✅ 已切换到 ' + data.nickname);
-                updateBannedBanner();
-            } catch (err) {
-                showToast('登录失败：' + err.message);
-            }
-        }
-
-        // 封号弹窗
-        var banModal = document.getElementById('banModal');
-        var banTargetId = null;
-        var banTargetNickname = document.getElementById('banTargetNickname');
-        var banReasonInput = document.getElementById('banReasonInput');
-        var banUntilInput = document.getElementById('banUntilInput');
-        var banCancel = document.getElementById('banCancel');
-        var banConfirm = document.getElementById('banConfirm');
-
-        function openBanModal(userId, nickname) {
-            if (!isAdmin) return;
-            banTargetId = userId;
-            banTargetNickname.textContent = nickname;
-            const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            banUntilInput.value = sevenDaysLater.toISOString().slice(0, 16);
-            banReasonInput.value = '由于您最近的不当言论，我们已经对你进行封号处理';
-            banModal.classList.add('active');
-        }
-
-        function closeBanModal() {
-            banModal.classList.remove('active');
-            banTargetId = null;
-        }
-        banCancel.addEventListener('click', closeBanModal);
-        banModal.addEventListener('click', function(e) {
-            if (e.target === banModal) closeBanModal();
-        });
-
-        banConfirm.addEventListener('click', async function() {
-            if (!banTargetId || !isAdmin) return;
-            const reason = banReasonInput.value.trim() || '由于您最近的不当言论，我们已经对你进行封号处理';
-            const until = banUntilInput.value;
-            if (!until) { showToast('请选择解封时间'); return; }
-            try {
-                await banUser(banTargetId, reason, new Date(until).toISOString());
-                closeBanModal();
-                await renderAdminPanel();
-                showToast('✅ 封号成功');
-            } catch (err) {
-                showToast('封号失败：' + err.message);
             }
         });
 
-        async function unbanUserById(userId) {
-            if (!isAdmin) return;
-            showConfirm('解封用户', '确定要解封该用户吗？', async () => {
-                try {
-                    await unbanUser(userId);
-                    await renderAdminPanel();
-                    showToast('✅ 已解封');
-                } catch (err) {
-                    showToast('解封失败：' + err.message);
-                }
-            });
-        }
-
-        // ============================================================
-        // 加载所有数据
-        // ============================================================
         async function loadAllData() {
-            try {
-                const postsData = await fetchPosts();
-                posts = postsData;
+            尝试 {
+                posts = await fetchPosts();
                 await renderPosts();
-                if (isAdmin) {
-                    document.getElementById('adminPanelBtn').style.display = 'inline-flex';
-                } else {
-                    document.getElementById('adminPanelBtn').style.display = 'none';
-                }
             } catch (err) {
-                console.error('加载帖子失败:', err);
                 showToast('帖子加载失败');
             }
         }
 
-        // ============================================================
-        // 初始化
-        // ============================================================
         (function init() {
-            const session = getSessionUser();
-            if (!session || !session.id) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = session;
-            isAdmin = (currentUser.phone === '17355394710');
-            updateBannedBanner();
-            if (isUserBanned()) document.getElementById('newPostBtn').disabled = true;
-            loadUserRoles()
-                .then(() => {
-                    loadCategories()
-                        .then(() => loadAllData());
-                });
+            如果 (!当前用户 || !当前用户.ID) 窗口.位置.href = 'index.html';
+            loadCategories().then(() => loadAllData());
 
-            window.sb.channel('public')
+            window.sb.channel('public-posts')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, () => loadAllData())
                 .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, () => loadAllData())
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, () => loadAllData())
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'post_comments' }, () => {
-                    if (currentDetailPostId) renderDetail(currentDetailPostId);
-                    loadAllData();
+                    如果 (currentDetailPostId) 渲染详情(currentDetailPostId);
                 })
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'post_comments' }, () => {
-                    if (currentDetailPostId) renderDetail(currentDetailPostId);
-                    loadAllData();
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'poll_votes' }, () => {
+                    如果 (currentDetailPostId) 渲染详情(currentDetailPostId);
                 })
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'post_comments' }, () => {
-                    if (currentDetailPostId) renderDetail(currentDetailPostId);
-                    loadAllData();
-                })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_roles' }, () => {
-                    loadUserRoles();
-                    if (adminPanelOverlay.classList.contains('active')) renderAdminPanel();
-                    loadAllData();
-                })
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'user_roles' }, () => {
-                    loadUserRoles();
-                    if (adminPanelOverlay.classList.contains('active')) renderAdminPanel();
-                    loadAllData();
-                })
-                .subscribe();
-
-            function syncUser() {
-                const session = getSessionUser();
-                if (session && session.id) {
-                    if (!currentUser || currentUser.id !== session.id ||
-                        currentUser.avatar_url !== session.avatar_url ||
-                        currentUser.nickname !== session.nickname) {
-                        currentUser = session;
-                        isAdmin = (currentUser.phone === '17355394710');
-                        renderHeader('帖子广场', 'posts');
-                        renderFooter('posts');
-                        updateBannedBanner();
-                        if (isUserBanned()) document.getElementById('newPostBtn').disabled = true;
-                        loadUserRoles()
-                            .then(() => {
-                                loadCategories()
-                                    .then(() => loadAllData());
-                            });
-                    }
-                }
-            }
-            window.addEventListener('focus', syncUser);
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) syncUser();
-            });
+                .订阅();
         })();
-
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
 </html>
