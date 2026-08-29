@@ -2,18 +2,12 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, 
-
-maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 个人中心</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-
-
-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ===== 基础与主题变量（保持原有样式） ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: 
-
-none; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         :root {
             --bg: #f5faf5;
             --bg-card: #ffffff;
@@ -30,279 +24,86 @@ none; -webkit-tap-highlight-color: transparent; }
             --shadow-sm: 0 2px 12px rgba(46, 125, 50, 0.08);
             --radius: 16px;
             --radius-sm: 10px;
-            --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, 
-
-sans-serif;
+            --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
             --safe-bottom: env(safe-area-inset-bottom, 0px);
             --danger: #e57373;
             --danger-bg: #ffebee;
             --danger-text: #c62828;
         }
-        html, body { height: 100%; font-family: var(--font); background: 
+        html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
+        #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
-var(--bg); color: var(--text); overflow: hidden; }
-        #mainApp { display: flex; flex-direction: column; height: 100vh; 
-
-height: 100dvh; background: var(--bg); }
-
-        /* 头部、底部样式由 common.js 生成，这里仅保留类名定义 */
-        .app-header { flex-shrink: 0; padding: 12px 20px 8px 20px; 
-
-background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--
-
-border); display: flex; align-items: center; justify-content: space-
-
-between; z-index: 50; backdrop-filter: blur(12px); min-height: 56px; }
-        .app-header .brand { font-weight: 900; font-size: 1.1em; color: 
-
-var(--text); display: flex; align-items: center; gap: 0.4em; cursor: 
-
-default; }
+        .app-header { flex-shrink: 0; padding: 12px 20px 8px 20px; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 50; backdrop-filter: blur(12px); min-height: 56px; }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; cursor: default; }
         .app-header .brand span { color: var(--primary); }
-        .app-header .brand small { font-weight: 400; font-size: 0.55em; 
-
-color: var(--text-muted); margin-left: 0.3em; }
-        .app-header .user-area { display: flex; align-items: center; gap: 
-
-10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; 
-
-transition: background 0.2s; }
+        .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.3em; }
+        .app-header .user-area { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; transition: background 0.2s; }
         .app-header .user-area:hover { background: var(--primary-bg); }
-        .app-header .avatar { width: 32px; height: 32px; border-radius: 
+        .app-header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
+        .app-header .user-name { font-weight: 600; font-size: 0.85em; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; transition: transform 0.3s; }
 
-50%; background: var(--primary); color: #fff; display: grid; place-items: 
-
-center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-
-
-size: cover; background-position: center; }
-        .app-header .user-name { font-weight: 600; font-size: 0.85em; 
-
-max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: 
-
-nowrap; }
-        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; 
-
-transition: transform 0.3s; }
-
-        .app-tabs { flex-shrink: 0; display: flex; background: rgba
-
-(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 
-
-calc(6px + var(--safe-bottom)); z-index: 50; backdrop-filter: blur(12px); 
-
-}
-        .tab-btn { flex: 1; display: flex; flex-direction: column; align-
-
-items: center; gap: 2px; background: none; border: none; font-family: var
-
-(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); 
-
-padding: 4px 0; cursor: pointer; transition: color 0.2s; position: 
-
-relative; text-decoration: none; }
+        .app-tabs { flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 calc(6px + var(--safe-bottom)); z-index: 50; backdrop-filter: blur(12px); }
+        .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); padding: 4px 0; cursor: pointer; transition: color 0.2s; position: relative; text-decoration: none; }
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
         .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after { content: ''; position: absolute; top: -
+        .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
 
-1px; left: 30%; right: 30%; height: 3px; background: var(--primary); 
-
-border-radius: 0 0 4px 4px; }
-
-        /* 内容区域 */
-        .profile-content { flex: 1; overflow-y: auto; padding: 16px 20px 
-
-12px 20px; display: flex; flex-direction: column; align-items: center; 
-
-justify-content: flex-start; gap: 16px; }
-        .view { width: 100%; max-width: 480px; display: none; flex-
-
-direction: column; animation: fadeSlideIn 0.35s ease; }
+        .profile-content { flex: 1; overflow-y: auto; padding: 16px 20px 12px 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; }
+        .view { width: 100%; max-width: 480px; display: none; flex-direction: column; animation: fadeSlideIn 0.35s ease; }
         .view.active { display: flex; }
-        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-(16px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 设置卡片 */
-        .settings-card { background: var(--bg-card); border-radius: var
-
-(--radius); padding: 1.8em 1.5em; width: 100%; box-shadow: var(--shadow); 
-
-border: 1px solid var(--border); }
-        .settings-title { font-size: 0.7em; font-weight: 700; color: var
-
-(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; 
-
-margin-bottom: 12px; }
-        .settings-item { display: flex; align-items: center; justify-
-
-content: space-between; padding: 12px 10px; border-bottom: 1px solid var
-
-(--border); cursor: pointer; transition: background 0.2s; border-radius: 
-
-var(--radius-sm); margin-bottom: 4px; text-decoration: none; }
-        .settings-item:last-child { border-bottom: none; margin-bottom: 0; 
-
-}
+        .settings-card { background: var(--bg-card); border-radius: var(--radius); padding: 1.8em 1.5em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .settings-title { font-size: 0.7em; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+        .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; border-radius: var(--radius-sm); margin-bottom: 4px; text-decoration: none; }
+        .settings-item:last-child { border-bottom: none; margin-bottom: 0; }
         .settings-item:hover { background: var(--primary-bg); }
         .settings-item.no-click { cursor: default; }
         .settings-item.no-click:hover { background: transparent; }
-        .settings-item .item-left { display: flex; align-items: center; 
+        .settings-item .item-left { display: flex; align-items: center; gap: 12px; }
+        .settings-item .item-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-bg); display: grid; place-items: center; font-size: 1.2em; flex-shrink: 0; color: var(--primary); }
+        .settings-item .item-label { font-size: 0.95em; font-weight: 600; color: var(--text); }
+        .settings-item .item-sublabel { font-size: 0.7em; color: var(--text-light); margin-top: 2px; font-weight: 400; }
+        .settings-item .item-arrow { color: var(--text-light); font-size: 1.1em; transition: transform 0.2s; }
+        .settings-item:hover .item-arrow { transform: translateX(3px); color: var(--primary); }
 
-gap: 12px; }
-        .settings-item .item-icon { width: 38px; height: 38px; border-
-
-radius: 50%; background: var(--primary-bg); display: grid; place-items: 
-
-center; font-size: 1.2em; flex-shrink: 0; color: var(--primary); }
-        .settings-item .item-label { font-size: 0.95em; font-weight: 600; 
-
-color: var(--text); }
-        .settings-item .item-sublabel { font-size: 0.7em; color: var(--
-
-text-light); margin-top: 2px; font-weight: 400; }
-        .settings-item .item-arrow { color: var(--text-light); font-size: 
-
-1.1em; transition: transform 0.2s; }
-        .settings-item:hover .item-arrow { transform: translateX(3px); 
-
-color: var(--primary); }
-
-        /* 开关按钮 */
-        .toggle-switch { display: inline-block; position: relative; width: 
-
-52px; height: 30px; flex-shrink: 0; }
+        .toggle-switch { display: inline-block; position: relative; width: 52px; height: 30px; flex-shrink: 0; }
         .toggle-input { display: none; }
-        .toggle-label { position: absolute; top: 0; left: 0; width: 52px; 
+        .toggle-label { position: absolute; top: 0; left: 0; width: 52px; height: 30px; background-color: #ccc; border-radius: 30px; cursor: pointer; transition: background-color 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        .toggle-label::before { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; background-color: #fff; border-radius: 50%; transition: transform 0.3s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+        .toggle-input:checked + .toggle-label { background-color: var(--primary); }
+        .toggle-input:checked + .toggle-label::before { transform: translateX(22px); }
 
-height: 30px; background-color: #ccc; border-radius: 30px; cursor: 
-
-pointer; transition: background-color 0.3s ease; box-shadow: inset 0 1px 
-
-3px rgba(0,0,0,0.1); }
-        .toggle-label::before { content: ""; position: absolute; top: 2px; 
-
-left: 2px; width: 26px; height: 26px; background-color: #fff; border-
-
-radius: 50%; transition: transform 0.3s ease; box-shadow: 0 1px 4px rgba
-
-(0,0,0,0.15); }
-        .toggle-input:checked + .toggle-label { background-color: var(--
-
-primary); }
-        .toggle-input:checked + .toggle-label::before { transform: 
-
-translateX(22px); }
-
-        /* 资料编辑卡片 */
-        .profile-card { background: var(--bg-card); border-radius: var(--
-
-radius); padding: 2em 2.2em; width: 100%; box-shadow: var(--shadow); 
-
-border: 1px solid var(--border); }
-        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; 
-
-background: var(--primary); color: #fff; display: grid; place-items: 
-
-center; font-size: 32px; font-weight: 700; margin: 0 auto 12px; object-
-
-fit: cover; background-size: cover; background-position: center; }
-        .avatar-upload { text-align: center; margin-top: 4px; margin-
-
-bottom: 16px; }
-        .avatar-upload label { font-size: 0.8em; color: var(--primary); 
-
-cursor: pointer; text-decoration: underline; }
+        .profile-card { background: var(--bg-card); border-radius: var(--radius); padding: 2em 2.2em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px; object-fit: cover; background-size: cover; background-position: center; }
+        .avatar-upload { text-align: center; margin-top: 4px; margin-bottom: 16px; }
+        .avatar-upload label { font-size: 0.8em; color: var(--primary); cursor: pointer; text-decoration: underline; }
         .avatar-upload input[type="file"] { display: none; }
         .field-group { margin-bottom: 16px; }
-        .field-group label { display: block; font-size: 0.7em; font-
-
-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-
-
-spacing: 0.05em; margin-bottom: 4px; }
-        .field-group input { width: 100%; padding: 8px 12px; border-
-
-radius: var(--radius-sm); border: 2px solid var(--border); background: 
-
-var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; 
-
-transition: border-color 0.2s; color: var(--text); }
+        .field-group label { display: block; font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .field-group input { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; transition: border-color 0.2s; color: var(--text); }
         .field-group input:focus { border-color: var(--primary); }
-        .btn-primary { width: 100%; padding: 10px; border-radius: var(--
-
-radius-sm); border: none; background: var(--primary); color: #fff; font-
-
-weight: 700; font-size: 1em; cursor: pointer; transition: background 0.2s; 
-
-font-family: inherit; }
+        .btn-primary { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; transition: background 0.2s; font-family: inherit; }
         .btn-primary:hover { background: var(--primary-light); }
-        .btn-danger { width: 100%; padding: 10px; border-radius: var(--
-
-radius-sm); border: none; background: var(--danger-bg); color: var(--
-
-danger-text); font-weight: 700; font-size: 1em; cursor: pointer; 
-
-transition: background 0.2s; font-family: inherit; margin-top: 8px; }
+        .btn-danger { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--danger-bg); color: var(--danger-text); font-weight: 700; font-size: 1em; cursor: pointer; transition: background 0.2s; font-family: inherit; margin-top: 8px; }
         .btn-danger:hover { background: #ffcdd2; }
-        .btn-secondary-outline { width: 100%; padding: 8px 12px; border-
+        .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; transition: all 0.2s; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .btn-secondary-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
 
-radius: var(--radius-sm); border: 2px solid var(--border); background: 
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease; z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow); }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-transparent; color: var(--text-muted); font-weight: 600; font-size: 
-
-0.85em; cursor: pointer; transition: all 0.2s; font-family: inherit; 
-
-margin-bottom: 10px; display: flex; align-items: center; justify-content: 
-
-center; gap: 4px; }
-        .btn-secondary-outline:hover { border-color: var(--primary); 
-
-color: var(--primary); background: var(--primary-bg); }
-
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: 
-
-translateX(-50%) translateY(80px); background: var(--text); color: #fff; 
-
-padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 
-
-0.85em; opacity: 0; transition: all 0.4s ease; z-index: 9999; pointer-
-
-events: none; white-space: nowrap; box-shadow: var(--shadow); }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY
-
-(0); }
-
-        .custom-modal { position: fixed; inset: 0; z-index: 2000; 
-
-background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; 
-
-align-items: center; justify-content: center; padding: 20px; }
+        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
         .custom-modal.active { display: flex; }
-        .modal-box { background: var(--bg-card); border-radius: var(--
-
-radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--
-
-shadow); border: 1px solid var(--border); }
-        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 
-
-8px; color: var(--text); }
-        .modal-body { font-size: 0.95em; color: var(--text-muted); line-
-
-height: 1.6; margin-bottom: 16px; }
-        .modal-actions { display: flex; gap: 8px; justify-content: flex-
-
-end; }
-        .modal-actions button { padding: 6px 18px; border-radius: var(--
-
-radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: 
-
-pointer; transition: background 0.2s; font-family: inherit; }
-        .modal-actions .btn-danger { background: var(--danger); color: 
-
-#fff; margin-top: 0; }
+        .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+        .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: pointer; transition: background 0.2s; font-family: inherit; }
+        .modal-actions .btn-danger { background: var(--danger); color: #fff; margin-top: 0; }
         .modal-actions .btn-danger:hover { background: #c62828; }
-        .modal-actions .btn-secondary { background: var(--bg-input); 
-
-color: var(--text-muted); }
+        .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
         .modal-actions .btn-secondary:hover { background: var(--border); }
 
         @media (max-width: 480px) {
@@ -323,77 +124,52 @@ color: var(--text-muted); }
                 <div class="settings-card">
                     <div class="settings-title">⚙️ 设置中心</div>
 
-                    <!-- 更新资料 -->
-                    <div class="settings-item" id="goToProfileEdit" 
-
-role="button" tabindex="0">
+                    <div class="settings-item" id="goToProfileEdit" role="button" tabindex="0">
                         <div class="item-left">
                             <div class="item-icon">👤</div>
                             <div>
                                 <div class="item-label">更新资料</div>
-                                <div class="item-sublabel">头像、昵称管理
-
-</div>
+                                <div class="item-sublabel">头像、昵称管理</div>
                             </div>
                         </div>
                         <span class="item-arrow">›</span>
                     </div>
 
-                    <!-- 提醒音效（开关按钮） -->
                     <div class="settings-item no-click">
                         <div class="item-left">
                             <div class="item-icon">🔔</div>
                             <div>
                                 <div class="item-label">提醒音效</div>
-                                <div class="item-sublabel" 
-
-id="soundStatusHint">新消息提示音 · 已开启</div>
+                                <div class="item-sublabel" id="soundStatusHint">新消息提示音 · 已开启</div>
                             </div>
                         </div>
                         <div class="toggle-switch">
-                            <input class="toggle-input" id="soundToggle" 
-
-type="checkbox" />
-                            <label class="toggle-label" 
-
-for="soundToggle"></label>
+                            <input class="toggle-input" id="soundToggle" type="checkbox" />
+                            <label class="toggle-label" for="soundToggle"></label>
                         </div>
                     </div>
                 </div>
 
-                <!-- 退出登录按钮 -->
                 <div style="width: 100%; margin-top: 12px;">
-                    <button class="btn-danger" id="logoutBtnFromSettings">
-
-退出登录</button>
+                    <button class="btn-danger" id="logoutBtnFromSettings">退出登录</button>
                 </div>
             </div>
 
             <!-- 视图二：更新资料 -->
             <div class="view" id="profileEditView">
                 <div class="profile-card">
-                    <button class="btn-secondary-outline" 
-
-id="backToSettings">← 返回设置</button>
+                    <button class="btn-secondary-outline" id="backToSettings">← 返回设置</button>
                     <div class="profile-avatar" id="profileAvatar">S</div>
                     <div class="avatar-upload">
                         <label for="avatarFileInput">📷 更换头像</label>
-                        <input type="file" id="avatarFileInput" 
-
-accept="image/*" />
+                        <input type="file" id="avatarFileInput" accept="image/*" />
                     </div>
                     <div class="field-group">
                         <label>昵称</label>
-                        <input type="text" id="profileNameInput" 
-
-maxlength="12" />
+                        <input type="text" id="profileNameInput" maxlength="12" />
                     </div>
-                    <button class="btn-primary" id="saveProfileBtn">保存
-
-</button>
-                    <button class="btn-danger" id="logoutBtn">退出登录
-
-</button>
+                    <button class="btn-primary" id="saveProfileBtn">保存</button>
+                    <button class="btn-danger" id="logoutBtn">退出登录</button>
                 </div>
             </div>
         </div>
@@ -406,13 +182,9 @@ maxlength="12" />
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
-            <div class="modal-body" id="confirmBody">确定要执行此操作吗？
-
-</div>
+            <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
             <div class="modal-actions">
-                <button class="btn-secondary" id="confirmCancel">取消
-
-</button>
+                <button class="btn-secondary" id="confirmCancel">取消</button>
                 <button class="btn-danger" id="confirmOk">确定</button>
             </div>
         </div>
@@ -423,16 +195,15 @@ maxlength="12" />
     <script src="/liuyanban/common.js"></script>
     <script>
         // ============================================================
-        // 工具函数
+        // 工具函数（如果 common.js 加载失败，此处提供 fallback）
         // ============================================================
         function showToast(msg) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.textContent = msg;
             toast.classList.add('show');
             clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => toast.classList.remove
-
-('show'), 2800);
+            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
         }
 
         function getSessionUser() {
@@ -451,28 +222,191 @@ maxlength="12" />
             localStorage.removeItem('sq_user_session');
         }
 
-        // ============================================================
-        // Supabase 配置（已在 common.js 初始化，此处不再重复）
-        // ============================================================
+        // 检查 common.js 是否已提供 renderHeader，如果没有则定义备用
+        if (typeof renderHeader === 'undefined') {
+            console.warn('common.js 未正确加载，使用备用导航渲染');
+            renderHeader = function(title, activeTab) {
+                const user = getSessionUser();
+                const container = document.getElementById('header-container');
+                if (!container) return;
+                let html = '<div class="app-header"><div class="brand">Seven<span>戚</span><small>· ' + title + '</small></div>';
+                if (user && user.id) {
+                    html += '<div class="user-area" onclick="window.location.href=\'profile.html\'">' +
+                        '<div class="avatar">' + (user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U') + '</div>' +
+                        '<span class="user-name">' + (user.nickname || '用户') + '</span>' +
+                        '<span class="chevron">▾</span></div>';
+                } else {
+                    html += '<div class="user-area" onclick="window.location.href=\'index.html\'">登录</div>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            };
+            renderFooter = function(activeTab) {
+                const container = document.getElementById('footer-container');
+                if (!container) return;
+                const tabs = [
+                    { id: 'posts', label: '📰 帖子', href: '/liuyanban/posts.html' },
+                    { id: 'messages', label: '💌 留言板', href: '/liuyanban/messages.html' },
+                    { id: 'chats', label: '💬 聊天群', href: '/liuyanban/chats.html' },
+                    { id: 'profile', label: '👤 个人', href: '/liuyanban/profile.html' }
+                ];
+                let html = '<div class="app-tabs">';
+                tabs.forEach(tab => {
+                    const activeClass = (tab.id === activeTab) ? 'active' : '';
+                    html += '<a href="' + tab.href + '" class="tab-btn ' + activeClass + '" style="position:relative;">' +
+                        '<span class="tab-icon">' + tab.label.split(' ')[0] + '</span>' +
+                        tab.label.split(' ').slice(1).join(' ') +
+                        '</a>';
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            };
+        }
 
+        // ============================================================
+        // 页面逻辑
+        // ============================================================
+        const currentUser = getSessionUser();
+        if (!currentUser || !currentUser.id) {
+            window.location.href = 'index.html';
+        }
+
+        // 渲染头部和底部（激活个人标签）
+        renderHeader('个人中心', 'profile');
+        renderFooter('profile');
+
+        // 填充资料编辑表单
+        document.getElementById('profileNameInput').value = currentUser.nickname;
+        if (currentUser.avatar_url) {
+            document.getElementById('profileAvatar').style.backgroundImage = 'url(' + currentUser.avatar_url + ')';
+            document.getElementById('profileAvatar').textContent = '';
+        } else {
+            document.getElementById('profileAvatar').textContent = currentUser.nickname.charAt(0).toUpperCase();
+        }
+
+        // 初始化音效开关
+        const soundToggle = document.getElementById('soundToggle');
+        const soundStatusHint = document.getElementById('soundStatusHint');
+        const soundEnabled = localStorage.getItem('sq_sound_enabled') !== 'false';
+        soundToggle.checked = soundEnabled;
+        soundStatusHint.textContent = soundEnabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        document.getElementById('goToProfileEdit').addEventListener('click', () => switchView('profileEditView'));
+        document.getElementById('goToProfileEdit').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchView('profileEditView'); }
+        });
+        document.getElementById('backToSettings').addEventListener('click', () => switchView('settingsView'));
+
+        soundToggle.addEventListener('change', function() {
+            const enabled = this.checked;
+            localStorage.setItem('sq_sound_enabled', enabled);
+            soundStatusHint.textContent = enabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
+            if (enabled) {
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    const ctx = new AudioCtx();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.28);
+                    setTimeout(() => ctx.close(), 400);
+                } catch(e) {}
+                showToast('🔔 提醒音效已开启');
+            } else {
+                showToast('🔕 提醒音效已关闭');
+            }
+        });
+
+        // 头像上传
+        document.getElementById('avatarFileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ 图片大小不能超过 5MB');
+                this.value = '';
+                return;
+            }
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showToast('❌ 请选择 JPG/PNG/GIF/WebP 格式的图片');
+                this.value = '';
+                return;
+            }
+            try {
+                showToast('⏳ 正在上传头像...');
+                const avatarUrl = await uploadAvatar(file, currentUser.id);
+                await updateUser(currentUser.id, { avatar_url: avatarUrl });
+                currentUser.avatar_url = avatarUrl;
+                setSessionUser(currentUser);
+                document.getElementById('profileAvatar').style.backgroundImage = 'url(' + avatarUrl + ')';
+                document.getElementById('profileAvatar').textContent = '';
+                renderHeader('个人中心', 'profile');
+                showToast('✅ 头像已更新');
+            } catch (err) {
+                if (err.message && (err.message.includes('row-level security policy') || err.message.includes('new row violates'))) {
+                    showToast('❌ 上传失败：请管理员在 Supabase 中为 avatars 存储桶配置 RLS 策略');
+                } else {
+                    showToast('上传失败：' + err.message);
+                }
+                console.error(err);
+            }
+            this.value = '';
+        });
+
+        // 保存昵称
+        document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+            const newName = document.getElementById('profileNameInput').value.trim();
+            if (!newName) { showToast('请输入昵称'); return; }
+            if (newName.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') {
+                showToast('该昵称不可用');
+                return;
+            }
+            try {
+                await updateUser(currentUser.id, { nickname: newName });
+                currentUser.nickname = newName;
+                setSessionUser(currentUser);
+                renderHeader('个人中心', 'profile');
+                showToast('✅ 昵称已更新');
+            } catch (err) {
+                showToast('更新失败：' + err.message);
+            }
+        });
+
+        function handleLogout() {
+            showConfirm('退出登录', '确定要退出登录吗？', () => {
+                clearSession();
+                showToast('👋 已退出登录');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+            });
+        }
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        document.getElementById('logoutBtnFromSettings').addEventListener('click', handleLogout);
+
+        // 封装的 Supabase 操作（如果 common.js 没提供，这里定义）
         async function uploadAvatar(file, userId) {
             const fileExt = file.name.split('.').pop();
-            const fileName = `avatars/${userId}/profile.${fileExt}`;
-            const { data, error } = await window.sb.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
+            const fileName = 'avatars/' + userId + '/profile.' + fileExt;
+            const { data, error } = await window.sb.storage.from('avatars').upload(fileName, file, { upsert: true });
             if (error) throw error;
-            const { data: urlData } = window.sb.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
+            const { data: urlData } = window.sb.storage.from('avatars').getPublicUrl(fileName);
             return urlData.publicUrl;
         }
 
         async function updateUser(userId, updates) {
-            const { data, error } = await window.sb
-                .from('users')
-                .update(updates)
-                .eq('id', userId);
+            const { data, error } = await window.sb.from('users').update(updates).eq('id', userId);
             if (error) throw error;
             return data;
         }
@@ -494,202 +428,9 @@ maxlength="12" />
             cancelBtn.addEventListener('click', cancelHandler);
             okBtn.addEventListener('click', okHandler);
             modal.addEventListener('click', function bgClick(e) {
-                if (e.target === modal) { cleanup(); 
-
-modal.removeEventListener('click', bgClick); }
+                if (e.target === modal) { cleanup(); modal.removeEventListener('click', bgClick); }
             });
         }
-
-        // ============================================================
-        // 页面逻辑
-        // ============================================================
-        const currentUser = getSessionUser();
-        if (!currentUser || !currentUser.id) {
-            window.location.href = 'index.html';
-        }
-
-        // 渲染头部和底部（激活个人标签）
-        renderHeader('个人中心', 'profile');
-        renderFooter('profile');
-
-        // 填充资料编辑表单
-        document.getElementById('profileNameInput').value = 
-
-currentUser.nickname;
-        if (currentUser.avatar_url) {
-            document.getElementById('profileAvatar').style.backgroundImage 
-
-= `url(${currentUser.avatar_url})`;
-            document.getElementById('profileAvatar').textContent = '';
-        } else {
-            document.getElementById('profileAvatar').textContent = 
-
-currentUser.nickname.charAt(0).toUpperCase();
-        }
-
-        // 初始化音效开关
-        const soundToggle = document.getElementById('soundToggle');
-        const soundStatusHint = document.getElementById
-
-('soundStatusHint');
-        const soundEnabled = localStorage.getItem('sq_sound_enabled') !== 
-
-'false'; // 默认开启
-        soundToggle.checked = soundEnabled;
-        soundStatusHint.textContent = soundEnabled ? '新消息提示音 · 已开
-
-启' : '新消息提示音 · 已关闭';
-
-        // 视图切换函数
-        function switchView(viewId) {
-            document.querySelectorAll('.view').forEach(v => 
-
-v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-        }
-
-        // 点击更新资料
-        document.getElementById('goToProfileEdit').addEventListener
-
-('click', () => switchView('profileEditView'));
-        document.getElementById('goToProfileEdit').addEventListener
-
-('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); 
-
-switchView('profileEditView'); }
-        });
-
-        // 返回设置
-        document.getElementById('backToSettings').addEventListener
-
-('click', () => switchView('settingsView'));
-
-        // 音效开关事件
-        soundToggle.addEventListener('change', function() {
-            const enabled = this.checked;
-            localStorage.setItem('sq_sound_enabled', enabled);
-            soundStatusHint.textContent = enabled ? '新消息提示音 · 已开
-
-启' : '新消息提示音 · 已关闭';
-            if (enabled) {
-                // 播放一个测试音（模仿 common.js 中的 playReminderSound）
-                try {
-                    const AudioCtx = window.AudioContext || 
-
-window.webkitAudioContext;
-                    const ctx = new AudioCtx();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, 
-
-ctx.currentTime + 0.25);
-                    osc.start(ctx.currentTime);
-                    osc.stop(ctx.currentTime + 0.28);
-                    setTimeout(() => ctx.close(), 400);
-                } catch(e) {}
-                showToast('🔔 提醒音效已开启');
-            } else {
-                showToast('🔕 提醒音效已关闭');
-            }
-        });
-
-        // 头像上传
-        document.getElementById('avatarFileInput').addEventListener
-
-('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('❌ 图片大小不能超过 5MB');
-                this.value = '';
-                return;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 
-
-'image/webp'];
-            if (!allowedTypes.includes(file.type)) {
-                showToast('❌ 请选择 JPG/PNG/GIF/WebP 格式的图片');
-                this.value = '';
-                return;
-            }
-            try {
-                showToast('⏳ 正在上传头像...');
-                const avatarUrl = await uploadAvatar(file, 
-
-currentUser.id);
-                await updateUser(currentUser.id, { avatar_url: avatarUrl 
-
-});
-                currentUser.avatar_url = avatarUrl;
-                setSessionUser(currentUser);
-                document.getElementById
-
-('profileAvatar').style.backgroundImage = `url(${avatarUrl})`;
-                document.getElementById('profileAvatar').textContent = '';
-                renderHeader('个人中心', 'profile'); // 刷新顶部头像
-                showToast('✅ 头像已更新');
-            } catch (err) {
-                if (err.message && (err.message.includes('row-level 
-
-security policy') || err.message.includes('new row violates'))) {
-                    showToast('❌ 上传失败：请管理员在 Supabase 中为 
-
-avatars 存储桶配置 RLS 策略');
-                } else {
-                    showToast('上传失败：' + err.message);
-                }
-                console.error(err);
-            }
-            this.value = '';
-        });
-
-        // 保存昵称
-        document.getElementById('saveProfileBtn').addEventListener
-
-('click', async function() {
-            const newName = document.getElementById
-
-('profileNameInput').value.trim();
-            if (!newName) { showToast('请输入昵称'); return; }
-            if (newName.toLowerCase() === 'seven戚' && currentUser.phone 
-
-!== '17355394710') {
-                showToast('该昵称不可用');
-                return;
-            }
-            try {
-                await updateUser(currentUser.id, { nickname: newName });
-                currentUser.nickname = newName;
-                setSessionUser(currentUser);
-                renderHeader('个人中心', 'profile'); // 刷新顶部名称
-                showToast('✅ 昵称已更新');
-            } catch (err) {
-                showToast('更新失败：' + err.message);
-            }
-        });
-
-        // 退出登录（两个按钮）
-        function handleLogout() {
-            showConfirm('退出登录', '确定要退出登录吗？', () => {
-                clearSession();
-                showToast('👋 已退出登录');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
-            });
-        }
-        document.getElementById('logoutBtn').addEventListener('click', 
-
-handleLogout);
-        document.getElementById('logoutBtnFromSettings').addEventListener
-
-('click', handleLogout);
     </script>
 </body>
 </html>
