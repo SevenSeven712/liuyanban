@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -515,7 +516,7 @@
                         console.warn('用户已被封禁，仍可浏览');
                     }
                     // ★★★ 修复：改为相对路径 ★★★
-                    window.location.href = 'posts.html';
+                    window.location.href = '/liuyanban/posts.html';
                 })
                 .catch(err => {
                     loginError.textContent = err.message || '登录失败';
