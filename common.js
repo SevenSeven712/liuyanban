@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // 初始化 Supabase 客户端（确保全局可用）
 // ============================================================
 if (!window.sb) {
@@ -95,10 +95,10 @@ function renderHeader(title, activeTab) {
 // ============================================================
 function renderFooterBase(activeTab) {
     const tabs = [
-        { id: 'posts', label: '📰 帖子', href: 'posts.html' },
-        { id: 'messages', label: '💌 留言板', href: 'messages.html' },
-        { id: 'chats', label: '💬 聊天群', href: 'chats.html' },
-        { id: 'profile', label: '👤 个人', href: 'profile.html' }
+        { id: 'posts', label: '📰 帖子', href: '/liuyanban/posts.html' },
+        { id: 'messages', label: '💌 留言板', href: '/liuyanban/messages.html' },
+        { id: 'chats', label: '💬 聊天群', href: '/liuyanban/chats.html' },
+        { id: 'profile', label: '👤 个人', href: '/liuyanban/profile.html' }
     ];
 
     let footerHtml = `<div class="app-tabs">`;
