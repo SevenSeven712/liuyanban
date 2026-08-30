@@ -56,8 +56,6 @@
             background: var(--bg);
         }
 
-        /* ----- 头部 & 底部（由 
- 生成，此处保留样式占位） ----- */
         .app-header {
             flex-shrink: 0;
             padding: 12px 20px;
@@ -162,8 +160,21 @@
             background: var(--primary);
             border-radius: 0 0 4px 4px;
         }
+        .tab-btn .badge {
+            position: absolute;
+            top: -2px;
+            right: 15%;
+            background: #e57373;
+            color: #fff;
+            font-size: 0.6em;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 99px;
+            min-width: 16px;
+            text-align: center;
+            transform: translateY(-2px);
+        }
 
-        /* ----- 封禁横幅 ----- */
         .banned-banner {
             flex-shrink: 0;
             background: #ffebee;
@@ -179,7 +190,6 @@
             display: block;
         }
 
-        /* ----- 主内容 ----- */
         .app-content {
             flex: 1;
             min-height: 0;
@@ -263,7 +273,6 @@
             stroke-linejoin: round;
         }
 
-        /* ----- 帖子卡片 ----- */
         .post-card {
             background: var(--bg-card);
             border-radius: var(--radius-sm);
@@ -366,7 +375,6 @@
             color: var(--danger);
         }
 
-        /* ----- 详情弹窗 ----- */
         .detail-overlay,
         .admin-panel-overlay {
             position: fixed;
@@ -469,6 +477,15 @@
             gap: 10px;
             padding: 10px 0;
             border-bottom: 1px solid var(--border);
+            transition: background 0.3s, border 0.3s;
+            border-radius: 4px;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        .detail-comments .comment-item.highlight {
+            background: var(--primary-bg);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
         }
         .detail-comments .comment-item .avatar {
             width: 30px;
@@ -543,7 +560,6 @@
             font-family: inherit;
         }
 
-        /* ----- 投票样式 ----- */
         .poll-container {
             margin: 16px 0;
             padding: 16px;
@@ -585,7 +601,6 @@
             font-size: 0.7em;
         }
 
-        /* ----- 通用状态 ----- */
         .empty-state {
             text-align: center;
             color: var(--text-muted);
@@ -610,7 +625,6 @@
             }
         }
 
-        /* ----- Toast ----- */
         #toast {
             position: fixed;
             bottom: 80px;
@@ -630,7 +644,6 @@
             transform: translateX(-50%) translateY(-10px);
         }
 
-        /* ----- 自定义弹窗（确认 / 提示） ----- */
         .custom-modal {
             position: fixed;
             inset: 0;
@@ -720,9 +733,6 @@
             background: #43a047;
         }
 
-        /* ============================================================
-               管理面板 —— 全新美化 UI
-               ============================================================ */
         .admin-panel-content {
             padding: 16px 20px 32px;
         }
@@ -739,7 +749,6 @@
             margin-top: 0;
         }
 
-        /* --- 用户卡片（全新设计） --- */
         .admin-user-card {
             background: var(--bg-card);
             border-radius: var(--radius-sm);
@@ -876,7 +885,6 @@
             stroke-linejoin: round;
         }
 
-        /* --- 分类管理 & 角色管理（保持整洁） --- */
         .admin-cat-item,
         .admin-role-item {
             display: flex;
@@ -955,7 +963,6 @@
             background: var(--primary-light);
         }
 
-        /* ----- 响应式 ----- */
         @media (max-width: 480px) {
             .app-content {
                 padding: 12px 14px;
@@ -992,15 +999,12 @@
 </head>
 <body>
     <div id="mainApp">
-        <!-- 顶部由 common.js 渲染 -->
         <div id="header-container"></div>
 
-        <!-- 封禁横幅 -->
         <div class="banned-banner" id="bannedBanner">
             ⚠️ 账号已被封禁，无法发布新帖或评论。解封时间：<span id="bannedUntilDisplay"></span>
         </div>
 
-        <!-- 帖子列表 -->
         <div class="app-content" id="postContent">
             <div class="posts-header">
                 <div class="left" id="categoryFilter">
@@ -1008,22 +1012,19 @@
                 </div>
                 <div style="display:flex; gap:6px;">
                     <button class="new-post-btn" id="adminPanelBtn" style="display:none; background:var(--danger);" onclick="openAdminPanel()">⚙️ 管理</button>
-                    <a href="new-post.html" class="new-post-btn" id="newPostBtn">📝 发帖</a>
+                    <a href="/liuyanban/new-post.html" class="new-post-btn" id="newPostBtn">📝 发帖</a>
                 </div>
             </div>
             <div id="postList"></div>
         </div>
 
-        <!-- 底部由 common.js 渲染 -->
         <div id="footer-container"></div>
     </div>
 
-    <!-- 悬浮发帖按钮 -->
-    <a href="new-post.html" class="floating-post-btn" id="floatingPostBtn">
+    <a href="/liuyanban/new-post.html" class="floating-post-btn" id="floatingPostBtn">
         <svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </a>
 
-    <!-- 帖子详情弹窗 -->
     <div class="detail-overlay" id="detailOverlay">
         <div class="detail-panel" style="display:flex;flex-direction:column;height:100%;">
             <div class="detail-header">
@@ -1038,7 +1039,6 @@
         </div>
     </div>
 
-    <!-- 管理面板弹窗 -->
     <div class="admin-panel-overlay" id="adminPanelOverlay">
         <div class="admin-panel-header">
             <button class="back-btn" id="closeAdminPanel">←</button>
@@ -1047,7 +1047,6 @@
         <div class="admin-panel-content" id="adminPanelContent"></div>
     </div>
 
-    <!-- 确认弹窗 -->
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle"></div>
@@ -1059,7 +1058,6 @@
         </div>
     </div>
 
-    <!-- 提示输入弹窗 -->
     <div class="custom-modal" id="promptModal">
         <div class="modal-box">
             <div class="modal-title" id="promptTitle"></div>
@@ -1174,7 +1172,7 @@
         // 会话 & 权限
         // ============================================================
         var currentUser = getSessionUser();
-        if (!currentUser || !currentUser.id) window.location.href = 'index.html';
+        if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
         var isAdmin = (currentUser.phone === '17355394710');
         if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
 
@@ -1248,16 +1246,50 @@
             }
         }
 
+        // ============================================================
+        // 【关键修改】addComment - 插入通知
+        // ============================================================
         async function addComment(postId, author, user_id, content) {
-            await window.sb.from('post_comments').insert([{ post_id: postId, author: author, user_id: user_id,
-                content: content }]);
+            // 插入评论
+            const { data: commentData, error: commentError } = await window.sb
+                .from('post_comments')
+                .insert([{ post_id: postId, author: author, user_id: user_id, content: content }])
+                .select('id');
+            if (commentError) throw commentError;
+            const commentId = commentData[0].id;
+
+            // 获取帖子作者
+            const { data: postData, error: postError } = await window.sb
+                .from('posts')
+                .select('user_id')
+                .eq('id', postId)
+                .single();
+            if (postError) throw postError;
+            const postAuthorId = postData.user_id;
+
+            // 如果评论者不是帖子作者，插入通知
+            if (postAuthorId !== user_id) {
+                await window.sb.from('notifications').insert([{
+                    user_id: postAuthorId,
+                    type: 'post_comment',
+                    source_id: commentId,
+                    post_id: postId,
+                    comment_author_id: user_id,
+                    comment_content: content,
+                    is_read: false
+                }]);
+                // 立即更新通知红点
+                if (typeof updateNotificationBadge === 'function') {
+                    updateNotificationBadge();
+                }
+            }
+            return commentData;
         }
 
         async function deletePost(id) {
             await window.sb.from('posts').delete().eq('id', id);
         }
 
-        // 用户管理
         async function fetchAllUsers() {
             var res = await window.sb.from('users').select('*');
             return res.data || [];
@@ -1290,7 +1322,6 @@
             }
         }
 
-        // 投票
         async function loadPollData(postId) {
             var res = await window.sb
                 .from('post_polls')
@@ -1431,7 +1462,7 @@
         }
 
         // ============================================================
-        // 帖子详情（修复：立即清空旧内容）
+        // 帖子详情（支持评论定位 + 高亮）
         // ============================================================
         var detailOverlay = document.getElementById('detailOverlay');
         var detailContent = document.getElementById('detailContent');
@@ -1441,7 +1472,10 @@
 
         async function openPostDetail(id) {
             currentDetailPostId = id;
-            // ★ 先清空内容，避免显示上一次的帖子
+            // 清除 URL 中的 comment 参数（如果有）
+            if (window.location.search.includes('comment=')) {
+                history.replaceState({}, document.title, window.location.pathname);
+            }
             detailContent.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载中...</div>';
             detailOverlay.classList.add('active');
             await renderDetail(id);
@@ -1453,7 +1487,6 @@
         };
 
         async function renderDetail(id) {
-            // ★★★ 关键修复：立即清空并显示加载状态，避免旧内容残留 ★★★
             detailContent.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载中...</div>';
 
             var post = posts.find(function(p) { return p.id === id; });
@@ -1471,12 +1504,13 @@
             var time = new Date(post.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric',
                 hour: '2-digit', minute: '2-digit' });
 
+            // 【修改】为评论添加 data-comment-id 和 id 属性
             var commentsHtml = comments.length ?
                 comments.map(function(c) {
                     var cu = c.users || null;
                     var cn = cu ? cu.nickname : c.author;
                     var ca = cu ? (cu.avatar_url || getUserAvatar(cu)) : getUserAvatar({ nickname: c.author });
-                    return '<div class="comment-item">' +
+                    return '<div class="comment-item" data-comment-id="' + c.id + '" id="comment-' + c.id + '">' +
                         '<div class="avatar" style="' + (ca && ca.startsWith('http') ?
                             'background-image:url(' + ca + ');background-size:cover;background-position:center;' :
                             '') + '">' + (ca && !ca.startsWith('http') ? cn.charAt(0).toUpperCase() : '') +
@@ -1506,6 +1540,22 @@
                 renderPollUI(poll) +
                 '</div>' +
                 '<div class="detail-comments"><b>💬 评论 (' + comments.length + ')</b>' + commentsHtml + '</div>';
+
+            // 【新增】如果 URL 带有 comment 参数，滚动到并高亮该评论
+            const urlParams = new URLSearchParams(window.location.search);
+            const commentId = urlParams.get('comment');
+            if (commentId) {
+                setTimeout(function() {
+                    var commentEl = document.getElementById('comment-' + commentId);
+                    if (commentEl) {
+                        commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        commentEl.classList.add('highlight');
+                        setTimeout(function() {
+                            commentEl.classList.remove('highlight');
+                        }, 3000);
+                    }
+                }, 300);
+            }
         }
 
         detailSendCommentBtn.onclick = async function() {
@@ -1520,7 +1570,7 @@
         };
 
         // ============================================================
-        // 管理面板（全新美化 UI + 分类序号连续）
+        // 管理面板（与之前相同，省略以节省篇幅，但保留完整功能）
         // ============================================================
         var adminPanelOverlay = document.getElementById('adminPanelOverlay');
         var adminPanelContent = document.getElementById('adminPanelContent');
@@ -1530,19 +1580,16 @@
             adminPanelOverlay.classList.add('active');
             renderAdminPanel();
         }
-
         document.getElementById('closeAdminPanel').onclick = function() {
             adminPanelOverlay.classList.remove('active');
         };
 
-        // 管理面板渲染
         async function renderAdminPanel() {
             var users = await fetchAllUsers();
             var roles = await fetchUserRoles();
             var roleMap = {};
             roles.forEach(function(r) { roleMap[r.user_id] = r; });
 
-            // ---- 分类管理（使用连续序号 #1, #2, ...） ----
             var catsHtml = '<h3>📂 分类管理</h3>';
             var displayIndex = 1;
             categories.forEach(function(c, idx) {
@@ -1566,7 +1613,6 @@
                 '<button onclick="addNewCategory()">添加</button>' +
                 '</div>';
 
-            // ---- 用户管理（全新卡片式） ----
             var usersHtml = '<h3>👥 用户管理</h3>';
             users.forEach(function(u) {
                 var isBanned = u.banned_until && new Date(u.banned_until) > new Date();
@@ -1604,7 +1650,6 @@
                 usersHtml += '</div></div>';
             });
 
-            // ---- 角色管理 ----
             var uniqueRoles = {};
             roles.forEach(function(r) {
                 var key = r.role_name + '|' + r.role_color;
@@ -1637,7 +1682,6 @@
             await loadCategories();
             renderAdminPanel();
         };
-
         window.moveCategoryUp = async function(id) {
             var idx = categories.findIndex(function(c) { return c.id === id; });
             if (idx > 0) {
@@ -1646,7 +1690,6 @@
                 renderAdminPanel();
             }
         };
-
         window.moveCategoryDown = async function(id) {
             var idx = categories.findIndex(function(c) { return c.id === id; });
             if (idx < categories.length - 1) {
@@ -1655,7 +1698,6 @@
                 renderAdminPanel();
             }
         };
-
         window.deleteCategoryById = async function(id) {
             showConfirm('删除分类', '确定删除此分类？其下帖子将移入「未分类」', async function() {
                 await deleteCategory(id);
@@ -1663,7 +1705,6 @@
                 renderAdminPanel();
             });
         };
-
         window.addNewCategory = async function() {
             var name = document.getElementById('newCatName').value.trim();
             if (!name) return showToast('请输入分类名');
@@ -1672,7 +1713,6 @@
             await loadCategories();
             renderAdminPanel();
         };
-
         window.banUserPrompt = function(userId, nickname) {
             showPrompt('🚫 封号设置', '为用户 “' + nickname + '” 设置解封时间', '选择解封时间', async function(until) {
                 if (!until) return showToast('请选择解封时间');
@@ -1681,7 +1721,6 @@
                 renderAdminPanel();
             }, 'datetime-local');
         };
-
         window.unbanUserById = async function(userId) {
             showConfirm('🔓 解封用户', '确定解封该用户吗？', async function() {
                 await unbanUser(userId);
@@ -1689,7 +1728,6 @@
                 renderAdminPanel();
             });
         };
-
         window.loginAsUser = async function(userId) {
             try {
                 var res = await window.sb.from('users').select('*').eq('id', userId).single();
@@ -1707,11 +1745,13 @@
                 if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
                 else document.getElementById('adminPanelBtn').style.display = 'none';
                 showToast('✅ 已切换到 ' + user.nickname);
+                if (typeof updateNotificationBadge === 'function') {
+                    updateNotificationBadge();
+                }
             } catch (err) {
                 showToast('一键登录失败：' + err.message);
             }
         };
-
         window.removeRoleFromAll = function(roleName) {
             showConfirm('删除身份', '确定删除身份 "' + roleName + '"？所有拥有该身份的用户将失去身份', async function() {
                 await removeRoleFromAll(roleName);
@@ -1719,7 +1759,6 @@
                 renderAdminPanel();
             });
         };
-
         window.createRole = function() {
             var name = document.getElementById('newRoleName').value.trim();
             var color = document.getElementById('newRoleColor').value;
@@ -1747,14 +1786,13 @@
         }
 
         // ============================================================
-        // 初始化
+        // 【新增】实时订阅：监听评论插入，触发音效 + 横幅 + 红点
         // ============================================================
         (function init() {
-            if (!currentUser || !currentUser.id) window.location.href = 'index.html';
+            if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
 
             loadCategories().then(loadAllData);
 
-            // 实时订阅
             window.sb.channel('public-posts')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, function() { loadAllData
                         (); })
@@ -1764,6 +1802,33 @@
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_votes' }, function() {
                     if (currentDetailPostId) renderDetail(currentDetailPostId);
+                })
+                // 【新增】监听评论插入，触发通知
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'post_comments' }, async function(
+                    payload) {
+                    var newComment = payload.new;
+                    if (!newComment) return;
+                    // 获取帖子作者
+                    var { data: postData } = await window.sb
+                        .from('posts')
+                        .select('user_id')
+                        .eq('id', newComment.post_id)
+                        .single();
+                    if (postData && postData.user_id === currentUser.id && newComment.user_id !== currentUser
+                        .id) {
+                        // 当前用户是帖子作者且不是自己评论
+                        if (getSoundEnabled()) {
+                            playReminderSound();
+                        }
+                        if (typeof showTopBanner === 'function') {
+                            showTopBanner('💬 你的帖子收到新评论');
+                        } else {
+                            showToast('💬 你的帖子收到新评论');
+                        }
+                        if (typeof updateNotificationBadge === 'function') {
+                            updateNotificationBadge();
+                        }
+                    }
                 })
                 .subscribe();
 
@@ -1781,6 +1846,9 @@
                         if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
                         else document.getElementById('adminPanelBtn').style.display = 'none';
                         loadAllData();
+                        if (typeof updateNotificationBadge === 'function') {
+                            updateNotificationBadge();
+                        }
                     }
                 }
             }
@@ -1790,7 +1858,6 @@
             });
         })();
 
-        // 禁用手势缩放
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
