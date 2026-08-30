@@ -538,6 +538,15 @@
                 document.getElementById('clearChatBtn').style.display = 'inline-block';
             }
 
+            // ========== 修复：绑定发送按钮事件 ==========
+            document.getElementById('sendChatBtn').addEventListener('click', sendChat);
+            document.getElementById('chatInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChat();
+                }
+            });
+
             window.sb.channel('chats-page-realtime')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
                     loadAllData();
