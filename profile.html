@@ -6,7 +6,7 @@
     <title>Seven戚 · 个人中心</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 基础与主题变量（保持原有样式） ===== */
+        /* ===== 基础与主题变量 ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         :root {
             --bg: #f5faf5;
@@ -48,6 +48,7 @@
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
         .tab-btn.active { color: var(--primary); }
         .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
+        .tab-btn .badge { position: absolute; top: -2px; right: 15%; background: #e57373; color: #fff; font-size: 0.6em; font-weight: 700; padding: 1px 6px; border-radius: 99px; min-width: 16px; text-align: center; transform: translateY(-2px); }
 
         .profile-content { flex: 1; overflow-y: auto; padding: 16px 20px 12px 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; }
         .view { width: 100%; max-width: 480px; display: none; flex-direction: column; animation: fadeSlideIn 0.35s ease; }
@@ -91,6 +92,35 @@
         .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; transition: all 0.2s; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 4px; }
         .btn-secondary-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
 
+        /* 消息中心样式 */
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notification-item:hover { background: var(--primary-bg); }
+        .notification-item .ntf-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex-shrink: 0; background-size: cover; background-position: center; }
+        .notification-item .ntf-body { flex: 1; min-width: 0; }
+        .notification-item .ntf-body .ntf-text { font-size: 0.9em; line-height: 1.4; color: var(--text); }
+        .notification-item .ntf-body .ntf-meta { font-size: 0.7em; color: var(--text-muted); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .notification-item.unread { background: var(--primary-bg); border-left: 4px solid var(--primary); }
+        .notification-item .ntf-body .ntf-highlight { color: var(--primary); font-weight: 600; }
+
+        /* 关于我们 */
+        .about-card { text-align: center; padding: 20px 0; }
+        .about-card .about-avatar { width: 100px; height: 100px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 40px; font-weight: 900; margin: 0 auto 12px; }
+        .about-card h2 { font-size: 1.4em; margin-bottom: 4px; }
+        .about-card .sub { color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px; }
+        .about-card .desc { font-size: 0.95em; line-height: 1.6; color: var(--text); max-width: 320px; margin: 0 auto 20px; }
+        .shop-ad { background: linear-gradient(135deg, #2e7d32, #4caf50); border-radius: var(--radius-sm); padding: 16px; color: #fff; margin-top: 16px; cursor: pointer; transition: transform 0.2s; box-shadow: var(--shadow); }
+        .shop-ad:hover { transform: scale(1.02); }
+        .shop-ad h3 { font-size: 1.1em; margin-bottom: 4px; }
+        .shop-ad p { font-size: 0.8em; opacity: 0.9; }
+
         #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease; z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow); }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -110,12 +140,12 @@
             .profile-content { padding: 12px 14px; }
             .settings-card { padding: 1.2em 1em; }
             .profile-card { padding: 1.2em 1.2em; }
+            .notification-item { padding: 10px 8px; }
         }
     </style>
 </head>
 <body>
     <div id="mainApp">
-        <!-- 顶部占位（由 common.js 渲染） -->
         <div id="header-container"></div>
 
         <div class="profile-content">
@@ -130,6 +160,28 @@
                             <div>
                                 <div class="item-label">更新资料</div>
                                 <div class="item-sublabel">头像、昵称管理</div>
+                            </div>
+                        </div>
+                        <span class="item-arrow">›</span>
+                    </div>
+
+                    <div class="settings-item" id="goToMessages" role="button" tabindex="0">
+                        <div class="item-left">
+                            <div class="item-icon">📬</div>
+                            <div>
+                                <div class="item-label">消息中心</div>
+                                <div class="item-sublabel" id="unreadHint">查看评论通知</div>
+                            </div>
+                        </div>
+                        <span class="item-arrow" id="msgArrow">›</span>
+                    </div>
+
+                    <div class="settings-item" id="goToAbout" role="button" tabindex="0">
+                        <div class="item-left">
+                            <div class="item-icon">ℹ️</div>
+                            <div>
+                                <div class="item-label">关于我们</div>
+                                <div class="item-sublabel">创作者 & 商城</div>
                             </div>
                         </div>
                         <span class="item-arrow">›</span>
@@ -172,9 +224,41 @@
                     <button class="btn-danger" id="logoutBtn">退出登录</button>
                 </div>
             </div>
+
+            <!-- 视图三：消息中心 -->
+            <div class="view" id="messagesView">
+                <div class="profile-card" style="padding: 1.2em 1em;">
+                    <button class="btn-secondary-outline" id="backToSettingsFromMsg">← 返回设置</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-weight:700; font-size:1.1em;">📬 消息中心</span>
+                        <button id="markAllReadBtn" style="background:none; border:none; color:var(--primary); font-size:0.7em; font-weight:600; cursor:pointer;">全部已读</button>
+                    </div>
+                    <div id="notificationList">
+                        <div style="text-align:center; color:var(--text-muted); padding:20px 0;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视图四：关于我们 -->
+            <div class="view" id="aboutView">
+                <div class="profile-card" style="padding: 1.2em 1em;">
+                    <button class="btn-secondary-outline" id="backToSettingsFromAbout">← 返回设置</button>
+                    <div class="about-card">
+                        <div class="about-avatar" style="background:#2e7d32;">S</div>
+                        <h2>Seven戚</h2>
+                        <div class="sub">全栈开发者 · 社区创始人</div>
+                        <div class="desc">
+                            热爱技术，喜欢创造。这个社区是我用爱发电的作品，希望你们喜欢。
+                        </div>
+                        <div class="shop-ad" onclick="window.open('https://sevenseven712.github.io/shangcheng/', '_blank')">
+                            <h3>🛍️ 软件商城</h3>
+                            <p>精选实用软件，限时优惠中 → 点击进入</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- 底部占位（由 common.js 渲染） -->
         <div id="footer-container"></div>
     </div>
 
@@ -222,7 +306,7 @@
             localStorage.removeItem('sq_user_session');
         }
 
-        // 检查 common.js 是否已提供 renderHeader，如果没有则定义备用
+        // 检查 common.js 是否已提供函数
         if (typeof renderHeader === 'undefined') {
             console.warn('common.js 未正确加载，使用备用导航渲染');
             renderHeader = function(title, activeTab) {
@@ -231,12 +315,12 @@
                 if (!container) return;
                 let html = '<div class="app-header"><div class="brand">Seven<span>戚</span><small>· ' + title + '</small></div>';
                 if (user && user.id) {
-                    html += '<div class="user-area" onclick="window.location.href=\'profile.html\'">' +
+                    html += '<div class="user-area" onclick="window.location.href=\'/liuyanban/profile.html\'">' +
                         '<div class="avatar">' + (user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U') + '</div>' +
                         '<span class="user-name">' + (user.nickname || '用户') + '</span>' +
                         '<span class="chevron">▾</span></div>';
                 } else {
-                    html += '<div class="user-area" onclick="window.location.href=\'index.html\'">登录</div>';
+                    html += '<div class="user-area" onclick="window.location.href=\'/liuyanban/index.html\'">登录</div>';
                 }
                 html += '</div>';
                 container.innerHTML = html;
@@ -268,7 +352,7 @@
         // ============================================================
         const currentUser = getSessionUser();
         if (!currentUser || !currentUser.id) {
-            window.location.href = 'index.html';
+            window.location.href = '/liuyanban/index.html';
         }
 
         // 渲染头部和底部（激活个人标签）
@@ -291,6 +375,7 @@
         soundToggle.checked = soundEnabled;
         soundStatusHint.textContent = soundEnabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
 
+        // 视图切换
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -301,7 +386,17 @@
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchView('profileEditView'); }
         });
         document.getElementById('backToSettings').addEventListener('click', () => switchView('settingsView'));
+        document.getElementById('backToSettingsFromMsg').addEventListener('click', () => switchView('settingsView'));
+        document.getElementById('backToSettingsFromAbout').addEventListener('click', () => switchView('settingsView'));
 
+        // 消息中心
+        document.getElementById('goToMessages').addEventListener('click', () => {
+            switchView('messagesView');
+            loadNotifications();
+        });
+        document.getElementById('goToAbout').addEventListener('click', () => switchView('aboutView'));
+
+        // 音效开关
         soundToggle.addEventListener('change', function() {
             const enabled = this.checked;
             localStorage.setItem('sq_sound_enabled', enabled);
@@ -383,19 +478,124 @@
             }
         });
 
+        // 退出登录
         function handleLogout() {
             showConfirm('退出登录', '确定要退出登录吗？', () => {
                 clearSession();
                 showToast('👋 已退出登录');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = '/liuyanban/index.html';
                 }, 500);
             });
         }
         document.getElementById('logoutBtn').addEventListener('click', handleLogout);
         document.getElementById('logoutBtnFromSettings').addEventListener('click', handleLogout);
 
-        // 封装的 Supabase 操作（如果 common.js 没提供，这里定义）
+        // ============================================================
+        // 通知相关功能
+        // ============================================================
+        async function loadNotifications() {
+            const container = document.getElementById('notificationList');
+            container.innerHTML = '加载中...';
+            try {
+                const { data, error } = await window.sb
+                    .from('notifications')
+                    .select('*, users!notifications_comment_author_id_fkey (id, nickname, avatar_url)')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px 0;">暂无通知</div>';
+                    return;
+                }
+                let html = '';
+                data.forEach(n => {
+                    const isRead = n.is_read;
+                    const author = n.users || { nickname: '用户', avatar_url: null };
+                    const avatarUrl = author.avatar_url;
+                    const avatarContent = avatarUrl ? '' : author.nickname.charAt(0).toUpperCase();
+                    const avatarStyle = avatarUrl ? 'background-image:url(' + avatarUrl + ');background-size:cover;background-position:center;' : '';
+                    const time = new Date(n.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const text = n.comment_content || '评论了你的帖子';
+                    html += `
+                        <div class="notification-item ${isRead ? '' : 'unread'}" data-id="${n.id}" data-postid="${n.post_id}" data-commentid="${n.source_id}">
+                            <div class="ntf-avatar" style="${avatarStyle}">${avatarContent}</div>
+                            <div class="ntf-body">
+                                <div class="ntf-text"><span class="ntf-highlight">${escapeHtml(author.nickname)}</span> 评论了你的帖子：<span style="color:var(--text);">${escapeHtml(text)}</span></div>
+                                <div class="ntf-meta">${time} · ${isRead ? '已读' : '未读'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+                // 点击通知跳转
+                container.querySelectorAll('.notification-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const postId = this.dataset.postid;
+                        const commentId = this.dataset.commentid;
+                        // 标记为已读
+                        markNotificationRead(this.dataset.id);
+                        // 跳转到帖子详情并定位评论
+                        window.location.href = '/liuyanban/posts.html?comment=' + commentId + '&post=' + postId;
+                    });
+                });
+                // 更新未读数量
+                const unread = data.filter(n => !n.is_read).length;
+                document.getElementById('unreadHint').textContent = unread > 0 ? `有 ${unread} 条未读通知` : '暂无未读通知';
+                // 更新底部红点
+                if (typeof updateNotificationBadge === 'function') {
+                    updateNotificationBadge();
+                } else {
+                    // 手动更新
+                    updateUnreadCountInFooter(unread);
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="text-align:center; color:var(--danger-text); padding:20px 0;">加载失败</div>';
+                console.error(err);
+            }
+        }
+
+        async function markNotificationRead(id) {
+            try {
+                await window.sb.from('notifications').update({ is_read: true }).eq('id', id);
+            } catch (e) { console.error(e); }
+        }
+
+        // 全部已读
+        document.getElementById('markAllReadBtn').addEventListener('click', async function() {
+            try {
+                await window.sb.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                showToast('✅ 全部已读');
+                loadNotifications();
+                if (typeof updateNotificationBadge === 'function') {
+                    updateNotificationBadge();
+                } else {
+                    updateUnreadCountInFooter(0);
+                }
+            } catch (e) { showToast('操作失败'); }
+        });
+
+        // 更新底部红点（备用）
+        function updateUnreadCountInFooter(count) {
+            const footerContainer = document.getElementById('footer-container');
+            if (!footerContainer) return;
+            const profileTab = footerContainer.querySelector('a[href="/liuyanban/profile.html"]');
+            if (!profileTab) return;
+            const oldBadge = profileTab.querySelector('.badge');
+            if (oldBadge) oldBadge.remove();
+            if (count > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.style.cssText = 'position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:0.5em;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;transform:translateY(-2px);';
+                badge.textContent = count > 9 ? '9+' : count;
+                profileTab.appendChild(badge);
+            }
+        }
+
+        // ============================================================
+        // 封装的 Supabase 操作
+        // ============================================================
         async function uploadAvatar(file, userId) {
             const fileExt = file.name.split('.').pop();
             const fileName = 'avatars/' + userId + '/profile.' + fileExt;
@@ -431,6 +631,29 @@
                 if (e.target === modal) { cleanup(); modal.removeEventListener('click', bgClick); }
             });
         }
+
+        // ============================================================
+        // 初始化 - 检查 URL 参数并更新红点
+        // ============================================================
+        (function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const view = urlParams.get('view');
+            if (view === 'messages') {
+                switchView('messagesView');
+                loadNotifications();
+            }
+            // 更新红点
+            if (typeof updateNotificationBadge === 'function') {
+                updateNotificationBadge();
+            } else {
+                window.sb.from('notifications').select('*', { count: 'exact', head: true })
+                    .eq('user_id', currentUser.id)
+                    .eq('is_read', false)
+                    .then(({ count }) => {
+                        updateUnreadCountInFooter(count || 0);
+                    });
+            }
+        })();
     </script>
 </body>
 </html>
