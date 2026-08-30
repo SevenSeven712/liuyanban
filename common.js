@@ -58,7 +58,7 @@ function getUserAvatar(user) {
 }
 
 // ============================================================
-// 渲染头部（✅ 修复版：无嵌套模板字符串）
+// 渲染头部（修复版：无嵌套模板字符串）
 // ============================================================
 function renderHeader(title, activeTab) {
     const user = getSessionUser();
@@ -78,17 +78,17 @@ function renderHeader(title, activeTab) {
             avatarContent = displayName.charAt(0).toUpperCase();
         }
 
-        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'profile.html\'">' +
+        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'/liuyanban/profile.html\'">' +
             '<div class="avatar" style="' + avatarStyle + '">' + avatarContent + '</div>' +
             '<span class="user-name">' + escapeHtml(displayName) + '</span>' +
             '<span class="chevron">▾</span>' +
             '</div>';
     } else {
-        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'index.html\'">登录</div>';
+        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'/liuyanban/index.html\'">登录</div>';
     }
 
     headerContainer.innerHTML = '<div class="app-header">' +
-        '<div class="brand" onclick="window.location.href=\'posts.html\'">' +
+        '<div class="brand" onclick="window.location.href=\'/liuyanban/posts.html\'">' +
         'Seven<span>戚</span><small>· ' + escapeHtml(title) + '</small>' +
         '</div>' +
         userAreaHtml +
@@ -173,7 +173,7 @@ async function updateChatBadge(activeTab) {
 
     var footerContainer = document.getElementById('footer-container');
     if (!footerContainer) return;
-    var chatTab = footerContainer.querySelector('a[href="chats.html"]');
+    var chatTab = footerContainer.querySelector('a[href="/liuyanban/chats.html"]');
     if (!chatTab) return;
 
     var oldBadge = chatTab.querySelector('.badge');
@@ -243,7 +243,7 @@ function getSoundEnabled() {
 }
 
 // ============================================================
-// 顶部消息提醒横幅
+// 顶部消息提醒横幅（聊天用）
 // ============================================================
 var chatNotificationBanner = null;
 
@@ -258,7 +258,7 @@ function showChatNotificationBanner() {
     banner.style.cssText = 'position: fixed;top: 80px;left: 50%;transform: translateX(-50%);background: #2e7d32;color: white;padding: 12px 28px;border-radius: 50px;z-index: 99999;cursor: pointer;box-shadow: 0 8px 24px rgba(0,0,0,0.3);animation: slideDown 0.3s ease;font-family: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;font-weight: 600;font-size: 0.9em;display: flex;align-items: center;gap: 8px;white-space: nowrap;';
     banner.textContent = '🔔 收到一条新消息';
     banner.addEventListener('click', function() {
-        window.location.href = 'chats.html';
+        window.location.href = '/liuyanban/chats.html';
         banner.remove();
         clearTimeout(banner._timeout);
         chatNotificationBanner = null;
@@ -328,3 +328,57 @@ window.addEventListener('storage', function(e) {
         initializeGlobalChatListener();
     }
 });
+
+// ============================================================
+// 【新增】通知未读数量更新（用于个人标签红点）
+// ============================================================
+async function updateNotificationBadge() {
+    const user = getSessionUser();
+    if (!user || !user.id || !window.sb) return;
+    try {
+        const { count, error } = await window.sb
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+        if (error) throw error;
+        const footerContainer = document.getElementById('footer-container');
+        if (!footerContainer) return;
+        const profileTab = footerContainer.querySelector('a[href="/liuyanban/profile.html"]');
+        if (!profileTab) return;
+        const oldBadge = profileTab.querySelector('.badge');
+        if (oldBadge) oldBadge.remove();
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.style.cssText = 'position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:0.5em;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;transform:translateY(-2px);';
+            badge.textContent = count > 9 ? '9+' : count;
+            profileTab.appendChild(badge);
+        }
+    } catch (e) {
+        console.error('更新通知红点失败:', e);
+    }
+}
+
+// ============================================================
+// 【新增】增强的横幅函数（支持自定义文本）
+// ============================================================
+let topBannerTimeout = null;
+
+function showTopBanner(text) {
+    const old = document.querySelector('.custom-top-banner');
+    if (old) { old.remove(); clearTimeout(topBannerTimeout); }
+    const banner = document.createElement('div');
+    banner.className = 'custom-top-banner';
+    banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#2e7d32;color:#fff;padding:12px 28px;border-radius:50px;z-index:99999;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:slideDown 0.3s ease;font-family:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:8px;white-space:nowrap;';
+    banner.textContent = text || '🔔 收到新消息';
+    banner.addEventListener('click', function() {
+        window.location.href = '/liuyanban/profile.html?view=messages';
+        banner.remove();
+        clearTimeout(topBannerTimeout);
+    });
+    document.body.appendChild(banner);
+    topBannerTimeout = setTimeout(function() {
+        banner.remove();
+    }, 5000);
+}
