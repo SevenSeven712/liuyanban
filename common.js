@@ -116,8 +116,8 @@ var FOOTER_ICONS = {
 // ============================================================
 function renderFooterBase(activeTab) {
     var tabs = [
+        { id: 'posts',    name: '帖子', href: '/liuyanban/posts.html' },
         { id: 'messages', name: '留言板', href: '/liuyanban/messages.html' },
-        { id: 'posts',    name: '帖子首页', href: '/liuyanban/posts.html' },
         { id: 'chats',    name: '消息',    href: '/liuyanban/chats.html' },
         { id: 'profile',  name: '个人',    href: '/liuyanban/profile.html' }
     ];
