@@ -27,7 +27,7 @@
         .app-header .back-btn { background: none; border: none; cursor: pointer; color: var(--text); padding: 4px; display: none; flex-shrink: 0; }
         .app-header .back-btn.visible { display: flex; }
         .app-header .back-btn svg { width: 22px; height: 22px; }
-        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.2em; white-space: nowrap; overflow: hidden; }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.2em; }
         .app-header .user-area { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 99px; flex-shrink: 0; }
@@ -88,9 +88,9 @@
         .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-secondary-outline svg { width: 16px; height: 16px; }
 
-        /* ====== 网站选择网格 ====== */
+        /* 网站选择网格 */
         .site-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
-        .site-card { padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; position: relative; }
+        .site-card { padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative; transition: all 0.2s; }
         .site-card:hover { border-color: var(--primary-light); }
         .site-card.selected { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 3px rgba(46,125,50,0.1); }
         .site-card.selected::after { content: ''; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; }
@@ -99,7 +99,7 @@
         .site-card .site-icon svg { width: 16px; height: 16px; }
         .site-card .site-name { font-size: 0.85em; font-weight: 600; line-height: 1.3; word-break: break-word; }
 
-        /* ====== 反馈列表 ====== */
+        /* 反馈列表 */
         .fb-item { padding: 12px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 10px; }
         .fb-item .fb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; flex-wrap: wrap; }
         .fb-item .fb-site { font-weight: 700; font-size: 0.9em; color: var(--text); }
@@ -110,21 +110,24 @@
         .fb-item .fb-content { font-size: 0.85em; color: var(--text); line-height: 1.5; margin-bottom: 6px; word-break: break-word; }
         .fb-item .fb-reply { background: var(--primary-bg); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 6px; font-size: 0.8em; color: var(--text); margin-top: 6px; }
         .fb-item .fb-time { font-size: 0.7em; color: var(--text-light); }
-        .fb-item .fb-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .fb-item .fb-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .fb-item .fb-actions button { padding: 5px 14px; border-radius: 99px; border: none; font-weight: 600; font-size: 0.75em; cursor: pointer; font-family: inherit; }
+        .fb-item .fb-actions .btn-reply { background: var(--primary-bg); color: var(--primary); }
+        .fb-item .fb-actions .btn-del { background: var(--danger-bg); color: var(--danger-text); }
 
-        /* ====== 管理网站列表 ====== */
+        /* 管理网站列表 */
         .admin-site-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; }
         .admin-site-item .site-name { font-size: 0.9em; font-weight: 600; }
-        .admin-site-item .site-actions button { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 4px 12px; border-radius: 99px; font-size: 0.75em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .admin-site-item .site-actions button { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 4px 12px; border-radius: 99px; font-size: 0.75em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
         .admin-site-item .site-actions button svg { width: 12px; height: 12px; }
         .admin-add-row { display: flex; gap: 8px; margin-top: 12px; }
         .admin-add-row input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9em; outline: none; }
         .admin-add-row input:focus { border-color: var(--primary); }
         .admin-add-row button { padding: 10px 18px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-        /* ====== 消息中心 ====== */
-        .ntf-filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-input); border-radius: 99px; padding: 3px; }
-        .ntf-tab { flex: 1; padding: 6px 0; border: none; background: transparent; border-radius: 99px; font-family: inherit; font-size: 0.75em; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        /* 消息中心 */
+        .ntf-filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-input); border-radius: 99px; padding: 3px; overflow-x: auto; }
+        .ntf-tab { flex: 1; padding: 6px 0; border: none; background: transparent; border-radius: 99px; font-family: inherit; font-size: 0.7em; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; }
         .ntf-tab.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(46,125,50,0.15); }
         .ntf-tab-badge { background: var(--danger); color: #fff; font-size: 0.8em; padding: 0 5px; border-radius: 99px; min-width: 16px; text-align: center; line-height: 16px; display: none; }
         .ntf-tab-badge.visible { display: inline-block; }
@@ -142,6 +145,7 @@
         .ntf-type-icon.system { background: #f3e5f5; color: #8e24aa; }
         .ntf-type-icon.ban { background: var(--danger-bg); color: var(--danger-text); }
         .ntf-type-icon.result-ok { background: var(--success-bg); color: var(--success); }
+        .ntf-type-icon.result-no { background: #f5f5f5; color: #757575; }
         .ntf-type-icon.feedback { background: #e3f2fd; color: #2b6cff; }
         .ntf-body { flex: 1; min-width: 0; }
         .ntf-title { font-size: 0.9em; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 2px; }
@@ -195,13 +199,11 @@
             .app-header { padding: 10px 12px 6px 12px; min-height: 48px; }
             .app-header .brand { font-size: 0.95em; }
             .app-header .user-name { max-width: 50px; font-size: 0.7em; }
-            .site-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
     <div id="mainApp">
-        <!-- 头部 -->
         <div class="app-header">
             <div class="header-left">
                 <button class="back-btn" id="headerBackBtn" onclick="goBack()">
@@ -342,13 +344,15 @@
                         返回设置
                     </button>
 
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
                         <span style="font-weight:700; font-size:1.1em;">反馈 Bug</span>
-                        <button id="fbTabNew" class="fb-tab-btn active" style="background:none;border:none;color:var(--primary);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我要反馈</button>
-                        <button id="fbTabMine" class="fb-tab-btn" style="background:none;border:none;color:var(--text-muted);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我的反馈</button>
+                        <div style="display:flex; gap:4px;">
+                            <button id="fbTabNew" class="fb-tab-btn active" style="background:none;border:none;color:var(--primary);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我要反馈</button>
+                            <button id="fbTabMine" class="fb-tab-btn" style="background:none;border:none;color:var(--text-muted);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我的反馈</button>
+                        </div>
                     </div>
 
-                    <!-- 提交反馈面板 -->
+                    <!-- 提交反馈 -->
                     <div id="fbSubmitPanel">
                         <div class="field-group">
                             <label>1. 选择问题网站</label>
@@ -358,7 +362,7 @@
                         </div>
                         <div class="field-group">
                             <label>2. 问题描述</label>
-                            <textarea id="fbContent" placeholder="请详细描述你遇到的问题，例如：打开软件后点击某按钮无反应..." maxlength="1000"></textarea>
+                            <textarea id="fbContent" placeholder="请详细描述你遇到的问题..." maxlength="1000"></textarea>
                         </div>
                         <div class="field-group">
                             <label>3. 联系方式（选填）</label>
@@ -367,7 +371,7 @@
                         <button class="btn-primary" id="fbSubmitBtn">提交反馈</button>
                     </div>
 
-                    <!-- 我的反馈面板 -->
+                    <!-- 我的反馈 -->
                     <div id="fbMinePanel" style="display:none;">
                         <div id="myFeedbackList">
                             <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>
@@ -376,7 +380,7 @@
                 </div>
             </div>
 
-            <!-- 管理员的反馈管理 -->
+            <!-- 管理员反馈管理 -->
             <div class="view" id="adminFeedbackView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromAdminFb">
@@ -400,7 +404,7 @@
                     <div style="font-weight:700; font-size:1.1em; margin-bottom:12px;">网站管理</div>
                     <div id="adminSitesList"></div>
                     <div class="admin-add-row">
-                        <input type="text" id="newSiteName" placeholder="输入网站名称，例如：小七万年历" maxlength="30" />
+                        <input type="text" id="newSiteName" placeholder="输入网站名称" maxlength="30" />
                         <button id="addSiteBtn">添加</button>
                     </div>
                 </div>
@@ -487,10 +491,19 @@
             o.onclick = () => { if (onOk) onOk(); cleanup(); };
         }
 
+        // ============ 兜底：通知推送 ============
+        window.pushNotification = window.pushNotification || async function(userId, payload) {
+            if (!window.sb || !userId) return;
+            try {
+                await window.sb.from('notifications').insert([Object.assign({ user_id: userId, is_read: false }, payload)]);
+                if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+            } catch (e) { console.warn('通知发送失败', e); }
+        };
+
         // ============ Supabase ============
         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
         var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
-        window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.sb = window.sb || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ============ 会话 ============
         const currentUser = getSessionUser();
@@ -549,13 +562,11 @@
         }
         function goBack() { switchView('settingsView'); }
 
-        // 显示管理员菜单
         if (isAdmin) {
             document.getElementById('goToAdminFeedback').style.display = 'flex';
             document.getElementById('goToManageSites').style.display = 'flex';
         }
 
-        // 菜单绑定
         document.getElementById('goToProfileEdit').onclick = () => switchView('profileEditView');
         document.getElementById('goToMessages').onclick = () => { switchView('messagesView'); loadNotifications(); };
         document.getElementById('goToFeedback').onclick = () => { switchView('feedbackView'); initFeedbackView(); };
@@ -582,7 +593,7 @@
             showToast(e ? '提醒音效已开启' : '提醒音效已关闭');
         };
 
-        // ============ 头像上传 ============
+        // ============ 头像/昵称 ============
         async function uploadAvatar(file, userId) {
             const ext = file.name.split('.').pop();
             const fn = 'avatars/' + userId + '/profile.' + ext;
@@ -623,7 +634,6 @@
             } catch (err) { showToast('更新失败：' + err.message); }
         };
 
-        // ============ 退出登录 ============
         function handleLogout() {
             showConfirm('退出登录', '确定要退出登录吗？', () => {
                 clearSession();
@@ -652,7 +662,8 @@
                 if (h) h.textContent = u > 0 ? '有 ' + u + ' 条未读通知' : '暂无未读通知';
                 if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
             } catch (err) {
-                c.innerHTML = '<div class="ntf-empty">加载失败</div>';
+                c.innerHTML = '<div class="ntf-empty">加载失败：' + escapeHtml(err.message) + '</div>';
+                console.error(err);
             }
         }
 
@@ -736,7 +747,7 @@
             if (nt === 'report' && n.report_id) {
                 actions = '<div class="ntf-actions">' +
                     '<button class="btn-view" onclick="event.stopPropagation();viewReportDetail(\'' + n.report_id + '\')">查看</button>' +
-                    '<button class="btn-approve" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'approved\')">同意</button>' +
+                    '<button class="btn-approve" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'approved\')">同意并处理</button>' +
                     '<button class="btn-reject" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'rejected\')">驳回</button>' +
                     '</div>';
             }
@@ -780,47 +791,229 @@
             } catch (e) {}
         }
 
-        // 举报处理
+        // ============ 举报处理（带措施选择） ============
         async function handleReport(reportId, result) {
-            var label = result === 'approved' ? '同意' : '驳回';
-            showConfirm('处理举报', '确定要' + label + '此举报吗？', async function() {
-                try {
-                    await window.sb.from('reports').update({
-                        status: result,
-                        reviewed_by: currentUser.id,
-                        reviewed_at: new Date().toISOString()
-                    }).eq('id', reportId);
-                    var rRes = await window.sb.from('reports').select('*').eq('id', reportId).single();
-                    var report = rRes.data;
-                    var tt = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[report.content_type] || '内容';
-                    await pushNotification(report.reporter_id, {
-                        type: 'report_result', notification_type: 'report_result',
-                        extra_text: '你对' + tt + '的举报已' + label + '：' + report.reason
-                    });
-                    if (result === 'approved') {
-                        await pushNotification(report.reported_user_id, {
-                            type: 'report_result', notification_type: 'report_result',
-                            extra_text: '你的' + tt + '被举报成立，管理员已处理。'
+            if (result === 'approved') {
+                openMeasureDialog(reportId);
+            } else {
+                showConfirm('驳回举报', '确定驳回此举报吗？举报人会收到通知。', async function() {
+                    try {
+                        await window.sb.from('reports').update({
+                            status: 'rejected',
+                            reviewed_by: currentUser.id,
+                            reviewed_at: new Date().toISOString()
+                        }).eq('id', reportId);
+
+                        var rRes = await window.sb.from('reports').select('*').eq('id', reportId).single();
+                        if (rRes.error) throw rRes.error;
+                        var report = rRes.data;
+                        var typeText = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[report.content_type] || '内容';
+                        var snippet = await getFullSnippet(report);
+
+                        await window.pushNotification(report.reporter_id, {
+                            type: 'report_result',
+                            notification_type: 'report_result',
+                            extra_text: '你举报的' + typeText + '「' + snippet + '」经审核未违反社区规定，已驳回。'
                         });
+
+                        showToast('已驳回，举报人已收到通知');
+                        loadNotifications();
+                    } catch (err) {
+                        showToast('驳回失败：' + err.message);
+                        console.error(err);
                     }
-                    showToast('举报已' + label);
-                    loadNotifications();
-                } catch (err) { showToast('处理失败：' + err.message); }
+                });
+            }
+        }
+        window.handleReport = handleReport;
+
+        async function getFullSnippet(report) {
+            try {
+                if (report.content_type === 'post') {
+                    var r = await window.sb.from('posts').select('title, content').eq('id', report.content_id).single();
+                    if (r.data) {
+                        var s = (r.data.title || r.data.content || '').replace(/<[^>]*>/g, '').trim();
+                        return s.substring(0, 20) || '（无内容）';
+                    }
+                } else if (report.content_type === 'message') {
+                    var r = await window.sb.from('messages').select('text').eq('id', report.content_id).single();
+                    if (r.data) return (r.data.text || '').substring(0, 20) || '（无内容）';
+                } else if (report.content_type === 'chat') {
+                    var r = await window.sb.from('chats').select('content').eq('id', report.content_id).single();
+                    if (r.data) return (r.data.content || '').substring(0, 20) || '（无内容）';
+                } else if (report.content_type === 'comment') {
+                    var r = await window.sb.from('post_comments').select('content').eq('id', report.content_id).single();
+                    if (r.data) return (r.data.content || '').substring(0, 20) || '（无内容）';
+                }
+            } catch (e) {}
+            var s = (report.content_snapshot || '').replace(/<[^>]*>/g, '').trim();
+            return s.substring(0, 20) || '（无内容）';
+        }
+
+        function openMeasureDialog(reportId) {
+            var old = document.getElementById('measureOverlay');
+            if (old) old.remove();
+
+            var overlay = document.createElement('div');
+            overlay.id = 'measureOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;';
+
+            overlay.innerHTML =
+                '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.2);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid #e8f0e8;">' +
+                        '<h3 style="font-size:1.05em;margin:0;display:flex;align-items:center;gap:6px;">' +
+                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                                '<path d="M9 11l3 3L22 4"/>' +
+                                '<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>' +
+                            '</svg>' +
+                            '选择处理措施' +
+                        '</h3>' +
+                        '<button id="measureClose" style="background:none;border:none;font-size:1.3em;cursor:pointer;color:#8aaa9a;padding:4px;display:flex;">' +
+                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div style="padding:16px 20px;overflow-y:auto;flex:1;">' +
+                        '<div style="margin-bottom:14px;">' +
+                            '<label style="display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:8px;">处理措施（必选）</label>' +
+                            '<div style="display:flex;flex-direction:column;gap:8px;">' +
+                                '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
+                                    '<input type="radio" name="measureType" value="warn" style="accent-color:#2e7d32;"> 警告（发送警告通知）' +
+                                '</label>' +
+                                '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
+                                    '<input type="radio" name="measureType" value="delete" style="accent-color:#2e7d32;"> 删除违规内容' +
+                                '</label>' +
+                                '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
+                                    '<input type="radio" name="measureType" value="ban" style="accent-color:#2e7d32;"> 禁言处理' +
+                                '</label>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div id="banDaysGroup" style="display:none;margin-bottom:14px;">' +
+                            '<label style="display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">禁言天数</label>' +
+                            '<input type="number" id="banDays" value="3" min="1" max="3650" style="width:100%;padding:10px 12px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:0.9em;outline:none;box-sizing:border-box;">' +
+                        '</div>' +
+                        '<div style="background:#f5faf5;border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;font-size:0.78em;color:#5a7a6a;line-height:1.5;">' +
+                            '处理后，举报人和被举报人都会收到站内通知。' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;padding:12px 20px 18px;border-top:1px solid #e8f0e8;">' +
+                        '<button id="measureCancel" style="flex:1;padding:10px;border-radius:10px;border:none;background:#eaf3ea;color:#5a7a6a;font-weight:700;font-size:0.9em;cursor:pointer;font-family:inherit;">取消</button>' +
+                        '<button id="measureOk" style="flex:1;padding:10px;border-radius:10px;border:none;background:#2e7d32;color:#fff;font-weight:700;font-size:0.9em;cursor:pointer;font-family:inherit;">确认处理</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            var radios = overlay.querySelectorAll('input[name="measureType"]');
+            var banGroup = overlay.querySelector('#banDaysGroup');
+
+            radios.forEach(function(r) {
+                r.onchange = function() {
+                    banGroup.style.display = this.value === 'ban' ? 'block' : 'none';
+                    overlay.querySelectorAll('.measure-opt').forEach(function(el) {
+                        el.style.borderColor = '#c8e0c8';
+                        el.style.background = '#fff';
+                    });
+                    this.parentElement.style.borderColor = '#2e7d32';
+                    this.parentElement.style.background = '#e8f5e9';
+                };
             });
+
+            overlay.querySelector('#measureClose').onclick = function() { overlay.remove(); };
+            overlay.querySelector('#measureCancel').onclick = function() { overlay.remove(); };
+            overlay.querySelector('#measureOk').onclick = async function() {
+                var sel = overlay.querySelector('input[name="measureType"]:checked');
+                if (!sel) { alert('请选择处理措施'); return; }
+                var measure = sel.value;
+                var days = parseInt(overlay.querySelector('#banDays').value) || 3;
+                overlay.remove();
+                await doApproveReport(reportId, measure, days);
+            };
         }
+        window.openMeasureDialog = openMeasureDialog;
+
+        async function doApproveReport(reportId, measure, banDays) {
+            try {
+                var rRes = await window.sb.from('reports').select('*').eq('id', reportId).single();
+                if (rRes.error) throw rRes.error;
+                var report = rRes.data;
+                var typeText = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[report.content_type] || '内容';
+                var snippet = await getFullSnippet(report);
+
+                await window.sb.from('reports').update({
+                    status: 'approved',
+                    reviewed_by: currentUser.id,
+                    reviewed_at: new Date().toISOString(),
+                    measure: measure,
+                    ban_days: measure === 'ban' ? banDays : null,
+                    admin_note: measure + (measure === 'ban' ? '（' + banDays + '天）' : '')
+                }).eq('id', reportId);
+
+                var measureText = '';
+                if (measure === 'ban') {
+                    var until = new Date(Date.now() + banDays * 86400000).toISOString();
+                    await window.sb.from('users').update({
+                        banned_reason: '被举报违规',
+                        banned_until: until
+                    }).eq('id', report.reported_user_id);
+                    measureText = '禁言 ' + banDays + ' 天（至 ' + new Date(until).toLocaleString('zh-CN') + '）';
+                } else if (measure === 'delete') {
+                    var tableMap = { post: 'posts', comment: 'post_comments', message: 'messages', chat: 'chats' };
+                    var table = tableMap[report.content_type];
+                    if (table) {
+                        await window.sb.from(table).delete().eq('id', report.content_id);
+                    }
+                    measureText = '删除违规内容';
+                } else if (measure === 'warn') {
+                    measureText = '警告（已发送警告通知）';
+                }
+
+                await window.pushNotification(report.reporter_id, {
+                    type: 'report_result',
+                    notification_type: 'report_result',
+                    extra_text: '你举报的' + typeText + '「' + snippet + '」已被接受并处理，处理措施：' + measureText
+                });
+
+                await window.pushNotification(report.reported_user_id, {
+                    type: 'report_result',
+                    notification_type: 'report_result',
+                    extra_text: '你的' + typeText + '「' + snippet + '」被举报，目前对你采取：' + measureText + '，请文明聊天'
+                });
+
+                showToast('已处理，双方已收到通知');
+                loadNotifications();
+            } catch (err) {
+                showToast('处理失败：' + err.message);
+                console.error(err);
+            }
+        }
+        window.doApproveReport = doApproveReport;
+
         async function viewReportDetail(reportId) {
-            var r = (await window.sb.from('reports').select('*').eq('id', reportId).single()).data;
-            if (!r) return;
-            var tt = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[r.content_type] || '内容';
-            showConfirm('举报详情',
-                '类型：' + tt + '\n原因：' + r.reason + '\n描述：' + (r.description || '无') +
-                '\n快照：' + (r.content_snapshot || '无'),
-                function() {});
+            try {
+                var res = await window.sb.from('reports').select('*').eq('id', reportId).single();
+                if (res.error) throw res.error;
+                var r = res.data;
+                var typeText = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[r.content_type] || '内容';
+                var snippet = await getFullSnippet(r);
+                var statusText = { pending: '待处理', approved: '已处理', rejected: '已驳回' }[r.status] || r.status;
+                var detailText =
+                    '类型：' + typeText + '\n' +
+                    '内容摘要：' + snippet + '\n' +
+                    '举报原因：' + r.reason + '\n' +
+                    '补充描述：' + (r.description || '无') + '\n' +
+                    '当前状态：' + statusText;
+                showConfirm('举报详情', detailText, function() {});
+            } catch (err) {
+                showToast('加载失败：' + err.message);
+            }
         }
+        window.viewReportDetail = viewReportDetail;
+
         function goToFeedbackDetail(fid) {
             switchView('adminFeedbackView');
             loadAdminFeedback(fid);
         }
+        window.goToFeedbackDetail = goToFeedbackDetail;
 
         document.querySelectorAll('.ntf-tab').forEach(tab => {
             tab.onclick = function() {
@@ -850,7 +1043,6 @@
         async function initFeedbackView() {
             if (!allSites.length) await loadSites();
             renderSiteGrid();
-            fbCurrentTab = 'submit';
             switchFbTab('submit');
         }
 
@@ -905,10 +1097,9 @@
                 }]).select();
                 if (ins.error) throw ins.error;
 
-                // 通知管理员
                 var adminRes = await window.sb.from('users').select('id').eq('phone', '17355394710').single();
                 if (adminRes.data) {
-                    await pushNotification(adminRes.data.id, {
+                    await window.pushNotification(adminRes.data.id, {
                         type: 'feedback', notification_type: 'feedback',
                         feedback_id: ins.data[0].id,
                         extra_text: '[' + site.name + '] ' + content.substring(0, 60)
@@ -946,7 +1137,7 @@
             ).join('');
         }
 
-        // ============ 管理员：反馈管理 ============
+        // ============ 管理员反馈管理 ============
         var highlightFbId = null;
         async function loadAdminFeedback(highlightId) {
             highlightFbId = highlightId || null;
@@ -971,14 +1162,13 @@
                     (f.admin_reply ? '<div class="fb-reply"><b>已回复：</b>' + escapeHtml(f.admin_reply) + '</div>' : '') +
                     '<div class="fb-time">' + new Date(f.created_at).toLocaleString('zh-CN') + '</div>' +
                     '<div class="fb-actions">' +
-                        '<button class="btn-primary" style="padding:5px 14px;font-size:0.75em;width:auto;" onclick="replyFeedback(\'' + f.id + '\')">' + (f.admin_reply ? '重新回复' : '回复') + '</button>' +
-                        '<button class="btn-danger" style="padding:5px 14px;font-size:0.75em;width:auto;margin-top:0;" onclick="deleteFeedback(\'' + f.id + '\')">删除</button>' +
+                        '<button class="btn-reply" onclick="replyFeedback(\'' + f.id + '\')">' + (f.admin_reply ? '重新回复' : '回复') + '</button>' +
+                        '<button class="btn-del" onclick="deleteFeedback(\'' + f.id + '\')">删除</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
         }
 
-        // 回复反馈
         var replyingFeedbackId = null;
         function replyFeedback(fid) {
             replyingFeedbackId = fid;
@@ -986,6 +1176,8 @@
             document.getElementById('replyModal').classList.add('active');
             document.getElementById('replyText').focus();
         }
+        window.replyFeedback = replyFeedback;
+
         document.getElementById('replyCancel').onclick = function() {
             document.getElementById('replyModal').classList.remove('active');
             replyingFeedbackId = null;
@@ -997,9 +1189,8 @@
                 var res = await window.sb.from('feedback').select('*').eq('id', replyingFeedbackId).single();
                 var f = res.data;
                 await window.sb.from('feedback').update({ admin_reply: txt, status: 'replied' }).eq('id', replyingFeedbackId);
-                // 通知反馈用户
                 if (f && f.user_id) {
-                    await pushNotification(f.user_id, {
+                    await window.pushNotification(f.user_id, {
                         type: 'feedback', notification_type: 'feedback',
                         feedback_id: replyingFeedbackId,
                         extra_text: '管理员回复了你的反馈：' + txt.substring(0, 60)
@@ -1014,13 +1205,20 @@
 
         async function deleteFeedback(fid) {
             showConfirm('删除反馈', '确定删除此条反馈吗？', async function() {
-                await window.sb.from('feedback').delete().eq('id', fid);
-                showToast('已删除');
-                loadAdminFeedback();
+                try {
+                    var r = await window.sb.from('feedback').delete().eq('id', fid);
+                    if (r.error) throw r.error;
+                    showToast('已删除');
+                    loadAdminFeedback();
+                } catch (err) {
+                    showToast('删除失败：' + err.message);
+                    console.error(err);
+                }
             });
         }
+        window.deleteFeedback = deleteFeedback;
 
-        // ============ 管理员：网站管理 ============
+        // ============ 网站管理 ============
         async function loadAdminSites() {
             await loadSites();
             renderAdminSites();
@@ -1035,7 +1233,7 @@
                 '<div class="admin-site-item">' +
                     '<span class="site-name">' + escapeHtml(s.name) + '</span>' +
                     '<div class="site-actions">' +
-                        '<button onclick="deleteSite(\'' + s.id + '\',\'' + escapeHtml(s.name) + '\')">' +
+                        '<button onclick="deleteSite(\'' + s.id + '\',\'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
                         '删除</button>' +
                     '</div>' +
@@ -1055,13 +1253,14 @@
             } catch (err) { showToast('添加失败：' + err.message); }
         };
         async function deleteSite(sid, name) {
-            showConfirm('删除网站', '确定删除「' + name + '」吗？已有反馈不受影响。', async function() {
+            showConfirm('删除网站', '确定删除「' + name + '」吗？', async function() {
                 await window.sb.from('feedback_sites').delete().eq('id', sid);
                 showToast('已删除');
                 await loadSites();
                 renderAdminSites();
             });
         }
+        window.deleteSite = deleteSite;
 
         // ============ 初始化 ============
         (function init() {
