@@ -8,33 +8,17 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
-            --bg: #f5faf5;
-            --bg-card: #ffffff;
-            --bg-input: #eaf3ea;
-            --border: #c8e0c8;
-            --text: #1e3a2e;
-            --text-muted: #5a7a6a;
-            --text-light: #8aaa9a;
-            --primary: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-bg: #e8f5e9;
-            --shadow: 0 8px 32px rgba(46,125,50,0.12);
-            --radius: 16px;
-            --radius-sm: 10px;
+            --bg: #f5faf5; --bg-card: #ffffff; --bg-input: #eaf3ea;
+            --border: #c8e0c8; --text: #1e3a2e; --text-muted: #5a7a6a;
+            --text-light: #8aaa9a; --primary: #2e7d32; --primary-light: #4caf50;
+            --primary-bg: #e8f5e9; --shadow: 0 8px 32px rgba(46,125,50,0.12);
+            --radius: 16px; --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-            --danger: #e57373;
-            --official-blue: #2b6cff;
+            --danger: #e57373; --official-blue: #2b6cff;
         }
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
-
-        .app-header {
-            flex-shrink: 0; padding: 12px 20px;
-            background: rgba(255,255,255,0.92);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            min-height: 56px; z-index: 50;
-        }
+        .app-header { flex-shrink: 0; padding: 12px 20px; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; min-height: 56px; z-index: 50; }
         .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; cursor: default; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.3em; }
@@ -43,84 +27,37 @@
         .app-header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
         .app-header .user-name { font-weight: 600; font-size: 0.85em; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .app-header .chevron { color: var(--text-muted); font-size: 0.7em; }
-
-        .app-tabs {
-            flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96);
-            border-top: 1px solid var(--border); padding: 6px 0 calc(6px + env(safe-area-inset-bottom,0px));
-            z-index: 50;
-        }
-        .tab-btn {
-            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-            background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600;
-            color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none; position: relative;
-        }
+        .app-tabs { flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 calc(6px + env(safe-area-inset-bottom,0px)); z-index: 50; }
+        .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none; position: relative; }
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
         .tab-btn.active { color: var(--primary); }
         .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
-
-        .banned-banner {
-            flex-shrink: 0; background: #ffebee; color: #c62828;
-            padding: 6px 16px; font-size: 0.8em; font-weight: 600;
-            text-align: center; border-bottom: 1px solid #ffcdd2; display: none;
-        }
+        .banned-banner { flex-shrink: 0; background: #ffebee; color: #c62828; padding: 6px 16px; font-size: 0.8em; font-weight: 600; text-align: center; border-bottom: 1px solid #ffcdd2; display: none; }
         .banned-banner.active { display: block; }
-
         .app-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-        .chat-messages {
-            flex: 1; overflow-y: auto; padding: 16px 20px 8px 20px;
-            display: flex; flex-direction: column; gap: 4px;
-            -webkit-overflow-scrolling: touch;
-        }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px 20px 8px 20px; display: flex; flex-direction: column; gap: 4px; -webkit-overflow-scrolling: touch; }
         .time-divider { text-align: center; font-size: 0.7em; color: var(--text-light); padding: 6px 0; position: relative; }
-        .time-divider span { background: var(--bg); padding: 0 12px; }
+        .time-divider span { background: var(--bg); padding: 0 12px; position: relative; z-index: 1; }
         .time-divider::before { content: ''; position: absolute; left: 10%; right: 10%; top: 50%; height: 1px; background: var(--border); z-index: 0; }
-        .time-divider span { position: relative; z-index: 1; }
-
-        .chat-msg {
-            max-width: 85%; padding: 8px 12px; border-radius: var(--radius-sm);
-            background: var(--bg-card); border: 1px solid var(--border);
-            align-self: flex-start; flex-shrink: 0; position: relative;
-        }
+        .chat-msg { max-width: 85%; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border); align-self: flex-start; flex-shrink: 0; position: relative; }
         .chat-msg.self { align-self: flex-end; background: var(--primary-bg); border-color: var(--primary); }
         .chat-msg.deleted { opacity: 0.6; background: #f0f0f0; border-color: #ccc; }
         .chat-msg.deleted .chat-text { color: var(--text-muted); font-style: italic; }
         .chat-msg.deleted .deleted-by { color: var(--official-blue); font-weight: 600; }
         .chat-msg .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .chat-msg .msg-header .avatar {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: var(--primary); color: #fff; display: grid; place-items: center;
-            font-weight: 700; font-size: 12px; flex-shrink: 0;
-            background-size: cover; background-position: center;
-        }
+        .chat-msg .msg-header .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 12px; flex-shrink: 0; background-size: cover; background-position: center; }
         .chat-msg .msg-header .name { font-weight: 600; font-size: 0.85em; }
         .chat-msg .msg-header .official-badge { font-size: 0.5em; background: var(--primary); color: #fff; padding: 0 6px; border-radius: 99px; line-height: 16px; }
         .chat-msg .chat-text { font-size: 0.85em; line-height: 1.5; word-break: break-word; }
-
-        .fixed-input-area {
-            flex-shrink: 0; padding: 10px 20px calc(10px + env(safe-area-inset-bottom,0px));
-            background: var(--bg); border-top: 1px solid var(--border);
-            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-        }
+        .fixed-input-area { flex-shrink: 0; padding: 10px 20px calc(10px + env(safe-area-inset-bottom,0px)); background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .fixed-input-area .input-wrapper { flex: 1; display: flex; gap: 8px; min-width: 0; }
-        .fixed-input-area input {
-            flex: 1; padding: 10px 14px; border-radius: 99px;
-            border: 2px solid var(--border); background: var(--bg-input);
-            font-family: inherit; font-size: 0.85em; outline: none; min-width: 0;
-        }
+        .fixed-input-area input { flex: 1; padding: 10px 14px; border-radius: 99px; border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.85em; outline: none; min-width: 0; }
         .fixed-input-area input:focus { border-color: var(--primary); }
         .fixed-input-area input:disabled { opacity: 0.5; }
-        .fixed-input-area button {
-            padding: 8px 20px; border-radius: 99px; border: none;
-            background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em;
-            cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px;
-        }
+        .fixed-input-area button { padding: 8px 20px; border-radius: 99px; border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
         .fixed-input-area button:hover { background: var(--primary-light); }
         .fixed-input-area button:disabled { opacity: 0.5; pointer-events: none; }
-        .fixed-input-area .admin-clear-btn {
-            background: var(--danger); color: #fff; padding: 6px 12px;
-            border-radius: 99px; border: none; font-size: 0.7em; cursor: pointer; display: none;
-        }
-
+        .fixed-input-area .admin-clear-btn { background: var(--danger); color: #fff; padding: 6px 12px; border-radius: 99px; border: none; font-size: 0.7em; cursor: pointer; display: none; }
         .icon-svg { width: 1.2em; height: 1.2em; fill: currentColor; flex-shrink: 0; }
         .btn-text { margin-left: 2px; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.85em; }
@@ -130,7 +67,6 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 10px 24px; border-radius: 99px; opacity: 0; transition: 0.4s; z-index: 9999; pointer-events: none; }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
-
         .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 20px; }
         .custom-modal.active { display: flex; }
         .custom-modal .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
@@ -140,7 +76,12 @@
         .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
         .modal-actions .btn-danger { background: var(--danger); color: #fff; }
         .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
-
+        /* 上下文菜单 */
+        .chat-ctx-menu { position: fixed; z-index: 10000; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); padding: 4px 0; min-width: 130px; }
+        .chat-ctx-item { padding: 10px 16px; font-size: 0.85em; cursor: pointer; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .chat-ctx-item:hover { background: var(--primary-bg); color: var(--primary); }
+        .chat-ctx-item svg { width: 16px; height: 16px; }
+        .chat-ctx-item.danger:hover { background: var(--danger-bg, #ffebee); color: var(--danger); }
         @media (max-width: 480px) {
             .app-header { padding: 10px 14px; }
             .chat-messages { padding: 12px 14px 4px 14px; }
@@ -154,7 +95,7 @@
     <div id="mainApp">
         <div id="header-container"></div>
         <div class="banned-banner" id="bannedBanner">
-            ⚠️ 账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span>
+            账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span>
         </div>
         <div class="app-content">
             <div class="chat-messages" id="chatMessages"></div>
@@ -166,7 +107,10 @@
                         <span class="btn-text">发送</span>
                     </button>
                 </div>
-                <button class="admin-clear-btn" id="clearChatBtn" onclick="clearAllChats()">🗑️ 清空聊天</button>
+                <button class="admin-clear-btn" id="clearChatBtn" onclick="clearAllChats()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    清空聊天
+                </button>
             </div>
         </div>
         <div id="footer-container"></div>
@@ -201,18 +145,16 @@
             clearTimeout(window.toastTimer);
             window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
         }
-
         function escapeHtml(s) {
             if (!s) return '';
             return String(s).replace(/[&<>"']/g, function(c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
             });
         }
 
         var currentUser = getSessionUser();
         if (!currentUser || !currentUser.id) window.location.href = 'index.html';
         var isAdmin = (currentUser.phone === '17355394710');
-
         var isAuthorMode = false;
         var AUTHOR_PASSWORD = "7592";
 
@@ -241,9 +183,7 @@
                         if (hash === correctHash) {
                             isAuthorMode = true;
                             showToast('👑 作者模式已激活');
-                        } else {
-                            showToast('❌ 密码错误');
-                        }
+                        } else { showToast('❌ 密码错误'); }
                     } else {
                         isAuthorMode = false;
                         showToast('已退出作者模式');
@@ -301,11 +241,8 @@
 
         async function revokeChat(id, author, revoker, isSelf) {
             let newContent;
-            if (isSelf) {
-                newContent = `${author} 撤回了一条消息`;
-            } else {
-                newContent = `${author} 的消息被 ${revoker} 撤回了`;
-            }
+            if (isSelf) newContent = `${author} 撤回了一条消息`;
+            else newContent = `${author} 的消息被 ${revoker} 撤回了`;
             const { error } = await window.sb
                 .from('chats')
                 .update({ is_deleted: true, content: newContent, deleted_by: revoker })
@@ -321,9 +258,7 @@
                     if (error) throw error;
                     showToast('🗑️ 所有聊天消息已清空');
                     await loadAllData();
-                } catch (err) {
-                    showToast('清空失败：' + err.message);
-                }
+                } catch (err) { showToast('清空失败：' + err.message); }
             });
         }
 
@@ -361,15 +296,12 @@
                 const isSelf = currentUser && c.user_id === currentUser.id;
                 const isOfficial = c.is_official || c.author === 'Seven戚';
                 const isDeleted = c.is_deleted === true;
-
                 let userInfo = usersCache[c.user_id] || null;
                 let displayName = userInfo ? userInfo.nickname : c.author;
                 let avatarUrl = userInfo ? userInfo.avatar_url : null;
 
                 const showDivider = shouldShowTimeDivider(prevMsgTime, c.created_at);
-                if (showDivider) {
-                    html += `<div class="time-divider"><span>${formatTimeDivider(c.created_at)}</span></div>`;
-                }
+                if (showDivider) html += `<div class="time-divider"><span>${formatTimeDivider(c.created_at)}</span></div>`;
                 prevMsgTime = c.created_at;
 
                 const officialBadge = isOfficial ? '<span class="official-badge">官方</span>' : '';
@@ -380,9 +312,7 @@
                     const contentText = c.content || '';
                     const match = contentText.match(/^(.*?) 的消息被 (.*?) 撤回了$/);
                     if (match) {
-                        const revokedName = match[1];
-                        const revokerName = match[2];
-                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(revokedName)}</span> 的消息被 <span class="deleted-by">${escapeHtml(revokerName)}</span> 撤回了</span>`;
+                        finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(match[1])}</span> 的消息被 <span class="deleted-by">${escapeHtml(match[2])}</span> 撤回了</span>`;
                     } else if (contentText.includes('撤回了一条消息')) {
                         const name = contentText.replace(' 撤回了一条消息', '');
                         finalContent = `<span class="chat-text"><span class="deleted-by">${escapeHtml(name)}</span> 撤回了一条消息</span>`;
@@ -397,8 +327,7 @@
                 if (avatarUrl) {
                     avatarHtml = `<div class="avatar" style="background-image:url(${escapeHtml(avatarUrl)});background-size:cover;background-position:center;text-indent:-9999px;"> </div>`;
                 } else {
-                    const initial = displayName.charAt(0).toUpperCase();
-                    avatarHtml = `<div class="avatar">${initial}</div>`;
+                    avatarHtml = `<div class="avatar">${displayName.charAt(0).toUpperCase()}</div>`;
                 }
 
                 html += `
@@ -416,51 +345,81 @@
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
 
-            // 为每条消息绑定长按和右键事件
+            // 绑定长按/右键
             container.querySelectorAll('.chat-msg:not(.deleted)').forEach(msgEl => {
-                // 右键
                 msgEl.addEventListener('contextmenu', function(e) {
                     e.preventDefault();
-                    const id = this.dataset.id;
-                    const author = this.dataset.author;
-                    const isSelf = this.dataset.self === 'true';
+                    var id = this.dataset.id, author = this.dataset.author, isSelf = this.dataset.self === 'true';
                     if (!currentUser) return;
-                    if (!isAdmin && !isSelf) { showToast('您只能撤回自己的消息'); return; }
-                    showConfirm('撤回消息', '确定撤回此消息吗？', () => doRevoke(id, author, isSelf));
+                    showChatCtxMenu(e.clientX, e.clientY, id, author, isSelf,
+                        this.querySelector('.chat-text') ? this.querySelector('.chat-text').textContent : '');
                 });
 
-                // 长按（移动端）
                 let longPressTimer = null;
                 msgEl.addEventListener('touchstart', function(e) {
-                    longPressTimer = setTimeout(() => {
-                        const id = this.dataset.id;
-                        const author = this.dataset.author;
-                        const isSelf = this.dataset.self === 'true';
-                        if (!currentUser) return;
-                        if (!isAdmin && !isSelf) { showToast('您只能撤回自己的消息'); return; }
+                    var el = this;
+                    longPressTimer = setTimeout(function() {
                         if (navigator.vibrate) navigator.vibrate(50);
-                        showConfirm('撤回消息', '确定撤回此消息吗？', () => doRevoke(id, author, isSelf));
+                        showChatCtxMenu(e.touches[0].clientX, e.touches[0].clientY,
+                            el.dataset.id, el.dataset.author, el.dataset.self === 'true',
+                            el.querySelector('.chat-text') ? el.querySelector('.chat-text').textContent : '');
                         longPressTimer = null;
                     }, 600);
                 });
-                msgEl.addEventListener('touchend', function() {
-                    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-                });
-                msgEl.addEventListener('touchmove', function() {
-                    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-                });
+                msgEl.addEventListener('touchend', function() { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
+                msgEl.addEventListener('touchmove', function() { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
             });
+        }
+
+        function showChatCtxMenu(x, y, id, author, isSelf, contentText) {
+            var old = document.getElementById('chatCtxMenu');
+            if (old) old.remove();
+            var menu = document.createElement('div');
+            menu.id = 'chatCtxMenu';
+            menu.className = 'chat-ctx-menu';
+            menu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
+            menu.style.top = Math.min(y, window.innerHeight - 140) + 'px';
+            var html = '';
+            if (isAdmin || isSelf) {
+                html += '<div class="chat-ctx-item danger" data-action="revoke">' + svgIcon('undo', 16) + ' 撤回</div>';
+            }
+            if (!isSelf) {
+                html += '<div class="chat-ctx-item" data-action="report">' + svgIcon('flag', 16) + ' 举报</div>';
+            }
+            menu.innerHTML = html;
+            document.body.appendChild(menu);
+            menu.querySelectorAll('.chat-ctx-item').forEach(function(item) {
+                item.onclick = function() {
+                    var action = this.dataset.action;
+                    menu.remove();
+                    if (action === 'revoke') {
+                        if (!currentUser) return;
+                        if (!isAdmin && !isSelf) { showToast('您只能撤回自己的消息'); return; }
+                        showConfirm('撤回消息', '确定撤回此消息吗？', () => doRevoke(id, author, isSelf));
+                    } else if (action === 'report') {
+                        reportChat(id, author, contentText);
+                    }
+                };
+            });
+            setTimeout(function() {
+                document.addEventListener('click', function close(e) {
+                    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); }
+                });
+            }, 10);
+        }
+
+        async function reportChat(contentId, author, contentSnapshot) {
+            var userRes = await window.sb.from('users').select('id').eq('nickname', author).single();
+            if (userRes.error || !userRes.data) { showToast('无法找到该用户'); return; }
+            openReportDialog(userRes.data.id, 'chat', contentId, contentSnapshot);
         }
 
         async function doRevoke(id, author, isSelf) {
             try {
-                const revoker = currentUser.nickname;
-                await revokeChat(id, author, revoker, isSelf);
+                await revokeChat(id, author, currentUser.nickname, isSelf);
                 showToast('✅ 消息已撤回');
                 await loadAllData();
-            } catch (err) {
-                showToast('撤回失败：' + err.message);
-            }
+            } catch (err) { showToast('撤回失败：' + err.message); }
         }
 
         function sendChat() {
@@ -482,10 +441,7 @@
                     showToast('💬 消息已发送');
                 })
                 .catch(err => showToast('发送失败：' + err.message))
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                });
+                .finally(() => { btn.disabled = false; btn.innerHTML = originalHTML; });
         }
 
         async function loadAllData() {
@@ -527,36 +483,15 @@
         (function init() {
             updateBannedBanner();
             loadAllData();
-
             if (currentUser && currentUser.id) {
-                updateLastChatRead(currentUser.id).then(() => {
-                    updateChatBadge();
-                });
+                updateLastChatRead(currentUser.id).then(() => updateChatBadge());
             }
-
-            if (isAdmin) {
-                document.getElementById('clearChatBtn').style.display = 'inline-block';
-            }
-
-            // ========== 修复：绑定发送按钮事件 ==========
-            document.getElementById('sendChatBtn').addEventListener('click', sendChat);
-            document.getElementById('chatInput').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendChat();
-                }
-            });
+            if (isAdmin) document.getElementById('clearChatBtn').style.display = 'inline-block';
 
             window.sb.channel('chats-page-realtime')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
-                    loadAllData();
-                })
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, (payload) => {
-                    loadAllData();
-                })
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload) => {
-                    loadAllData();
-                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, () => loadAllData())
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, () => loadAllData())
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, () => loadAllData())
                 .subscribe();
 
             function syncUser() {
@@ -581,6 +516,10 @@
             });
         })();
 
+        document.getElementById('sendChatBtn').addEventListener('click', sendChat);
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendChat();
+        });
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
