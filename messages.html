@@ -6,7 +6,6 @@
     <title>Seven戚 · 留言板</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 完整样式（原文件所有样式） ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         :root {
             --bg: #f5faf5;
@@ -31,43 +30,83 @@
         }
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
-        .app-header { flex-shrink: 0; padding: 12px 20px 8px 20px; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 50; backdrop-filter: blur(12px); min-height: 56px; }
-        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; cursor: default; user-select: none; }
+
+        .app-header {
+            flex-shrink: 0; padding: 12px 20px 8px 20px;
+            background: rgba(255,255,255,0.92);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 50; min-height: 56px;
+        }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.4em; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.3em; }
-        .app-header .user-area { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; transition: background 0.2s; }
+        .app-header .user-area { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 10px 4px 6px; border-radius: 99px; }
         .app-header .user-area:hover { background: var(--primary-bg); }
         .app-header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
         .app-header .user-name { font-weight: 600; font-size: 0.85em; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; transition: transform 0.3s; }
+        .app-header .chevron { color: var(--text-muted); font-size: 0.7em; }
 
-        .app-tabs { flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 calc(6px + var(--safe-bottom)); z-index: 50; backdrop-filter: blur(12px); }
-        .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); padding: 4px 0; cursor: pointer; transition: color 0.2s; position: relative; text-decoration: none; }
+        .app-tabs {
+            flex-shrink: 0; display: flex;
+            background: rgba(255,255,255,0.96);
+            border-top: 1px solid var(--border);
+            padding: 6px 0 calc(6px + var(--safe-bottom));
+            z-index: 50;
+        }
+        .tab-btn {
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+            background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600;
+            color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none;
+            position: relative;
+        }
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; }
         .tab-btn.active { color: var(--primary); }
         .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
-        .tab-btn .badge { position: absolute; top: 0; right: 20%; background: #e57373; color: #fff; font-size: 0.6em; font-weight: 700; padding: 1px 6px; border-radius: 99px; min-width: 16px; text-align: center; transform: translateY(-4px); }
+        .tab-btn .badge { position: absolute; top: -2px; right: 15%; background: #e57373; color: #fff; font-size: 0.6em; font-weight: 700; padding: 1px 6px; border-radius: 99px; min-width: 16px; text-align: center; }
 
         .banned-banner { flex-shrink: 0; background: #ffebee; color: #c62828; padding: 6px 16px; font-size: 0.8em; font-weight: 600; text-align: center; border-bottom: 1px solid #ffcdd2; display: none; }
         .banned-banner.active { display: block; }
 
         .app-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
         .msg-list { flex: 1; overflow-y: auto; padding: 16px 20px 8px 20px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-        .fixed-input-area { flex-shrink: 0; padding: 10px 20px calc(10px + var(--safe-bottom)); background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .fixed-input-area {
+            flex-shrink: 0; padding: 10px 20px calc(10px + var(--safe-bottom));
+            background: var(--bg); border-top: 1px solid var(--border);
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        }
         .fixed-input-area .input-wrapper { flex: 1; display: flex; gap: 8px; min-width: 0; }
-        .fixed-input-area input { flex: 1; padding: 10px 14px; border-radius: 99px; border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.85em; outline: none; transition: border-color 0.2s; color: var(--text); min-width: 0; }
+        .fixed-input-area input {
+            flex: 1; padding: 10px 14px; border-radius: 99px;
+            border: 2px solid var(--border); background: var(--bg-input);
+            font-family: inherit; font-size: 0.85em; outline: none; color: var(--text); min-width: 0;
+        }
         .fixed-input-area input:focus { border-color: var(--primary); }
         .fixed-input-area input:disabled { opacity: 0.5; }
-        .fixed-input-area button { padding: 8px 20px; border-radius: 99px; border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em; cursor: pointer; transition: background 0.2s; font-family: inherit; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 6px; min-width: 80px; justify-content: center; }
+        .fixed-input-area button {
+            padding: 8px 20px; border-radius: 99px; border: none;
+            background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em;
+            cursor: pointer; font-family: inherit; white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
         .fixed-input-area button:hover { background: var(--primary-light); }
         .fixed-input-area button:disabled { opacity: 0.5; pointer-events: none; }
         .fixed-input-area .author-options { display: none; align-items: center; gap: 12px; width: 100%; margin-top: 4px; }
         .fixed-input-area .author-options.active { display: flex; }
         .fixed-input-area .author-options label { font-size: 0.75em; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 
-        .msg { display: flex; gap: 12px; padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: box-shadow 0.2s; flex-shrink: 0; }
-        .msg:hover { box-shadow: var(--shadow); }
-        .msg .avatar { width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #0b0e14; background: var(--primary); background-size: cover; background-position: center; }
+        .msg {
+            display: flex; gap: 12px; padding: 14px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); flex-shrink: 0;
+        }
+        .msg .avatar {
+            width: 38px; height: 38px; border-radius: 50%; flex: none;
+            display: grid; place-items: center; font-weight: 700; font-size: 16px;
+            color: #fff; background: var(--primary);
+            background-size: cover; background-position: center;
+        }
         .msg .body { flex: 1; min-width: 0; }
         .msg .meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
         .msg .name { font-size: 14px; font-weight: 600; }
@@ -76,26 +115,53 @@
         .msg .txt { font-size: 14px; line-height: 1.6; color: var(--text); word-break: break-word; }
         .msg .ip { margin-top: 6px; font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .msg .ip .ip-text { display: flex; align-items: center; gap: 4px; }
-        .msg .ip .ip-text::before { content: "📍"; opacity: .6; }
-        .msg .ip .comment-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 999px; transition: .2s; font-family: inherit; }
+        .msg .ip .comment-btn {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 13px; display: flex; align-items: center;
+            gap: 4px; padding: 2px 6px; border-radius: 999px; font-family: inherit;
+        }
         .msg .ip .comment-btn:hover { background: rgba(0,0,0,0.05); color: var(--text); }
-        .msg .ip .comment-btn .count { font-size: 12px; font-weight: 600; }
         .msg .ip .comment-btn.official { color: var(--official-blue); }
-        .msg .del-btn { background: none; border: none; color: #e57373; cursor: pointer; font-size: 13px; opacity: 0.6; transition: .2s; padding: 0 4px; margin-left: auto; display: flex; align-items: center; gap: 4px; }
-        .msg .del-btn:hover { opacity: 1; }
+        .msg .ip .report-btn {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 12px; opacity: 0.6;
+            padding: 2px 6px; display: flex; align-items: center;
+            gap: 4px; border-radius: 999px;
+        }
+        .msg .ip .report-btn:hover { opacity: 1; color: var(--danger); }
+        .msg .ip .del-btn {
+            background: none; border: none; color: #e57373;
+            cursor: pointer; font-size: 13px; opacity: 0.6;
+            padding: 0 4px; margin-left: auto;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .msg .ip .del-btn:hover { opacity: 1; }
         .msg.pinned { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
 
-        .icon-svg { width: 1.2em; height: 1.2em; fill: currentColor; flex-shrink: 0; }
-        .btn-text { margin-left: 2px; }
+        .icon-svg { width: 1em; height: 1em; fill: currentColor; flex-shrink: 0; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.85em; }
         .empty-state .big { font-size: 2.8em; margin-bottom: 8px; opacity: 0.5; }
         .loading-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.9em; }
-        .loading-state .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+        .loading-state .spinner {
+            display: inline-block; width: 30px; height: 30px;
+            border: 3px solid var(--border); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         .error-state { text-align: center; color: #c62828; padding: 40px 20px; font-size: 0.9em; }
-        .error-state .big { font-size: 2.8em; margin-bottom: 8px; opacity: 0.7; }
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease; z-index: 9999 !important; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow); }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text); color: #fff;
+            padding: 0.7em 1.6em; border-radius: 2em;
+            font-weight: 600; font-size: 0.85em;
+            opacity: 0; transition: all 0.4s ease;
+            z-index: 9999; pointer-events: none;
+            white-space: nowrap; box-shadow: var(--shadow);
+        }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         @media (max-width: 480px) {
             .app-header { padding: 10px 14px 6px 14px; min-height: 48px; }
             .app-header .brand { font-size: 0.95em; }
@@ -105,84 +171,91 @@
             .fixed-input-area .input-wrapper { flex: 1; }
             .fixed-input-area input { padding: 8px 12px; font-size: 0.8em; }
             .fixed-input-area button { padding: 6px 14px; font-size: 0.8em; }
-            .fixed-input-area .author-options { justify-content: flex-start; gap: 10px; }
         }
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        .comment-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease; }
+        /* 评论弹窗 */
+        .comment-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
         .comment-overlay.active { display: flex; }
-        .comment-panel { background: var(--bg-card); border-radius: var(--radius); max-width: 560px; width: 100%; max-height: 80vh; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .comment-panel {
+            background: var(--bg-card); border-radius: var(--radius);
+            max-width: 560px; width: 100%; max-height: 80vh; padding: 24px;
+            display: flex; flex-direction: column; border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
         .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .comment-header h4 { font-size: 1.1em; }
-        .comment-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-muted); transition: .2s; padding: 0 4px; display: flex; align-items: center; }
+        .comment-header h4 { font-size: 1.1em; display: flex; align-items: center; gap: 6px; }
+        .comment-close { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; }
         .comment-close:hover { color: var(--text); }
         .comment-list { flex: 1; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; }
-        .comment-item { background: var(--bg-input); border-radius: var(--radius-sm); padding: 10px 12px; border-left: 3px solid var(--border); }
+        .comment-item {
+            background: var(--bg-input); border-radius: var(--radius-sm);
+            padding: 10px 12px; border-left: 3px solid var(--border);
+        }
         .comment-item.official { border-left-color: #2b6cff; background: rgba(43,108,255,0.06); }
         .comment-item .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8em; color: var(--text-muted); }
         .comment-item .meta .name { font-weight: 700; color: var(--text); }
         .comment-item .meta .official-tag { background: #2b6cff; color: #fff; font-size: 0.55em; padding: 0 6px; border-radius: 99px; line-height: 16px; }
         .comment-item .txt { font-size: 0.9em; line-height: 1.5; margin-top: 4px; color: var(--text); }
         .comment-item .time { font-size: 0.7em; color: var(--text-light); }
-        .comment-item .del-comment-btn { background: none; border: none; color: #e57373; cursor: pointer; font-size: 0.75em; transition: .2s; margin-left: auto; padding: 0 4px; }
-        .comment-item .del-comment-btn:hover { opacity: 1; }
+        .comment-item .del-comment-btn { background: none; border: none; color: #e57373; cursor: pointer; padding: 0 4px; margin-left: auto; display: flex; align-items: center; }
         .comment-input-area { display: flex; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
-        .comment-input-area input { flex: 1; padding: 8px 14px; border-radius: 99px; border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.85em; outline: none; transition: border-color 0.2s; color: var(--text); }
+        .comment-input-area input {
+            flex: 1; padding: 8px 14px; border-radius: 99px;
+            border: 2px solid var(--border); background: var(--bg-input);
+            font-family: inherit; font-size: 0.85em; outline: none; color: var(--text);
+        }
         .comment-input-area input:focus { border-color: var(--primary); }
         .comment-input-area input:disabled { opacity: 0.5; }
-        .comment-input-area button { padding: 8px 18px; border-radius: 99px; border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em; cursor: pointer; transition: background 0.2s; font-family: inherit; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+        .comment-input-area button {
+            padding: 8px 18px; border-radius: 99px; border: none;
+            background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85em;
+            cursor: pointer; font-family: inherit; white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
         .comment-input-area button:hover { background: var(--primary-light); }
         .comment-input-area button:disabled { opacity: 0.5; pointer-events: none; }
         .comment-empty { text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.85em; }
 
-        .profile-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .profile-overlay.active { opacity: 1; pointer-events: auto; }
-        .profile-card { background: var(--bg-card); border-radius: var(--radius); padding: 2em 2.2em; max-width: 90vw; width: 22em; box-shadow: var(--shadow); border: 1px solid var(--border); transform: scale(0.9) translateY(20px); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .profile-overlay.active .profile-card { transform: scale(1) translateY(0); }
-        .profile-card .profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 700; margin: 0 auto 12px; object-fit: cover; }
-        .profile-card .avatar-upload { text-align: center; margin-top: 4px; }
-        .profile-card .avatar-upload label { font-size: 0.7em; color: var(--primary); cursor: pointer; text-decoration: underline; }
-        .profile-card .avatar-upload input[type="file"] { display: none; }
-        .profile-card h3 { text-align: center; font-size: 1.1em; margin-bottom: 4px; }
-        .profile-card .sub { text-align: center; color: var(--text-muted); font-size: 0.75em; margin-bottom: 16px; }
-        .profile-card .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-        .profile-card .field label { font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        .profile-card .field input { padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; transition: border-color 0.2s; color: var(--text); }
-        .profile-card .field input:focus { border-color: var(--primary); }
-        .profile-card .actions { display: flex; gap: 8px; margin-top: 8px; }
-        .profile-card .actions button { flex: 1; padding: 8px; border-radius: var(--radius-sm); border: none; font-weight: 700; font-size: 0.8em; cursor: pointer; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .profile-card .actions .save-btn { background: var(--primary); color: #fff; }
-        .profile-card .actions .save-btn:hover { background: var(--primary-light); }
-        .profile-card .actions .logout-btn { background: #ffebee; color: #c62828; }
-        .profile-card .actions .logout-btn:hover { background: #ffcdd2; }
-        .profile-card .actions .close-btn { background: var(--bg-input); color: var(--text-muted); }
-        .profile-card .actions .close-btn:hover { background: var(--border); }
-
-        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
+        /* 确认弹窗 */
+        .custom-modal {
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
         .custom-modal.active { display: flex; }
-        .custom-modal .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .custom-modal .modal-box .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-        .custom-modal .modal-box .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
-        .custom-modal .modal-box .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-        .custom-modal .modal-box .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: pointer; transition: background 0.2s; font-family: inherit; }
-        .custom-modal .modal-box .modal-actions .btn-danger { background: var(--danger); color: #fff; }
-        .custom-modal .modal-box .modal-actions .btn-danger:hover { background: #c62828; }
-        .custom-modal .modal-box .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
-        .custom-modal .modal-box .modal-actions .btn-secondary:hover { background: var(--border); }
-        .custom-modal .modal-box .modal-actions .btn-primary { background: var(--primary); color: #fff; }
-        .custom-modal .modal-box .modal-actions .btn-primary:hover { background: var(--primary-light); }
+        .custom-modal .modal-box {
+            background: var(--bg-card); border-radius: var(--radius);
+            max-width: 420px; width: 100%; padding: 24px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .custom-modal .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+        .custom-modal .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; white-space: pre-wrap; }
+        .custom-modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .custom-modal .modal-actions button {
+            padding: 6px 18px; border-radius: var(--radius-sm);
+            border: none; font-weight: 600; font-size: 0.85em;
+            cursor: pointer; font-family: inherit;
+        }
+        .custom-modal .modal-actions .btn-danger { background: var(--danger); color: #fff; }
+        .custom-modal .modal-actions .btn-danger:hover { background: #c62828; }
+        .custom-modal .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
+        .custom-modal .modal-actions .btn-secondary:hover { background: var(--border); }
     </style>
 </head>
 <body>
     <div id="mainApp">
-        <!-- 顶部由 common.js 渲染 -->
         <div id="header-container"></div>
 
         <div class="banned-banner" id="bannedBanner">
-            ⚠️ 账号已被封禁，无法发布留言或评论。解封时间：<span id="bannedUntilDisplay"></span>
+            账号已被封禁，无法发布留言或评论。解封时间：<span id="bannedUntilDisplay"></span>
         </div>
 
         <div class="app-content">
@@ -191,18 +264,20 @@
                 <div class="input-wrapper">
                     <input type="text" id="msgInput" placeholder="写留言…" maxlength="200" />
                     <button id="sendMsgBtn" onclick="sendMessage()">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
                         <span class="btn-text">发送</span>
                     </button>
                 </div>
                 <div class="author-options" id="msgAuthorOptions">
-                    <label><input type="checkbox" id="msgPinnedCheck"> 📌 置顶</label>
+                    <label><input type="checkbox" id="msgPinnedCheck"> 置顶</label>
                     <span style="font-size:0.65em;color:var(--text-muted);">(仅作者)</span>
                 </div>
             </div>
         </div>
 
-        <!-- 底部由 common.js 渲染 -->
         <div id="footer-container"></div>
     </div>
 
@@ -210,45 +285,34 @@
     <div class="comment-overlay" id="commentOverlay">
         <div class="comment-panel">
             <div class="comment-header">
-                <h4>💬 评论</h4>
+                <h4>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    评论
+                </h4>
                 <button class="comment-close" id="closeComment">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
                 </button>
             </div>
             <div class="comment-list" id="commentList"></div>
             <div class="comment-input-area">
                 <input type="text" id="commentInput" placeholder="写评论…" maxlength="200" />
                 <button id="sendCommentBtn" onclick="sendComment()">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
                     <span class="btn-text">发送</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 个人资料弹窗 -->
-    <div class="profile-overlay" id="profileOverlay" onclick="closeProfileOutside(event)">
-        <div class="profile-card" onclick="event.stopPropagation()">
-            <img class="profile-avatar" id="profileAvatar" src="" alt="avatar" />
-            <div class="avatar-upload">
-                <label for="avatarFileInput">📷 更换头像</label>
-                <input type="file" id="avatarFileInput" accept="image/*" />
-            </div>
-            <h3 id="profileNameDisplay">用户</h3>
-            <div class="sub">Seven戚 社区成员</div>
-            <div class="field">
-                <label>修改昵称</label>
-                <input type="text" id="profileNameInput" maxlength="12" />
-            </div>
-            <div class="actions">
-                <button class="save-btn" onclick="saveProfile()">保存</button>
-                <button class="logout-btn" onclick="logout()">退出</button>
-                <button class="close-btn" onclick="closeProfile()">关闭</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 自定义确认弹窗 -->
+    <!-- 确认弹窗 -->
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
@@ -285,7 +349,7 @@
         function escapeHtml(s) {
             if (!s) return '';
             return String(s).replace(/[&<>"']/g, function(c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
             });
         }
 
@@ -293,25 +357,6 @@
         function pickColor(hex) {
             if (hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase() !== "#000000") return hex;
             return COLORS[Math.floor(Math.random() * COLORS.length)];
-        }
-        var avatarCache = {};
-        function avatarFor(name, color) {
-            var key = name + "|" + color;
-            if (!avatarCache[key]) avatarCache[key] = pickColor(color);
-            return avatarCache[key];
-        }
-
-        async function uploadAvatar(file, userId) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `avatars/${userId}/profile.${fileExt}`;
-            const { data, error } = await window.sb.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-            if (error) throw error;
-            const { data: urlData } = window.sb.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
-            return urlData.publicUrl;
         }
 
         // ============================================================
@@ -326,99 +371,12 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        var brandClickCount = 0;
-        var brandClickTimer = null;
-        var authorBadgeEl, authorModeHintEl, brandEl, userAreaEl;
-
-        function addAuthorBadgeElements() {
-            brandEl = document.querySelector('.brand');
-            if (brandEl && !brandEl.querySelector('.author-badge')) {
-                authorBadgeEl = document.createElement('span');
-                authorBadgeEl.className = 'author-badge';
-                authorBadgeEl.textContent = '👑 作者模式';
-                authorBadgeEl.style.cssText = 'background: var(--primary); color: #fff; font-size: 0.55em; padding: 0 8px; border-radius: 99px; line-height: 18px; margin-left: 6px; display: none;';
-                brandEl.appendChild(authorBadgeEl);
-
-                authorModeHintEl = document.createElement('span');
-                authorModeHintEl.className = 'author-mode-hint';
-                authorModeHintEl.textContent = '(作者模式已激活)';
-                authorModeHintEl.style.cssText = 'font-size: 0.6em; color: var(--primary); margin-left: 10px; font-weight: 700; display: none;';
-                brandEl.appendChild(authorModeHintEl);
-            }
-        }
-
-        function bindBrandClick() {
-            brandEl = document.querySelector('.brand');
-            if (brandEl) {
-                brandEl.addEventListener('click', async function(e) {
-                    if (e.target.closest('.author-badge') || e.target.closest('.author-mode-hint')) return;
-                    brandClickCount++;
-                    clearTimeout(brandClickTimer);
-                    brandClickTimer = setTimeout(() => { brandClickCount = 0; }, 800);
-                    if (brandClickCount === 3) {
-                        brandClickCount = 0;
-                        if (!isAuthorMode) {
-                            var pwd = prompt('请输入作者密码：');
-                            if (pwd === null) return;
-                            var hash = await sha256(pwd);
-                            var correctHash = await sha256(AUTHOR_PASSWORD);
-                            if (hash === correctHash) {
-                                isAuthorMode = true;
-                                if (authorBadgeEl) authorBadgeEl.classList.add('active');
-                                if (authorModeHintEl) authorModeHintEl.classList.add('active');
-                                document.getElementById('msgAuthorOptions').classList.add('active');
-                                showToast('👑 作者模式已激活');
-                                renderMessages();
-                            } else {
-                                showToast('❌ 密码错误');
-                            }
-                        } else {
-                            isAuthorMode = false;
-                            if (authorBadgeEl) authorBadgeEl.classList.remove('active');
-                            if (authorModeHintEl) authorModeHintEl.classList.remove('active');
-                            document.getElementById('msgAuthorOptions').classList.remove('active');
-                            showToast('已退出作者模式');
-                            renderMessages();
-                        }
-                    }
-                });
-            }
-        }
-
-        function bindUserAreaClick() {
-            userAreaEl = document.querySelector('.user-area');
-            if (userAreaEl) {
-                userAreaEl.addEventListener('click', function() {
-                    openProfile();
-                });
-            }
-        }
-
         // ============================================================
-        // 会话管理
+        // 会话与权限
         // ============================================================
         var currentUser = null;
         var isAdmin = false;
 
-        function getSessionUser() {
-            const stored = localStorage.getItem('sq_user_session');
-            if (stored) {
-                try { return JSON.parse(stored); } catch { return null; }
-            }
-            return null;
-        }
-
-        function setSessionUser(user) {
-            localStorage.setItem('sq_user_session', JSON.stringify(user));
-        }
-
-        function clearSession() {
-            localStorage.removeItem('sq_user_session');
-        }
-
-        // ============================================================
-        // 封禁检查
-        // ============================================================
         function isUserBanned() {
             if (!currentUser) return false;
             const bannedUntil = currentUser.banned_until ? new Date(currentUser.banned_until) : null;
@@ -449,7 +407,7 @@
         }
 
         // ============================================================
-        // 留言板数据操作
+        // 数据操作
         // ============================================================
         var messages = [];
 
@@ -531,15 +489,15 @@
         async function renderMessages() {
             const container = document.getElementById('messageList');
             if (messagesLoading) {
-                container.innerHTML = `<div class="loading-state"><div class="spinner"></div><div>正在加载留言...</div></div>`;
+                container.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>正在加载留言...</div></div>';
                 return;
             }
             if (messagesError) {
-                container.innerHTML = `<div class="error-state"><div class="big">⚠️</div><div>加载失败，请联系站主修复</div><div style="font-size:0.75em;margin-top:8px;color:var(--text-muted);">错误信息：${escapeHtml(messagesError)}</div></div>`;
+                container.innerHTML = '<div class="error-state">加载失败，请联系站主修复</div>';
                 return;
             }
             if (!messages || messages.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="big">💌</div>暂无留言，快来写第一条吧！</div>`;
+                container.innerHTML = '<div class="empty-state"><div class="big">💌</div>暂无留言，快来写第一条吧！</div>';
                 return;
             }
 
@@ -564,46 +522,78 @@
                 const isOfficial = m.is_official || m.name === 'Seven戚';
                 const timeStr = new Date(m.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const color = m.color || pickColor(null);
-                const av = avatarFor(m.name, color);
-                const officialTag = isOfficial ? `<span class="official-tag">官方</span>` : '';
+                const officialTag = isOfficial ? '<span class="official-tag">官方</span>' : '';
                 const pinnedClass = m.is_pinned ? 'pinned' : '';
                 const info = commentInfo[m.id] || { count: 0, hasOfficial: false };
-                const commentCount = info.count;
-                const hasOfficialComment = info.hasOfficial;
-                const commentIconClass = hasOfficialComment ? 'comment-btn official' : 'comment-btn';
+                const commentIconClass = info.hasOfficial ? 'comment-btn official' : 'comment-btn';
 
+                // 删除按钮
                 let delBtn = '';
                 if (isAdmin || isAuthorMode) {
-                    delBtn = `<button class="del-btn" onclick="deleteMessageById('${m.id}')"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> 删除</button>`;
+                    delBtn = '<button class="del-btn" onclick="deleteMessageById(\'' + m.id + '\')">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                        '<polyline points="3 6 5 6 21 6"/>' +
+                        '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>' +
+                        '</svg>删除</button>';
                 }
 
-                const commentBtn = `<button class="${commentIconClass}" onclick="openCommentPanel('${m.id}')"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="count">${commentCount}</span></button>`;
+                // 举报按钮
+                let reportBtn = '';
+                if (currentUser && m.name !== currentUser.nickname) {
+                    var snapshotSafe = escapeHtml(m.text || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    var nameSafe = escapeHtml(m.name || '').replace(/'/g, "\\'");
+                    reportBtn = '<button class="report-btn" onclick="event.stopPropagation();reportMessage(\'' + m.id + '\',\'' + nameSafe + '\',\'' + snapshotSafe + '\')" title="举报">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                        '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>' +
+                        '<line x1="4" y1="22" x2="4" y2="15"/>' +
+                        '</svg>举报</button>';
+                }
 
-                html += `
-                    <div class="msg ${pinnedClass}" data-id="${m.id}">
-                        <div class="avatar" style="background:${av}">${escapeHtml(m.name.slice(0,1))}</div>
-                        <div class="body">
-                            <div class="meta">
-                                <span class="name">${escapeHtml(m.name)}</span>
-                                ${officialTag}
-                                <span class="time">${timeStr}</span>
-                                ${m.is_pinned ? '📌' : ''}
-                            </div>
-                            <div class="txt">${escapeHtml(m.text)}</div>
-                            <div class="ip">
-                                <span class="ip-text">${escapeHtml(m.ip || '未知')}</span>
-                                ${commentBtn}
-                                ${delBtn}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const commentBtn = '<button class="' + commentIconClass + '" onclick="openCommentPanel(\'' + m.id + '\')">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+                    '</svg>' +
+                    '<span class="count">' + info.count + '</span></button>';
+
+                html += '<div class="msg ' + pinnedClass + '" data-id="' + m.id + '">' +
+                    '<div class="avatar" style="background:' + color + '">' + escapeHtml(m.name.slice(0,1)) + '</div>' +
+                    '<div class="body">' +
+                        '<div class="meta">' +
+                            '<span class="name">' + escapeHtml(m.name) + '</span>' +
+                            officialTag +
+                            '<span class="time">' + timeStr + '</span>' +
+                            (m.is_pinned ? '<span style="font-size:0.7em;color:var(--primary);">置顶</span>' : '') +
+                        '</div>' +
+                        '<div class="txt">' + escapeHtml(m.text) + '</div>' +
+                        '<div class="ip">' +
+                            '<span class="ip-text">' + escapeHtml(m.ip || '未知') + '</span>' +
+                            commentBtn +
+                            reportBtn +
+                            delBtn +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             }
             container.innerHTML = html;
             container.scrollTop = 0;
         }
 
+        // ============================================================
+        // 举报功能
+        // ============================================================
+        async function reportMessage(contentId, author, contentSnapshot) {
+            try {
+                var userRes = await window.sb.from('users').select('id').eq('nickname', author).single();
+                if (userRes.error || !userRes.data) { showToast('无法找到该用户'); return; }
+                openReportDialog(userRes.data.id, 'message', contentId, contentSnapshot);
+            } catch (err) {
+                showToast('举报失败：' + err.message);
+            }
+        }
+
+        // ============================================================
         // 删除留言（主+子）
+        // ============================================================
         async function deleteMessageById(id) {
             if (!isAdmin && !isAuthorMode) { showToast('权限不足'); return; }
             showConfirm('删除留言', '确定要删除此留言及其所有评论吗？', async () => {
@@ -612,14 +602,13 @@
                     messages = messages.filter(m => m.id !== id && m.parent_id !== id);
                     await renderMessages();
                     if (currentCommentParentId === id) closeCommentPanel();
-                    showToast('🗑️ 留言已删除（含评论）');
+                    showToast('留言已删除（含评论）');
                 } catch (err) {
                     showToast('删除失败：' + err.message);
                 }
             });
         }
 
-        // 删除评论（仅单条）
         async function deleteCommentOnlyById(id) {
             if (!isAdmin && !isAuthorMode) { showToast('权限不足'); return; }
             showConfirm('删除评论', '确定要删除此评论吗？', async () => {
@@ -628,14 +617,16 @@
                     messages = messages.filter(m => m.id !== id);
                     await renderMessages();
                     if (currentCommentParentId) renderComments(currentCommentParentId);
-                    showToast('🗑️ 评论已删除');
+                    showToast('评论已删除');
                 } catch (err) {
                     showToast('删除失败：' + err.message);
                 }
             });
         }
 
+        // ============================================================
         // 发送留言
+        // ============================================================
         function sendMessage() {
             if (!currentUser) { showToast('请先登录'); return; }
             if (isUserBanned()) { showToast('账号已被封禁，无法留言'); return; }
@@ -645,7 +636,7 @@
             const btn = document.getElementById('sendMsgBtn');
             btn.disabled = true;
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<span class="spinner" style="display:inline-block;width:1em;height:1em;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:4px;"></span> 发送中...`;
+            btn.innerHTML = '发送中...';
 
             const color = pickColor(null);
             const isOfficial = isAuthorMode || currentUser.nickname === 'Seven戚';
@@ -656,7 +647,7 @@
                     const ip = await fetchIP();
                     const { data } = await addMessage(currentUser.nickname, content, color, ip, isOfficial, isPinned, null);
                     if (data && data.length) {
-                        const newMsg = {
+                        messages.push({
                             id: data[0].id,
                             name: currentUser.nickname,
                             text: content,
@@ -666,15 +657,14 @@
                             is_official: isOfficial,
                             is_pinned: isPinned,
                             parent_id: null
-                        };
-                        messages.push(newMsg);
+                        });
                         await renderMessages();
                     } else {
                         await loadAllData();
                     }
                     input.value = '';
                     if (isPinned) document.getElementById('msgPinnedCheck').checked = false;
-                    showToast('💌 留言已发送');
+                    showToast('留言已发送');
                 } catch (err) {
                     showToast('发送失败：' + err.message);
                 } finally {
@@ -684,7 +674,9 @@
             })();
         }
 
+        // ============================================================
         // 评论功能
+        // ============================================================
         var currentCommentParentId = null;
         var commentList = document.getElementById('commentList');
         var commentInput = document.getElementById('commentInput');
@@ -728,22 +720,24 @@
             comments.forEach(c => {
                 const isOfficial = c.is_official || c.name === 'Seven戚';
                 const timeStr = new Date(c.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                const officialTag = isOfficial ? `<span class="official-tag">官方</span>` : '';
+                const officialTag = isOfficial ? '<span class="official-tag">官方</span>' : '';
                 let delBtn = '';
                 if (isAdmin || isAuthorMode) {
-                    delBtn = `<button class="del-comment-btn" onclick="deleteCommentOnlyById('${c.id}')">🗑️</button>`;
+                    delBtn = '<button class="del-comment-btn" onclick="deleteCommentOnlyById(\'' + c.id + '\')" title="删除">' +
+                        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                        '<polyline points="3 6 5 6 21 6"/>' +
+                        '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>' +
+                        '</svg></button>';
                 }
-                html += `
-                    <div class="comment-item ${isOfficial ? 'official' : ''}">
-                        <div class="meta">
-                            <span class="name">${escapeHtml(c.name)}</span>
-                            ${officialTag}
-                            <span class="time">${timeStr}</span>
-                            ${delBtn}
-                        </div>
-                        <div class="txt">${escapeHtml(c.text)}</div>
-                    </div>
-                `;
+                html += '<div class="comment-item ' + (isOfficial ? 'official' : '') + '">' +
+                    '<div class="meta">' +
+                        '<span class="name">' + escapeHtml(c.name) + '</span>' +
+                        officialTag +
+                        '<span class="time">' + timeStr + '</span>' +
+                        delBtn +
+                    '</div>' +
+                    '<div class="txt">' + escapeHtml(c.text) + '</div>' +
+                '</div>';
             });
             commentList.innerHTML = html;
             commentList.scrollTop = commentList.scrollHeight;
@@ -759,7 +753,7 @@
             const btn = sendCommentBtn;
             btn.disabled = true;
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<span class="spinner" style="display:inline-block;width:1em;height:1em;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:4px;"></span> 发送中...`;
+            btn.innerHTML = '发送中...';
 
             const color = pickColor(null);
             (async function() {
@@ -794,7 +788,7 @@
                         await loadAllData();
                     }
                     commentInput.value = '';
-                    showToast('💬 评论已发送');
+                    showToast('评论已发送');
                 } catch (err) {
                     showToast('评论失败：' + err.message);
                 } finally {
@@ -804,7 +798,9 @@
             })();
         }
 
+        // ============================================================
         // 自定义确认弹窗
+        // ============================================================
         function showConfirm(title, body, onOk) {
             const modal = document.getElementById('confirmModal');
             document.getElementById('confirmTitle').textContent = title;
@@ -826,7 +822,9 @@
             });
         }
 
+        // ============================================================
         // 加载数据
+        // ============================================================
         async function loadAllData() {
             messagesLoading = true;
             messagesError = null;
@@ -836,7 +834,7 @@
                 messages = data;
                 if (messages.length === 0) {
                     try {
-                        await addMessage('系统', '欢迎来到留言板！快来留下你的足迹吧 🌟', '#6ee7b7', '0.0.0.0', false, false, null);
+                        await addMessage('系统', '欢迎来到留言板！快来留下你的足迹吧', '#6ee7b7', '0.0.0.0', false, false, null);
                         const newData = await fetchMessages();
                         messages = newData;
                     } catch (insertErr) { console.warn('插入欢迎留言失败:', insertErr); }
@@ -849,106 +847,47 @@
             }
         }
 
-        // 个人资料功能
-        function openProfile() {
-            if (!currentUser) return;
-            document.getElementById('profileNameInput').value = currentUser.nickname;
-            document.getElementById('profileAvatar').src = currentUser.avatar_url || `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%232e7d32" rx="50"/><text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${currentUser.nickname.charAt(0).toUpperCase()}</text></svg>`;
-            document.getElementById('profileNameDisplay').textContent = currentUser.nickname;
-            document.getElementById('profileOverlay').classList.add('active');
-        }
+        // ============================================================
+        // 作者模式激活（三击 logo）
+        // ============================================================
+        var brandClickCount = 0;
+        var brandClickTimer = null;
 
-        function closeProfile() {
-            document.getElementById('profileOverlay').classList.remove('active');
-        }
-
-        function closeProfileOutside(e) {
-            if (e.target === e.currentTarget) closeProfile();
-        }
-
-        document.getElementById('avatarFileInput').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                showToast('⏳ 正在上传头像...');
-                const avatarUrl = await uploadAvatar(file, currentUser.id);
-                await window.sb
-                    .from('users')
-                    .update({ avatar_url: avatarUrl })
-                    .eq('id', currentUser.id);
-                currentUser.avatar_url = avatarUrl;
-                setSessionUser(currentUser);
-                updateHeaderDisplay();
-                document.getElementById('profileAvatar').src = avatarUrl;
-                showToast('✅ 头像已更新');
-                await loadAllData();
-            } catch (err) {
-                showToast('上传失败：' + err.message);
-                console.error(err);
-            }
-            this.value = '';
-        });
-
-        function saveProfile() {
-            const newName = document.getElementById('profileNameInput').value.trim();
-            if (!newName) { showToast('请输入昵称'); return; }
-            if (newName.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') {
-                showToast('该昵称不可用，请使用其他名称');
-                return;
-            }
-            window.sb
-                .from('users')
-                .update({ nickname: newName })
-                .eq('id', currentUser.id)
-                .then(() => {
-                    currentUser.nickname = newName;
-                    setSessionUser(currentUser);
-                    updateHeaderDisplay();
-                    loadAllData();
-                    closeProfile();
-                    showToast('✅ 昵称已更新');
-                })
-                .catch(err => showToast('更新失败：' + err.message));
-        }
-
-        function updateHeaderDisplay() {
-            if (!currentUser) return;
-            const headerNameEl = document.querySelector('.user-name');
-            const headerAvatarEl = document.querySelector('.user-area .avatar');
-            if (headerNameEl) headerNameEl.textContent = currentUser.nickname;
-            if (headerAvatarEl) {
-                const initial = currentUser.nickname.charAt(0).toUpperCase();
-                if (currentUser.avatar_url) {
-                    headerAvatarEl.style.backgroundImage = `url(${currentUser.avatar_url})`;
-                    headerAvatarEl.style.backgroundSize = 'cover';
-                    headerAvatarEl.textContent = '';
-                } else {
-                    headerAvatarEl.style.backgroundImage = '';
-                    headerAvatarEl.textContent = initial;
+        function bindBrandClick() {
+            var brandEl = document.querySelector('.brand');
+            if (!brandEl) return;
+            brandEl.addEventListener('click', async function(e) {
+                brandClickCount++;
+                clearTimeout(brandClickTimer);
+                brandClickTimer = setTimeout(function() { brandClickCount = 0; }, 800);
+                if (brandClickCount === 3) {
+                    brandClickCount = 0;
+                    if (!isAuthorMode) {
+                        var pwd = prompt('请输入作者密码：');
+                        if (pwd === null) return;
+                        var hash = await sha256(pwd);
+                        var correctHash = await sha256(AUTHOR_PASSWORD);
+                        if (hash === correctHash) {
+                            isAuthorMode = true;
+                            document.getElementById('msgAuthorOptions').classList.add('active');
+                            showToast('作者模式已激活');
+                            renderMessages();
+                        } else {
+                            showToast('密码错误');
+                        }
+                    } else {
+                        isAuthorMode = false;
+                        document.getElementById('msgAuthorOptions').classList.remove('active');
+                        showToast('已退出作者模式');
+                        renderMessages();
+                    }
                 }
-            }
-            const profileNameDisplay = document.getElementById('profileNameDisplay');
-            const profileNameInput = document.getElementById('profileNameInput');
-            const profileAvatar = document.getElementById('profileAvatar');
-            if (profileNameDisplay) profileNameDisplay.textContent = currentUser.nickname;
-            if (profileNameInput) profileNameInput.value = currentUser.nickname;
-            if (profileAvatar) {
-                profileAvatar.src = currentUser.avatar_url || `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%232e7d32" rx="50"/><text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${currentUser.nickname.charAt(0).toUpperCase()}</text></svg>`;
-            }
-        }
-
-        function logout() {
-            showConfirm('退出登录', '确定要退出登录吗？', () => {
-                closeProfile();
-                clearSession();
-                showToast('👋 已退出登录');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
             });
         }
 
+        // ============================================================
         // 初始化
+        // ============================================================
         (function init() {
             const session = getSessionUser();
             if (!session || !session.id) {
@@ -961,30 +900,28 @@
             renderHeader('留言板', 'messages');
             renderFooter('messages');
 
-            addAuthorBadgeElements();
             bindBrandClick();
-            bindUserAreaClick();
-
             updateBannedBanner();
             loadAllData();
 
-            window.sb.channel('public')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadAllData())
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, () => loadAllData())
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => loadAllData())
+            // 实时订阅
+            window.sb.channel('public-messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, function() { loadAllData(); })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, function() { loadAllData(); })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, function() { loadAllData(); })
                 .subscribe();
 
+            // 用户信息同步
             function syncUser() {
-                const session = getSessionUser();
-                if (session && session.id) {
-                    if (!currentUser || currentUser.id !== session.id ||
-                        currentUser.avatar_url !== session.avatar_url ||
-                        currentUser.nickname !== session.nickname) {
-                        currentUser = session;
+                const s = getSessionUser();
+                if (s && s.id) {
+                    if (!currentUser || currentUser.id !== s.id ||
+                        currentUser.avatar_url !== s.avatar_url ||
+                        currentUser.nickname !== s.nickname) {
+                        currentUser = s;
                         isAdmin = (currentUser.phone === '17355394710');
-                        updateHeaderDisplay();
                         updateBannedBanner();
-                        loadAllData();
+                        renderMessages();
                     }
                 }
             }
