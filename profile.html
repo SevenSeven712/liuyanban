@@ -4,827 +4,279 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 个人中心</title>
-    <!-- 引入 Font Awesome (通过 URL) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 基础与主题变量 ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         :root {
-            --bg: #f5faf5;
-            --bg-card: #ffffff;
-            --bg-input: #eaf3ea;
-            --border: #c8e0c8;
-            --text: #1e3a2e;
-            --text-muted: #5a7a6a;
-            --text-light: #8aaa9a;
-            --primary: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-glow: rgba(76, 175, 80, 0.25);
-            --primary-bg: #e8f5e9;
-            --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
-            --shadow-sm: 0 2px 12px rgba(46, 125, 50, 0.08);
-            --radius: 16px;
-            --radius-sm: 10px;
+            --bg: #f5faf5; --bg-card: #ffffff; --bg-input: #eaf3ea;
+            --border: #c8e0c8; --text: #1e3a2e; --text-muted: #5a7a6a;
+            --text-light: #8aaa9a; --primary: #2e7d32; --primary-light: #4caf50;
+            --primary-bg: #e8f5e9; --shadow: 0 8px 32px rgba(46,125,50,0.12);
+            --radius: 16px; --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
             --safe-bottom: env(safe-area-inset-bottom, 0px);
-            --danger: #e57373;
-            --danger-bg: #ffebee;
-            --danger-text: #c62828;
+            --danger: #e57373; --danger-bg: #ffebee; --danger-text: #c62828;
+            --success: #2e7d32; --success-bg: #e8f5e9;
+            --warning: #ffa726; --warning-bg: #fff3e0;
         }
-        html,
-        body {
-            height: 100%;
-            font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-        }
-        #mainApp {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            height: 100dvh;
-            background: var(--bg);
-        }
+        html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
+        #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
-        /* ===== 自定义头部（含返回按钮） ===== */
-        .app-header {
-            flex-shrink: 0;
-            padding: 12px 16px 8px 16px;
-            background: rgba(255, 255, 255, 0.92);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 50;
-            backdrop-filter: blur(12px);
-            min-height: 56px;
-            gap: 8px;
-        }
-        .app-header .header-left {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 0;
-            flex: 1;
-        }
-        .app-header .back-btn {
-            background: none;
-            border: none;
-            font-size: 1.4em;
-            line-height: 1;
-            cursor: pointer;
-            color: var(--text);
-            padding: 0 4px;
-            display: none;
-            transition: transform 0.2s;
-            flex-shrink: 0;
-        }
-        .app-header .back-btn.visible {
-            display: block;
-        }
-        .app-header .back-btn:active {
-            transform: scale(0.9);
-        }
-        .app-header .back-btn i {
-            font-size: 1.2em;
-        }
-        .app-header .brand {
-            font-weight: 900;
-            font-size: 1.1em;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 0.2em;
-            cursor: default;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .app-header .brand span {
-            color: var(--primary);
-        }
-        .app-header .brand small {
-            font-weight: 400;
-            font-size: 0.55em;
-            color: var(--text-muted);
-            margin-left: 0.2em;
-        }
-        .app-header .brand .view-title {
-            font-weight: 600;
-            font-size: 0.85em;
-            color: var(--text);
-            margin-left: 4px;
-        }
-        .app-header .user-area {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 4px 8px 4px 4px;
-            border-radius: 99px;
-            transition: background 0.2s;
-            flex-shrink: 0;
-        }
-        .app-header .user-area:hover {
-            background: var(--primary-bg);
-        }
-        .app-header .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: #fff;
-            display: grid;
-            place-items: center;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-        }
-        .app-header .user-name {
-            font-weight: 600;
-            font-size: 0.8em;
-            max-width: 70px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .app-header .chevron {
-            color: var(--text-muted);
-            font-size: 0.6em;
-        }
+        .app-header { flex-shrink: 0; padding: 12px 16px 8px 16px; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 50; min-height: 56px; gap: 8px; }
+        .app-header .header-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+        .app-header .back-btn { background: none; border: none; cursor: pointer; color: var(--text); padding: 4px; display: none; flex-shrink: 0; }
+        .app-header .back-btn.visible { display: flex; }
+        .app-header .back-btn svg { width: 22px; height: 22px; }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.2em; white-space: nowrap; overflow: hidden; }
+        .app-header .brand span { color: var(--primary); }
+        .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.2em; }
+        .app-header .user-area { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 99px; flex-shrink: 0; }
+        .app-header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
+        .app-header .user-name { font-weight: 600; font-size: 0.8em; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .app-header .chevron { color: var(--text-muted); font-size: 0.6em; }
 
-        /* ===== 底部导航 ===== */
-        .app-tabs {
-            flex-shrink: 0;
-            display: flex;
-            background: rgba(255, 255, 255, 0.96);
-            border-top: 1px solid var(--border);
-            padding: 6px 0 calc(6px + var(--safe-bottom));
-            z-index: 50;
-            backdrop-filter: blur(12px);
-        }
-        .tab-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            background: none;
-            border: none;
-            font-family: var(--font);
-            font-size: 0.6em;
-            font-weight: 600;
-            color: var(--text-muted);
-            padding: 4px 0;
-            cursor: pointer;
-            transition: color 0.2s;
-            position: relative;
-            text-decoration: none;
-        }
-        .tab-btn .tab-icon {
-            font-size: 1.6em;
-            line-height: 1.2;
-        }
-        .tab-btn.active {
-            color: var(--primary);
-        }
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: 30%;
-            right: 30%;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 0 0 4px 4px;
-        }
-        .tab-btn .badge {
-            position: absolute;
-            top: -2px;
-            right: 15%;
-            background: #e57373;
-            color: #fff;
-            font-size: 0.6em;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 99px;
-            min-width: 16px;
-            text-align: center;
-            transform: translateY(-2px);
-        }
+        .app-tabs { flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 calc(6px + var(--safe-bottom)); z-index: 50; }
+        .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none; position: relative; }
+        .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; display: flex; align-items: center; justify-content: center; width: 1.7em; height: 1.7em; }
+        .tab-btn .tab-icon svg { width: 100%; height: 100%; display: block; stroke: currentColor; fill: none; }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
+        .tab-btn .badge { position: absolute; top: -2px; right: 15%; background: #e57373; color: #fff; font-size: 0.6em; font-weight: 700; padding: 1px 6px; border-radius: 99px; min-width: 16px; text-align: center; transform: translateY(-2px); }
 
-        /* ===== 内容区域 ===== */
-        .profile-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 20px 12px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 16px;
-        }
-        .view {
-            width: 100%;
-            max-width: 480px;
-            display: none;
-            flex-direction: column;
-            animation: fadeSlideIn 0.35s ease;
-        }
-        .view.active {
-            display: flex;
-        }
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .profile-content { flex: 1; overflow-y: auto; padding: 16px 20px 12px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+        .view { width: 100%; max-width: 480px; display: none; flex-direction: column; }
+        .view.active { display: flex; }
 
-        /* ===== 设置卡片 ===== */
-        .settings-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 1.8em 1.5em;
-            width: 100%;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        .settings-title {
-            font-size: 0.7em;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 12px;
-        }
-        .settings-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 10px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.2s;
-            border-radius: var(--radius-sm);
-            margin-bottom: 4px;
-            text-decoration: none;
-        }
-        .settings-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        .settings-item:hover {
-            background: var(--primary-bg);
-        }
-        .settings-item.no-click {
-            cursor: default;
-        }
-        .settings-item.no-click:hover {
-            background: transparent;
-        }
-        .settings-item .item-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .settings-item .item-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: var(--primary-bg);
-            display: grid;
-            place-items: center;
-            font-size: 1.2em;
-            flex-shrink: 0;
-            color: var(--primary);
-        }
-        .settings-item .item-icon i {
-            font-size: 1.1em;
-        }
-        .settings-item .item-label {
-            font-size: 0.95em;
-            font-weight: 600;
-            color: var(--text);
-        }
-        .settings-item .item-sublabel {
-            font-size: 0.7em;
-            color: var(--text-light);
-            margin-top: 2px;
-            font-weight: 400;
-        }
-        .settings-item .item-arrow {
-            color: var(--text-light);
-            font-size: 1.2em;
-            transition: transform 0.2s;
-        }
-        .settings-item:hover .item-arrow {
-            transform: translateX(3px);
-            color: var(--primary);
-        }
+        .settings-card { background: var(--bg-card); border-radius: var(--radius); padding: 1.8em 1.5em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .settings-title { font-size: 0.7em; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+        .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: var(--radius-sm); margin-bottom: 4px; text-decoration: none; }
+        .settings-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .settings-item:hover { background: var(--primary-bg); }
+        .settings-item.no-click { cursor: default; }
+        .settings-item.no-click:hover { background: transparent; }
+        .settings-item .item-left { display: flex; align-items: center; gap: 12px; }
+        .settings-item .item-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-bg); display: grid; place-items: center; flex-shrink: 0; color: var(--primary); }
+        .settings-item .item-icon svg { width: 20px; height: 20px; }
+        .settings-item .item-icon.warn { background: var(--warning-bg); color: var(--warning); }
+        .settings-item .item-icon.danger { background: var(--danger-bg); color: var(--danger-text); }
+        .settings-item .item-label { font-size: 0.95em; font-weight: 600; color: var(--text); }
+        .settings-item .item-sublabel { font-size: 0.7em; color: var(--text-light); margin-top: 2px; }
+        .settings-item .item-arrow { color: var(--text-light); display: flex; }
+        .settings-item .item-arrow svg { width: 18px; height: 18px; }
 
-        /* ===== 开关 ===== */
-        .toggle-switch {
-            display: inline-block;
-            position: relative;
-            width: 52px;
-            height: 30px;
-            flex-shrink: 0;
-        }
-        .toggle-input {
-            display: none;
-        }
-        .toggle-label {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 52px;
-            height: 30px;
-            background-color: #ccc;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .toggle-label::before {
-            content: "";
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 26px;
-            height: 26px;
-            background-color: #fff;
-            border-radius: 50%;
-            transition: transform 0.3s ease;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-        }
-        .toggle-input:checked+.toggle-label {
-            background-color: var(--primary);
-        }
-        .toggle-input:checked+.toggle-label::before {
-            transform: translateX(22px);
-        }
+        .toggle-switch { display: inline-block; position: relative; width: 52px; height: 30px; flex-shrink: 0; }
+        .toggle-input { display: none; }
+        .toggle-label { position: absolute; top: 0; left: 0; width: 52px; height: 30px; background-color: #ccc; border-radius: 30px; cursor: pointer; transition: background-color 0.3s; }
+        .toggle-label::before { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; background-color: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+        .toggle-input:checked + .toggle-label { background-color: var(--primary); }
+        .toggle-input:checked + .toggle-label::before { transform: translateX(22px); }
 
-        /* ===== 资料卡 ===== */
-        .profile-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 2em 2.2em;
-            width: 100%;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: #fff;
-            display: grid;
-            place-items: center;
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0 auto 12px;
-            object-fit: cover;
-            background-size: cover;
-            background-position: center;
-        }
-        .avatar-upload {
-            text-align: center;
-            margin-top: 4px;
-            margin-bottom: 16px;
-        }
-        .avatar-upload label {
-            font-size: 0.8em;
-            color: var(--primary);
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .avatar-upload input[type="file"] {
-            display: none;
-        }
-        .field-group {
-            margin-bottom: 16px;
-        }
-        .field-group label {
-            display: block;
-            font-size: 0.7em;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 4px;
-        }
-        .field-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            border: 2px solid var(--border);
-            background: var(--bg-input);
-            font-family: inherit;
-            font-size: 0.9em;
-            outline: none;
-            transition: border-color 0.2s;
-            color: var(--text);
-        }
-        .field-group input:focus {
-            border-color: var(--primary);
-        }
-        .btn-primary {
-            width: 100%;
-            padding: 10px;
-            border-radius: var(--radius-sm);
-            border: none;
-            background: var(--primary);
-            color: #fff;
-            font-weight: 700;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
-        }
-        .btn-primary:hover {
-            background: var(--primary-light);
-        }
-        .btn-danger {
-            width: 100%;
-            padding: 10px;
-            border-radius: var(--radius-sm);
-            border: none;
-            background: var(--danger-bg);
-            color: var(--danger-text);
-            font-weight: 700;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
-            margin-top: 8px;
-        }
-        .btn-danger:hover {
-            background: #ffcdd2;
-        }
-        .btn-secondary-outline {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            border: 2px solid var(--border);
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .btn-secondary-outline:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: var(--primary-bg);
-        }
-        .btn-secondary-outline i {
-            font-size: 1em;
-        }
+        .profile-card { background: var(--bg-card); border-radius: var(--radius); padding: 2em 2.2em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px; background-size: cover; background-position: center; }
+        .avatar-upload { text-align: center; margin-top: 4px; margin-bottom: 16px; }
+        .avatar-upload label { font-size: 0.8em; color: var(--primary); cursor: pointer; text-decoration: underline; }
+        .avatar-upload input[type="file"] { display: none; }
+        .field-group { margin-bottom: 16px; }
+        .field-group label { display: block; font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; color: var(--text); }
+        .field-group textarea { resize: vertical; min-height: 100px; }
+        .field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--primary); }
+        .btn-primary { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; font-family: inherit; }
+        .btn-primary:hover { background: var(--primary-light); }
+        .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-danger { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--danger-bg); color: var(--danger-text); font-weight: 700; font-size: 1em; cursor: pointer; font-family: inherit; margin-top: 8px; }
+        .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-secondary-outline svg { width: 16px; height: 16px; }
 
-        /* ===== 消息中心 ===== */
-        .notification-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 10px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .notification-item:hover {
-            background: var(--primary-bg);
-        }
-        .notification-item .ntf-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: #fff;
-            display: grid;
-            place-items: center;
-            font-weight: 700;
-            font-size: 16px;
-            flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-        }
-        .notification-item .ntf-body {
-            flex: 1;
-            min-width: 0;
-        }
-        .notification-item .ntf-body .ntf-text {
-            font-size: 0.9em;
-            line-height: 1.4;
-            color: var(--text);
-        }
-        .notification-item .ntf-body .ntf-meta {
-            font-size: 0.7em;
-            color: var(--text-muted);
-            margin-top: 4px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .notification-item.unread {
-            background: var(--primary-bg);
-            border-left: 4px solid var(--primary);
-        }
-        .notification-item .ntf-body .ntf-highlight {
-            color: var(--primary);
-            font-weight: 600;
-        }
+        /* ====== 网站选择网格 ====== */
+        .site-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
+        .site-card { padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; position: relative; }
+        .site-card:hover { border-color: var(--primary-light); }
+        .site-card.selected { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 3px rgba(46,125,50,0.1); }
+        .site-card.selected::after { content: ''; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; }
+        .site-card .site-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-bg); display: grid; place-items: center; flex-shrink: 0; color: var(--primary); }
+        .site-card.selected .site-icon { background: #fff; }
+        .site-card .site-icon svg { width: 16px; height: 16px; }
+        .site-card .site-name { font-size: 0.85em; font-weight: 600; line-height: 1.3; word-break: break-word; }
 
-        /* ===== 关于我们 ===== */
-        .about-card {
-            text-align: center;
-            padding: 20px 0;
-        }
-        .about-card .about-avatar-link {
-            display: inline-block;
-            text-decoration: none;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 50%;
-        }
-        .about-card .about-avatar-link:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(46, 125, 50, 0.3);
-        }
-        .about-card .about-avatar-link:active {
-            transform: scale(0.95);
-        }
-        .about-card .about-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: #2e7d32;
-            color: #fff;
-            display: grid;
-            place-items: center;
-            font-size: 40px;
-            font-weight: 900;
-            margin: 0 auto 12px;
-            transition: background 0.3s ease;
-            cursor: pointer;
-        }
-        .about-card .about-avatar-link:hover .about-avatar {
-            background: #4caf50;
-        }
-        .about-card h2 {
-            font-size: 1.4em;
-            margin-bottom: 4px;
-        }
-        .about-card .sub {
-            color: var(--text-muted);
-            font-size: 0.9em;
-            margin-bottom: 16px;
-        }
-        .about-card .desc {
-            font-size: 0.95em;
-            line-height: 1.6;
-            color: var(--text);
-            max-width: 320px;
-            margin: 0 auto 20px;
-        }
-        .shop-ad {
-            background: linear-gradient(135deg, #2e7d32, #4caf50);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            color: #fff;
-            margin-top: 16px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: var(--shadow);
-        }
-        .shop-ad:hover {
-            transform: scale(1.02);
-        }
-        .shop-ad h3 {
-            font-size: 1.1em;
-            margin-bottom: 4px;
-        }
-        .shop-ad p {
-            font-size: 0.8em;
-            opacity: 0.9;
-        }
+        /* ====== 反馈列表 ====== */
+        .fb-item { padding: 12px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 10px; }
+        .fb-item .fb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; flex-wrap: wrap; }
+        .fb-item .fb-site { font-weight: 700; font-size: 0.9em; color: var(--text); }
+        .fb-item .fb-status { font-size: 0.65em; padding: 2px 10px; border-radius: 99px; font-weight: 600; }
+        .fb-item .fb-status.pending { background: var(--warning-bg); color: var(--warning); }
+        .fb-item .fb-status.replied { background: #e3f2fd; color: #2b6cff; }
+        .fb-item .fb-status.resolved { background: var(--success-bg); color: var(--success); }
+        .fb-item .fb-content { font-size: 0.85em; color: var(--text); line-height: 1.5; margin-bottom: 6px; word-break: break-word; }
+        .fb-item .fb-reply { background: var(--primary-bg); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 6px; font-size: 0.8em; color: var(--text); margin-top: 6px; }
+        .fb-item .fb-time { font-size: 0.7em; color: var(--text-light); }
+        .fb-item .fb-actions { display: flex; gap: 6px; margin-top: 8px; }
 
-        /* ===== Toast ===== */
-        #toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: var(--text);
-            color: #fff;
-            padding: 0.7em 1.6em;
-            border-radius: 2em;
-            font-weight: 600;
-            font-size: 0.85em;
-            opacity: 0;
-            transition: all 0.4s ease;
-            z-index: 9999;
-            pointer-events: none;
-            white-space: nowrap;
-            box-shadow: var(--shadow);
-        }
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        /* ====== 管理网站列表 ====== */
+        .admin-site-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; }
+        .admin-site-item .site-name { font-size: 0.9em; font-weight: 600; }
+        .admin-site-item .site-actions button { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 4px 12px; border-radius: 99px; font-size: 0.75em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .admin-site-item .site-actions button svg { width: 12px; height: 12px; }
+        .admin-add-row { display: flex; gap: 8px; margin-top: 12px; }
+        .admin-add-row input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9em; outline: none; }
+        .admin-add-row input:focus { border-color: var(--primary); }
+        .admin-add-row button { padding: 10px 18px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-        /* ===== Modal ===== */
-        .custom-modal {
-            position: fixed;
-            inset: 0;
-            z-index: 2000;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .custom-modal.active {
-            display: flex;
-        }
-        .modal-box {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            max-width: 420px;
-            width: 100%;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        .modal-title {
-            font-size: 1.2em;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-        .modal-body {
-            font-size: 0.95em;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-        .modal-actions button {
-            padding: 6px 18px;
-            border-radius: var(--radius-sm);
-            border: none;
-            font-weight: 600;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
-        }
-        .modal-actions .btn-danger {
-            background: var(--danger);
-            color: #fff;
-            margin-top: 0;
-        }
-        .modal-actions .btn-danger:hover {
-            background: #c62828;
-        }
-        .modal-actions .btn-secondary {
-            background: var(--bg-input);
-            color: var(--text-muted);
-        }
-        .modal-actions .btn-secondary:hover {
-            background: var(--border);
-        }
+        /* ====== 消息中心 ====== */
+        .ntf-filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-input); border-radius: 99px; padding: 3px; }
+        .ntf-tab { flex: 1; padding: 6px 0; border: none; background: transparent; border-radius: 99px; font-family: inherit; font-size: 0.75em; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .ntf-tab.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(46,125,50,0.15); }
+        .ntf-tab-badge { background: var(--danger); color: #fff; font-size: 0.8em; padding: 0 5px; border-radius: 99px; min-width: 16px; text-align: center; line-height: 16px; display: none; }
+        .ntf-tab-badge.visible { display: inline-block; }
+        .ntf-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px; border-radius: 12px; margin-bottom: 8px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
+        .ntf-card.unread { background: linear-gradient(135deg, #f0faf0 0%, #ffffff 100%); border-color: var(--primary); }
+        .ntf-card.unread::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); }
+        .ntf-card.report-card { border-left: 4px solid var(--warning); }
+        .ntf-card.feedback-card { border-left: 4px solid #2b6cff; }
+        .ntf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: transparent; margin-top: 6px; }
+        .ntf-card.unread .ntf-dot { background: var(--primary); }
+        .ntf-type-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+        .ntf-type-icon svg { width: 20px; height: 20px; }
+        .ntf-type-icon.comment { background: #e3f2fd; color: #2b6cff; }
+        .ntf-type-icon.report { background: var(--warning-bg); color: var(--warning); }
+        .ntf-type-icon.system { background: #f3e5f5; color: #8e24aa; }
+        .ntf-type-icon.ban { background: var(--danger-bg); color: var(--danger-text); }
+        .ntf-type-icon.result-ok { background: var(--success-bg); color: var(--success); }
+        .ntf-type-icon.feedback { background: #e3f2fd; color: #2b6cff; }
+        .ntf-body { flex: 1; min-width: 0; }
+        .ntf-title { font-size: 0.9em; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 2px; }
+        .ntf-snippet { font-size: 0.8em; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+        .ntf-meta { font-size: 0.7em; color: var(--text-light); display: flex; align-items: center; gap: 8px; }
+        .ntf-meta .unread-tag { color: var(--primary); font-weight: 600; }
+        .ntf-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .ntf-actions button { padding: 5px 12px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.72em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .ntf-actions button svg { width: 12px; height: 12px; }
+        .ntf-actions .btn-approve { background: var(--success-bg); color: var(--success); }
+        .ntf-actions .btn-reject { background: var(--danger-bg); color: var(--danger-text); }
+        .ntf-actions .btn-view { background: #e3f2fd; color: #2b6cff; }
+        .ntf-group-label { font-size: 0.7em; font-weight: 700; color: var(--text-light); padding: 12px 4px 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .ntf-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 0.9em; }
+        .ntf-empty .big { margin-bottom: 8px; opacity: 0.4; display: flex; justify-content: center; }
+        .ntf-empty .big svg { width: 60px; height: 60px; }
+        .ntf-loading { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 0.85em; }
+        .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ===== 响应式 ===== */
+        .about-card { text-align: center; padding: 20px 0; }
+        .about-card .about-avatar-link { display: inline-block; text-decoration: none; border-radius: 50%; }
+        .about-card .about-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 12px; }
+        .about-card h2 { font-size: 1.4em; margin-bottom: 4px; }
+        .about-card .sub { color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px; }
+        .about-card .desc { font-size: 0.95em; line-height: 1.6; max-width: 320px; margin: 0 auto 20px; }
+        .shop-ad { background: linear-gradient(135deg, #2e7d32, #4caf50); border-radius: var(--radius-sm); padding: 16px; color: #fff; margin-top: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; text-align: left; }
+        .shop-ad svg { width: 36px; height: 36px; flex-shrink: 0; }
+        .shop-ad h3 { font-size: 1.1em; margin-bottom: 4px; }
+        .shop-ad p { font-size: 0.8em; opacity: 0.9; }
+
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s; z-index: 9999; pointer-events: none; white-space: nowrap; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
+        .custom-modal.active { display: flex; }
+        .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; }
+        .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; white-space: pre-wrap; word-break: break-word; }
+        .modal-body textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9em; outline: none; resize: vertical; min-height: 80px; box-sizing: border-box; }
+        .modal-body textarea:focus { border-color: var(--primary); }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: pointer; font-family: inherit; }
+        .modal-actions .btn-danger { background: var(--danger); color: #fff; width: auto; margin-top: 0; }
+        .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
+        .modal-actions .btn-primary { background: var(--primary); color: #fff; width: auto; }
+
         @media (max-width: 480px) {
-            .profile-content {
-                padding: 12px 14px;
-            }
-            .settings-card {
-                padding: 1.2em 1em;
-            }
-            .profile-card {
-                padding: 1.2em 1.2em;
-            }
-            .notification-item {
-                padding: 10px 8px;
-            }
-            .app-header {
-                padding: 10px 12px 6px 12px;
-                min-height: 48px;
-            }
-            .app-header .brand {
-                font-size: 0.95em;
-            }
-            .app-header .user-name {
-                max-width: 50px;
-                font-size: 0.7em;
-            }
-            .app-header .back-btn {
-                font-size: 1.2em;
-            }
-            .app-header .avatar {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
+            .profile-content { padding: 12px 14px; }
+            .settings-card, .profile-card { padding: 1.2em 1em; }
+            .app-header { padding: 10px 12px 6px 12px; min-height: 48px; }
+            .app-header .brand { font-size: 0.95em; }
+            .app-header .user-name { max-width: 50px; font-size: 0.7em; }
+            .site-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
     <div id="mainApp">
-        <!-- ===== 自定义头部（含返回按钮） ===== -->
-        <div class="app-header" id="customHeader">
+        <!-- 头部 -->
+        <div class="app-header">
             <div class="header-left">
                 <button class="back-btn" id="headerBackBtn" onclick="goBack()">
-                    <i class="fas fa-arrow-left"></i>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 </button>
-                <div class="brand" id="headerBrand">
-                    Seven<span>戚</span>
-                    <small id="headerSub">· 个人中心</small>
-                    <span class="view-title" id="headerViewTitle"></span>
+                <div class="brand">
+                    Seven<span>戚</span><small id="headerSub">· 个人中心</small>
                 </div>
             </div>
-            <div class="user-area" id="headerUserArea" onclick="window.location.href='/liuyanban/profile.html'">
+            <div class="user-area" onclick="window.location.href='/liuyanban/profile.html'">
                 <div class="avatar" id="headerAvatar">U</div>
                 <span class="user-name" id="headerUserName">用户</span>
                 <span class="chevron">▾</span>
             </div>
         </div>
 
-        <!-- ===== 内容 ===== -->
         <div class="profile-content">
-            <!-- 视图一：设置菜单 -->
+
+            <!-- 设置 -->
             <div class="view active" id="settingsView">
                 <div class="settings-card">
-                    <div class="settings-title">⚙️ 设置中心</div>
+                    <div class="settings-title">设置中心</div>
 
-                    <div class="settings-item" id="goToProfileEdit" role="button" tabindex="0">
+                    <div class="settings-item" id="goToProfileEdit">
                         <div class="item-left">
-                            <div class="item-icon"><i class="fas fa-user"></i></div>
-                            <div>
-                                <div class="item-label">更新资料</div>
-                                <div class="item-sublabel">头像、昵称管理</div>
-                            </div>
+                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                            <div><div class="item-label">更新资料</div><div class="item-sublabel">头像、昵称管理</div></div>
                         </div>
-                        <span class="item-arrow">›</span>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
                     </div>
 
-                    <div class="settings-item" id="goToMessages" role="button" tabindex="0">
+                    <div class="settings-item" id="goToMessages">
                         <div class="item-left">
-                            <div class="item-icon"><i class="fas fa-inbox"></i></div>
-                            <div>
-                                <div class="item-label">消息中心</div>
-                                <div class="item-sublabel" id="unreadHint">查看评论通知</div>
-                            </div>
+                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                            <div><div class="item-label">消息中心</div><div class="item-sublabel" id="unreadHint">查看通知</div></div>
                         </div>
-                        <span class="item-arrow">›</span>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
                     </div>
 
-                    <div class="settings-item" id="goToAbout" role="button" tabindex="0">
+                    <div class="settings-item" id="goToFeedback">
                         <div class="item-left">
-                            <div class="item-icon"><i class="fas fa-info-circle"></i></div>
-                            <div>
-                                <div class="item-label">关于我们</div>
-                                <div class="item-sublabel">创作者 &amp; 商城</div>
-                            </div>
+                            <div class="item-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                            <div><div class="item-label">反馈 Bug</div><div class="item-sublabel">选择软件 → 描述问题</div></div>
                         </div>
-                        <span class="item-arrow">›</span>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    </div>
+
+                    <div class="settings-item" id="goToAdminFeedback" style="display:none;">
+                        <div class="item-left">
+                            <div class="item-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                            <div><div class="item-label">反馈管理</div><div class="item-sublabel">查看/回复用户反馈（管理员）</div></div>
+                        </div>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    </div>
+
+                    <div class="settings-item" id="goToManageSites" style="display:none;">
+                        <div class="item-left">
+                            <div class="item-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+                            <div><div class="item-label">网站管理</div><div class="item-sublabel">增删反馈目标网站（管理员）</div></div>
+                        </div>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    </div>
+
+                    <div class="settings-item" id="goToAbout">
+                        <div class="item-left">
+                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+                            <div><div class="item-label">关于我们</div><div class="item-sublabel">创作者 &amp; 商城</div></div>
+                        </div>
+                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
                     </div>
 
                     <div class="settings-item no-click">
                         <div class="item-left">
-                            <div class="item-icon"><i class="fas fa-bell"></i></div>
-                            <div>
-                                <div class="item-label">提醒音效</div>
-                                <div class="item-sublabel" id="soundStatusHint">新消息提示音 · 已开启</div>
-                            </div>
+                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
+                            <div><div class="item-label">提醒音效</div><div class="item-sublabel" id="soundStatusHint">新消息提示音 · 已开启</div></div>
                         </div>
                         <div class="toggle-switch">
                             <input class="toggle-input" id="soundToggle" type="checkbox" />
@@ -838,13 +290,16 @@
                 </div>
             </div>
 
-            <!-- 视图二：更新资料 -->
+            <!-- 更新资料 -->
             <div class="view" id="profileEditView">
                 <div class="profile-card">
-                    <button class="btn-secondary-outline" id="backToSettings"><i class="fas fa-arrow-left"></i> 返回设置</button>
+                    <button class="btn-secondary-outline" id="backToSettings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
                     <div class="profile-avatar" id="profileAvatar">S</div>
                     <div class="avatar-upload">
-                        <label for="avatarFileInput">📷 更换头像</label>
+                        <label for="avatarFileInput">更换头像</label>
                         <input type="file" id="avatarFileInput" accept="image/*" />
                     </div>
                     <div class="field-group">
@@ -856,51 +311,133 @@
                 </div>
             </div>
 
-            <!-- 视图三：消息中心 -->
+            <!-- 消息中心 -->
             <div class="view" id="messagesView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
-                    <button class="btn-secondary-outline" id="backToSettingsFromMsg"><i class="fas fa-arrow-left"></i> 返回设置</button>
+                    <button class="btn-secondary-outline" id="backToSettingsFromMsg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <span style="font-weight:700; font-size:1.1em;">📬 消息中心</span>
-                        <button id="markAllReadBtn" style="background:none; border:none; color:var(--primary); font-size:0.7em; font-weight:600; cursor:pointer;">全部已读</button>
+                        <span style="font-weight:700; font-size:1.1em;">消息中心</span>
+                        <button id="markAllReadBtn" style="background:none; border:none; color:var(--primary); font-size:0.75em; font-weight:600; cursor:pointer;">全部已读</button>
+                    </div>
+                    <div class="ntf-filter-tabs" id="ntfFilterTabs">
+                        <button class="ntf-tab active" data-filter="all">全部</button>
+                        <button class="ntf-tab" data-filter="unread">未读 <span id="unreadTabCount" class="ntf-tab-badge"></span></button>
+                        <button class="ntf-tab" data-filter="report">举报</button>
+                        <button class="ntf-tab" data-filter="feedback">反馈</button>
                     </div>
                     <div id="notificationList">
-                        <div style="text-align:center; color:var(--text-muted); padding:20px 0;">加载中...</div>
+                        <div class="ntf-loading"><span class="spinner"></span>加载中...</div>
                     </div>
                 </div>
             </div>
 
-            <!-- 视图四：关于我们 -->
+            <!-- 反馈 Bug -->
+            <div class="view" id="feedbackView">
+                <div class="profile-card" style="padding: 1.2em 1em;">
+                    <button class="btn-secondary-outline" id="backToSettingsFromFb">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-weight:700; font-size:1.1em;">反馈 Bug</span>
+                        <button id="fbTabNew" class="fb-tab-btn active" style="background:none;border:none;color:var(--primary);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我要反馈</button>
+                        <button id="fbTabMine" class="fb-tab-btn" style="background:none;border:none;color:var(--text-muted);font-size:0.75em;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;">我的反馈</button>
+                    </div>
+
+                    <!-- 提交反馈面板 -->
+                    <div id="fbSubmitPanel">
+                        <div class="field-group">
+                            <label>1. 选择问题网站</label>
+                            <div class="site-grid" id="siteGrid">
+                                <div style="text-align:center;color:var(--text-muted);padding:20px 0;grid-column:1/-1;font-size:0.85em;">加载中...</div>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label>2. 问题描述</label>
+                            <textarea id="fbContent" placeholder="请详细描述你遇到的问题，例如：打开软件后点击某按钮无反应..." maxlength="1000"></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label>3. 联系方式（选填）</label>
+                            <input type="text" id="fbContact" placeholder="QQ / 微信 / 手机号" maxlength="50" />
+                        </div>
+                        <button class="btn-primary" id="fbSubmitBtn">提交反馈</button>
+                    </div>
+
+                    <!-- 我的反馈面板 -->
+                    <div id="fbMinePanel" style="display:none;">
+                        <div id="myFeedbackList">
+                            <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 管理员的反馈管理 -->
+            <div class="view" id="adminFeedbackView">
+                <div class="profile-card" style="padding: 1.2em 1em;">
+                    <button class="btn-secondary-outline" id="backToSettingsFromAdminFb">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
+                    <div style="font-weight:700; font-size:1.1em; margin-bottom:12px;">反馈管理</div>
+                    <div id="adminFeedbackList">
+                        <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 网站管理 -->
+            <div class="view" id="manageSitesView">
+                <div class="profile-card" style="padding: 1.2em 1em;">
+                    <button class="btn-secondary-outline" id="backToSettingsFromSites">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
+                    <div style="font-weight:700; font-size:1.1em; margin-bottom:12px;">网站管理</div>
+                    <div id="adminSitesList"></div>
+                    <div class="admin-add-row">
+                        <input type="text" id="newSiteName" placeholder="输入网站名称，例如：小七万年历" maxlength="30" />
+                        <button id="addSiteBtn">添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关于我们 -->
             <div class="view" id="aboutView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
-                    <button class="btn-secondary-outline" id="backToSettingsFromAbout"><i class="fas fa-arrow-left"></i> 返回设置</button>
+                    <button class="btn-secondary-outline" id="backToSettingsFromAbout">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回设置
+                    </button>
                     <div class="about-card">
-<a class="about-avatar-link" href="https://sevenseven712.github.io/Seven712/" target="_blank" rel="noopener noreferrer" title="访问 Seven戚 的 个人拨款">
-    <img src="https://i.ibb.co/Y4rD6F2Y/b-8ee0f1b16f3c823eeff690735ca17e1f.jpg" alt="Seven戚" class="about-avatar" style="border-radius:50%; width:100px; height:100px; object-fit:cover;" />
-</a>
+                        <a class="about-avatar-link" href="https://sevenseven712.github.io/Seven712/" target="_blank" rel="noopener noreferrer">
+                            <img src="https://i.ibb.co/Y4rD6F2Y/b-8ee0f1b16f3c823eeff690735ca17e1f.jpg" alt="Seven戚" class="about-avatar" />
+                        </a>
                         <h2>Seven戚</h2>
                         <div class="sub">全栈开发者 · 社区创始人</div>
-                        <div class="desc">
-                            多多推广本网站，谢谢你们Thanks♪(･ω･)ﾉ
-                        </div>
+                        <div class="desc">多多推广本网站，谢谢你们 Thanks♪(･ω･)ﾉ</div>
                         <div class="shop-ad" onclick="window.open('https://sevenseven712.github.io/shangcheng/', '_blank')">
-                            <h3>🛍️ 软件商城</h3>
-                            <p>精选实用软件，个人制作 → 点击进入</p>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                            <div><h3>软件商城</h3><p>精选实用软件 → 点击进入</p></div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <!-- ===== 底部导航 ===== -->
         <div id="footer-container"></div>
     </div>
 
-    <!-- ===== Modal ===== -->
+    <!-- 确认弹窗 -->
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
-            <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
+            <div class="modal-body" id="confirmBody">确定？</div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="confirmCancel">取消</button>
                 <button class="btn-danger" id="confirmOk">确定</button>
@@ -908,464 +445,635 @@
         </div>
     </div>
 
+    <!-- 反馈回复弹窗 -->
+    <div class="custom-modal" id="replyModal">
+        <div class="modal-box">
+            <div class="modal-title">回复用户</div>
+            <div class="modal-body">
+                <textarea id="replyText" placeholder="输入回复内容..." maxlength="500"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="replyCancel">取消</button>
+                <button class="btn-primary" id="replyOk">发送回复</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast"></div>
 
-    <script src="/liuyanban/common.js">
-    </script>
+    <script src="/liuyanban/common.js"></script>
     <script>
-        // ============================================================
-        // 工具函数（fallback）
-        // ============================================================
+        // ============ 工具 ============
         function showToast(msg) {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.textContent = msg;
-            toast.classList.add('show');
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg; t.classList.add('show');
             clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+            window.toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
         }
-
-        function getSessionUser() {
-            const stored = localStorage.getItem('sq_user_session');
-            if (stored) {
-                try { return JSON.parse(stored); } catch { return null; }
-            }
-            return null;
-        }
-
-        function setSessionUser(user) {
-            localStorage.setItem('sq_user_session', JSON.stringify(user));
-        }
-
-        function clearSession() {
-            localStorage.removeItem('sq_user_session');
-        }
-
         function escapeHtml(s) {
             if (!s) return '';
-            return String(s).replace(/[&<>"']/g, function(c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
-            });
+            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
-
         function showConfirm(title, body, onOk) {
             const modal = document.getElementById('confirmModal');
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmBody').textContent = body;
             modal.classList.add('active');
-            const cancelBtn = document.getElementById('confirmCancel');
-            const okBtn = document.getElementById('confirmOk');
-            const cleanup = () => {
-                modal.classList.remove('active');
-                cancelBtn.removeEventListener('click', cancelHandler);
-                okBtn.removeEventListener('click', okHandler);
-            };
-            const cancelHandler = () => { cleanup(); };
-            const okHandler = () => { if (onOk) onOk();
-                cleanup(); };
-            cancelBtn.addEventListener('click', cancelHandler);
-            okBtn.addEventListener('click', okHandler);
-            modal.addEventListener('click', function bgClick(e) {
-                if (e.target === modal) { cleanup();
-                    modal.removeEventListener('click', bgClick); }
-            });
+            const c = document.getElementById('confirmCancel');
+            const o = document.getElementById('confirmOk');
+            const cleanup = () => { modal.classList.remove('active'); c.onclick = null; o.onclick = null; };
+            c.onclick = cleanup;
+            o.onclick = () => { if (onOk) onOk(); cleanup(); };
         }
 
-        // ============================================================
-        // Supabase
-        // ============================================================
+        // ============ Supabase ============
         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
         var SUPABASE_ANON_KEY = "sb_publishable_Ew8kKf2z05kmYIK2XNu00g_dzAirtIM";
         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ============================================================
-        // 会话
-        // ============================================================
+        // ============ 会话 ============
         const currentUser = getSessionUser();
-        if (!currentUser || !currentUser.id) {
-            window.location.href = '/liuyanban/index.html';
-        }
+        if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
+        const isAdmin = currentUser.phone === '17355394710';
 
-        // ============================================================
-        // 渲染底部导航（使用 common.js）
-        // ============================================================
-        if (typeof renderFooter === 'function') {
-            renderFooter('profile');
-        } else {
-            // fallback
-            const container = document.getElementById('footer-container');
-            if (container) {
-                const tabs = [
-                    { id: 'posts', label: '📰 帖子', href: '/liuyanban/posts.html' },
-                    { id: 'messages', label: '💌 留言板', href: '/liuyanban/messages.html' },
-                    { id: 'chats', label: '💬 聊天群', href: '/liuyanban/chats.html' },
-                    { id: 'profile', label: '👤 个人', href: '/liuyanban/profile.html' }
-                ];
-                let html = '<div class="app-tabs">';
-                tabs.forEach(tab => {
-                    const activeClass = (tab.id === 'profile') ? 'active' : '';
-                    html += '<a href="' + tab.href + '" class="tab-btn ' + activeClass +
-                        '" style="position:relative;">' +
-                        '<span class="tab-icon">' + tab.label.split(' ')[0] + '</span>' +
-                        tab.label.split(' ').slice(1).join(' ') +
-                        '</a>';
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            }
-        }
+        if (typeof renderFooter === 'function') renderFooter('profile');
 
-        // ============================================================
-        // 更新头部信息（含头像URL）
-        // ============================================================
+        // ============ 头部 ============
         function updateHeader() {
             const user = getSessionUser();
             if (!user) return;
-            const avatarEl = document.getElementById('headerAvatar');
-            const nameEl = document.getElementById('headerUserName');
-
+            const av = document.getElementById('headerAvatar');
+            const nm = document.getElementById('headerUserName');
             if (user.avatar_url && user.avatar_url.startsWith('http')) {
-                avatarEl.style.backgroundImage = 'url(' + user.avatar_url + ')';
-                avatarEl.style.backgroundSize = 'cover';
-                avatarEl.style.backgroundPosition = 'center';
-                avatarEl.textContent = '';
+                av.style.backgroundImage = 'url(' + user.avatar_url + ')';
+                av.style.backgroundSize = 'cover';
+                av.style.backgroundPosition = 'center';
+                av.textContent = '';
             } else {
-                avatarEl.style.backgroundImage = '';
-                avatarEl.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
+                av.style.backgroundImage = '';
+                av.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
             }
-            nameEl.textContent = user.nickname || '用户';
-
-            // 同步资料编辑页的头像
-            const profileAvatar = document.getElementById('profileAvatar');
-            if (profileAvatar) {
+            nm.textContent = user.nickname || '用户';
+            const pa = document.getElementById('profileAvatar');
+            if (pa) {
                 if (user.avatar_url && user.avatar_url.startsWith('http')) {
-                    profileAvatar.style.backgroundImage = 'url(' + user.avatar_url + ')';
-                    profileAvatar.style.backgroundSize = 'cover';
-                    profileAvatar.style.backgroundPosition = 'center';
-                    profileAvatar.textContent = '';
+                    pa.style.backgroundImage = 'url(' + user.avatar_url + ')';
+                    pa.style.backgroundSize = 'cover';
+                    pa.style.backgroundPosition = 'center';
+                    pa.textContent = '';
                 } else {
-                    profileAvatar.style.backgroundImage = '';
-                    profileAvatar.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
+                    pa.style.backgroundImage = '';
+                    pa.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
                 }
             }
-            const nameInput = document.getElementById('profileNameInput');
-            if (nameInput) nameInput.value = user.nickname || '';
+            const ni = document.getElementById('profileNameInput');
+            if (ni) ni.value = user.nickname || '';
         }
         updateHeader();
 
-        // ============================================================
-        // 视图切换 + 返回按钮控制
-        // ============================================================
+        // ============ 视图切换 ============
         const viewTitles = {
-            settingsView: '个人中心',
-            profileEditView: '更新资料',
-            messagesView: '消息中心',
-            aboutView: '关于我们'
+            settingsView: '个人中心', profileEditView: '更新资料', messagesView: '消息中心',
+            feedbackView: '反馈 Bug', adminFeedbackView: '反馈管理',
+            manageSitesView: '网站管理', aboutView: '关于我们'
         };
-
-        function switchView(viewId) {
+        function switchView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            const target = document.getElementById(viewId);
-            if (target) target.classList.add('active');
+            const t = document.getElementById(id);
+            if (t) t.classList.add('active');
+            const bb = document.getElementById('headerBackBtn');
+            const hs = document.getElementById('headerSub');
+            if (id === 'settingsView') { bb.classList.remove('visible'); hs.textContent = '· 个人中心'; }
+            else { bb.classList.add('visible'); hs.textContent = '· ' + (viewTitles[id] || ''); }
+        }
+        function goBack() { switchView('settingsView'); }
 
-            const backBtn = document.getElementById('headerBackBtn');
-            const headerSub = document.getElementById('headerSub');
-            const viewTitle = document.getElementById('headerViewTitle');
-
-            if (viewId === 'settingsView') {
-                backBtn.classList.remove('visible');
-                headerSub.textContent = '· 个人中心';
-                viewTitle.textContent = '';
-            } else {
-                backBtn.classList.add('visible');
-                headerSub.textContent = '·';
-                viewTitle.textContent = viewTitles[viewId] || '';
-            }
+        // 显示管理员菜单
+        if (isAdmin) {
+            document.getElementById('goToAdminFeedback').style.display = 'flex';
+            document.getElementById('goToManageSites').style.display = 'flex';
         }
 
-        function goBack() {
-            switchView('settingsView');
-        }
+        // 菜单绑定
+        document.getElementById('goToProfileEdit').onclick = () => switchView('profileEditView');
+        document.getElementById('goToMessages').onclick = () => { switchView('messagesView'); loadNotifications(); };
+        document.getElementById('goToFeedback').onclick = () => { switchView('feedbackView'); initFeedbackView(); };
+        document.getElementById('goToAdminFeedback').onclick = () => { switchView('adminFeedbackView'); loadAdminFeedback(); };
+        document.getElementById('goToManageSites').onclick = () => { switchView('manageSitesView'); loadAdminSites(); };
+        document.getElementById('goToAbout').onclick = () => switchView('aboutView');
+        document.getElementById('backToSettings').onclick = () => switchView('settingsView');
+        document.getElementById('backToSettingsFromMsg').onclick = () => switchView('settingsView');
+        document.getElementById('backToSettingsFromFb').onclick = () => switchView('settingsView');
+        document.getElementById('backToSettingsFromAdminFb').onclick = () => switchView('settingsView');
+        document.getElementById('backToSettingsFromSites').onclick = () => switchView('settingsView');
+        document.getElementById('backToSettingsFromAbout').onclick = () => switchView('settingsView');
 
-        // 设置点击事件
-        document.getElementById('goToProfileEdit').addEventListener('click', () => switchView('profileEditView'));
-        document.getElementById('goToMessages').addEventListener('click', () => {
-            switchView('messagesView');
-            loadNotifications();
-        });
-        document.getElementById('goToAbout').addEventListener('click', () => switchView('aboutView'));
-
-        // 返回按钮统一
-        document.getElementById('backToSettings').addEventListener('click', () => switchView('settingsView'));
-        document.getElementById('backToSettingsFromMsg').addEventListener('click', () => switchView('settingsView'));
-        document.getElementById('backToSettingsFromAbout').addEventListener('click', () => switchView('settingsView'));
-
-        // ============================================================
-        // 音效开关
-        // ============================================================
+        // ============ 音效开关 ============
         const soundToggle = document.getElementById('soundToggle');
         const soundStatusHint = document.getElementById('soundStatusHint');
         const soundEnabled = localStorage.getItem('sq_sound_enabled') !== 'false';
         soundToggle.checked = soundEnabled;
         soundStatusHint.textContent = soundEnabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
+        soundToggle.onchange = function() {
+            const e = this.checked;
+            localStorage.setItem('sq_sound_enabled', e);
+            soundStatusHint.textContent = e ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
+            showToast(e ? '提醒音效已开启' : '提醒音效已关闭');
+        };
 
-        soundToggle.addEventListener('change', function() {
-            const enabled = this.checked;
-            localStorage.setItem('sq_sound_enabled', enabled);
-            soundStatusHint.textContent = enabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
-            if (enabled) {
-                try {
-                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    const ctx = new AudioCtx();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-                    osc.start(ctx.currentTime);
-                    osc.stop(ctx.currentTime + 0.28);
-                    setTimeout(() => ctx.close(), 400);
-                } catch (e) {}
-                showToast('🔔 提醒音效已开启');
-            } else {
-                showToast('🔕 提醒音效已关闭');
-            }
-        });
-
-        // ============================================================
-        // 头像上传
-        // ============================================================
+        // ============ 头像上传 ============
         async function uploadAvatar(file, userId) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = 'avatars/' + userId + '/profile.' + fileExt;
-            const { data, error } = await window.sb.storage.from('avatars').upload(fileName, file, { upsert: true });
+            const ext = file.name.split('.').pop();
+            const fn = 'avatars/' + userId + '/profile.' + ext;
+            const { error } = await window.sb.storage.from('avatars').upload(fn, file, { upsert: true });
             if (error) throw error;
-            const { data: urlData } = window.sb.storage.from('avatars').getPublicUrl(fileName);
+            const { data: urlData } = window.sb.storage.from('avatars').getPublicUrl(fn);
             return urlData.publicUrl;
         }
-
-        async function updateUser(userId, updates) {
-            const { data, error } = await window.sb.from('users').update(updates).eq('id', userId);
+        async function updateUser(id, up) {
+            const { error } = await window.sb.from('users').update(up).eq('id', id);
             if (error) throw error;
-            return data;
         }
-
-        document.getElementById('avatarFileInput').addEventListener('change', async function(e) {
+        document.getElementById('avatarFileInput').onchange = async function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('❌ 图片大小不能超过 5MB');
-                this.value = '';
-                return;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (!allowedTypes.includes(file.type)) {
-                showToast('❌ 请选择 JPG/PNG/GIF/WebP 格式');
-                this.value = '';
-                return;
-            }
+            if (file.size > 5 * 1024 * 1024) { showToast('图片不能超过 5MB'); this.value = ''; return; }
             try {
-                showToast('⏳ 正在上传头像...');
-                const avatarUrl = await uploadAvatar(file, currentUser.id);
-                await updateUser(currentUser.id, { avatar_url: avatarUrl });
-                currentUser.avatar_url = avatarUrl;
+                showToast('上传中...');
+                const url = await uploadAvatar(file, currentUser.id);
+                await updateUser(currentUser.id, { avatar_url: url });
+                currentUser.avatar_url = url;
                 setSessionUser(currentUser);
                 updateHeader();
-                showToast('✅ 头像已更新');
-            } catch (err) {
-                if (err.message && (err.message.includes('row-level security policy') || err.message.includes(
-                        'new row violates'))) {
-                    showToast('❌ 上传失败：请管理员在 Supabase 中为 avatars 存储桶配置 RLS 策略');
-                } else {
-                    showToast('上传失败：' + err.message);
-                }
-                console.error(err);
-            }
+                showToast('头像已更新');
+            } catch (err) { showToast('上传失败：' + err.message); }
             this.value = '';
-        });
-
-        // ============================================================
-        // 保存昵称
-        // ============================================================
-        document.getElementById('saveProfileBtn').addEventListener('click', async function() {
-            const newName = document.getElementById('profileNameInput').value.trim();
-            if (!newName) { showToast('请输入昵称'); return; }
-            if (newName.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') {
-                showToast('该昵称不可用');
-                return;
-            }
+        };
+        document.getElementById('saveProfileBtn').onclick = async function() {
+            const n = document.getElementById('profileNameInput').value.trim();
+            if (!n) return showToast('请输入昵称');
+            if (n.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') return showToast('该昵称不可用');
             try {
-                await updateUser(currentUser.id, { nickname: newName });
-                currentUser.nickname = newName;
+                await updateUser(currentUser.id, { nickname: n });
+                currentUser.nickname = n;
                 setSessionUser(currentUser);
                 updateHeader();
-                showToast('✅ 昵称已更新');
-            } catch (err) {
-                showToast('更新失败：' + err.message);
-            }
-        });
+                showToast('昵称已更新');
+            } catch (err) { showToast('更新失败：' + err.message); }
+        };
 
-        // ============================================================
-        // 退出登录
-        // ============================================================
+        // ============ 退出登录 ============
         function handleLogout() {
             showConfirm('退出登录', '确定要退出登录吗？', () => {
                 clearSession();
-                showToast('👋 已退出登录');
-                setTimeout(() => {
-                    window.location.href = '/liuyanban/index.html';
-                }, 500);
+                showToast('已退出登录');
+                setTimeout(() => window.location.href = '/liuyanban/index.html', 500);
             });
         }
-        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-        document.getElementById('logoutBtnFromSettings').addEventListener('click', handleLogout);
+        document.getElementById('logoutBtn').onclick = handleLogout;
+        document.getElementById('logoutBtnFromSettings').onclick = handleLogout;
 
-        // ============================================================
-        // 消息中心（通知）
-        // ============================================================
+        // ============ 消息中心 ============
+        var allNotifications = [];
+        var currentNtfFilter = 'all';
+
         async function loadNotifications() {
-            const container = document.getElementById('notificationList');
-            container.innerHTML = '加载中...';
+            var c = document.getElementById('notificationList');
+            c.innerHTML = '<div class="ntf-loading"><span class="spinner"></span>加载中...</div>';
             try {
-                const { data, error } = await window.sb
-                    .from('notifications')
-                    .select('*, users!notifications_comment_author_id_fkey (id, nickname, avatar_url)')
-                    .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false });
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px 0;">暂无通知</div>';
-                    return;
-                }
-                let html = '';
-                data.forEach(n => {
-                    const isRead = n.is_read;
-                    const author = n.users || { nickname: '用户', avatar_url: null };
-                    const avatarUrl = author.avatar_url;
-                    const avatarContent = avatarUrl ? '' : author.nickname.charAt(0).toUpperCase();
-                    const avatarStyle = avatarUrl ?
-                        'background-image:url(' + avatarUrl + ');background-size:cover;background-position:center;' :
-                        '';
-                    const time = new Date(n.created_at).toLocaleString('zh-CN', { month: 'short',
-                        day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    const text = n.comment_content || '评论了你的帖子';
-                    html += `
-                            <div class="notification-item ${isRead ? '' : 'unread'}" data-id="${n.id}" data-postid="${n.post_id}" data-commentid="${n.source_id}">
-                                <div class="ntf-avatar" style="${avatarStyle}">${avatarContent}</div>
-                                <div class="ntf-body">
-                                    <div class="ntf-text"><span class="ntf-highlight">${escapeHtml(author.nickname)}</span> 评论了你的帖子：<span style="color:var(--text);">${escapeHtml(text)}</span></div>
-                                    <div class="ntf-meta">${time} · ${isRead ? '已读' : '未读'}</div>
-                                </div>
-                            </div>
-                        `;
-                });
-                container.innerHTML = html;
-
-                container.querySelectorAll('.notification-item').forEach(el => {
-                    el.addEventListener('click', function() {
-                        const postId = this.dataset.postid;
-                        const commentId = this.dataset.commentid;
-                        markNotificationRead(this.dataset.id);
-                        window.location.href = '/liuyanban/posts.html?comment=' + commentId +
-                            '&post=' + postId;
-                    });
-                });
-
-                const unread = data.filter(n => !n.is_read).length;
-                document.getElementById('unreadHint').textContent = unread > 0 ? `有 ${unread} 条未读通知` :
-                    '暂无未读通知';
-                if (typeof updateNotificationBadge === 'function') {
-                    updateNotificationBadge();
-                } else {
-                    updateUnreadCountInFooter(unread);
-                }
+                var res = await window.sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+                if (res.error) throw res.error;
+                allNotifications = res.data || [];
+                renderNotifications();
+                updateUnreadTabCount();
+                var u = allNotifications.filter(n => !n.is_read).length;
+                var h = document.getElementById('unreadHint');
+                if (h) h.textContent = u > 0 ? '有 ' + u + ' 条未读通知' : '暂无未读通知';
+                if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
             } catch (err) {
-                container.innerHTML =
-                    '<div style="text-align:center; color:var(--danger-text); padding:20px 0;">加载失败</div>';
-                console.error(err);
+                c.innerHTML = '<div class="ntf-empty">加载失败</div>';
             }
+        }
+
+        function updateUnreadTabCount() {
+            var u = allNotifications.filter(n => !n.is_read).length;
+            var b = document.getElementById('unreadTabCount');
+            if (b) { b.textContent = u > 9 ? '9+' : u; b.className = 'ntf-tab-badge' + (u > 0 ? ' visible' : ''); }
+        }
+
+        function renderNotifications() {
+            var c = document.getElementById('notificationList');
+            var f = allNotifications;
+            if (currentNtfFilter === 'unread') f = f.filter(n => !n.is_read);
+            else if (currentNtfFilter === 'report') f = f.filter(n => n.notification_type === 'report' || n.type === 'report');
+            else if (currentNtfFilter === 'feedback') f = f.filter(n => n.notification_type === 'feedback' || n.type === 'feedback');
+
+            if (!f.length) {
+                var msg = currentNtfFilter === 'unread' ? '没有未读通知' :
+                          currentNtfFilter === 'report' ? '没有待处理的举报' :
+                          currentNtfFilter === 'feedback' ? '暂无反馈通知' : '暂无通知';
+                c.innerHTML = '<div class="ntf-empty"><div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>' + msg + '</div>';
+                return;
+            }
+
+            var g = { today: [], yesterday: [], earlier: [] };
+            var now = new Date();
+            var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            var t1 = new Date(t0.getTime() - 86400000);
+            f.forEach(n => {
+                var d = new Date(n.created_at);
+                if (d >= t0) g.today.push(n);
+                else if (d >= t1) g.yesterday.push(n);
+                else g.earlier.push(n);
+            });
+
+            var html = '';
+            function rg(label, items) {
+                if (!items.length) return '';
+                var s = '<div class="ntf-group-label">' + label + '</div>';
+                items.forEach(n => { s += renderNotificationCard(n); });
+                return s;
+            }
+            html += rg('今天', g.today) + rg('昨天', g.yesterday) + rg('更早', g.earlier);
+            c.innerHTML = html;
+
+            c.querySelectorAll('.ntf-card').forEach(el => {
+                el.onclick = function(e) {
+                    if (e.target.closest('.ntf-actions')) return;
+                    var id = this.dataset.id;
+                    var pid = this.dataset.postid;
+                    var cid = this.dataset.commentid;
+                    var nt = this.dataset.ntftype;
+                    markNotificationRead(id);
+                    if (nt === 'report' || nt === 'feedback') return;
+                    if (pid && cid) window.location.href = '/liuyanban/posts.html?comment=' + cid + '&post=' + pid;
+                };
+            });
+        }
+
+        function renderNotificationCard(n) {
+            var r = n.is_read;
+            var nt = n.notification_type || n.type || 'comment';
+            var t = formatRelativeTime(n.created_at);
+            var icons = {
+                comment: { cls: 'comment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
+                report: { cls: 'report', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+                system: { cls: 'system', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' },
+                ban: { cls: 'ban', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+                report_result: { cls: 'result-ok', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' },
+                feedback: { cls: 'feedback', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' }
+            };
+            var info = icons[nt] || icons.comment;
+            var title = '', snippet = '';
+            if (nt === 'report') { title = '新举报待处理'; snippet = '原因：' + (n.report_reason || '未填写') + (n.extra_text ? ' · ' + n.extra_text : ''); }
+            else if (nt === 'feedback') { title = '用户提交了新反馈'; snippet = n.extra_text || '点击查看详情'; }
+            else if (nt === 'ban') { title = '你的账号已被封禁'; snippet = '解封时间：' + (n.ban_until ? new Date(n.ban_until).toLocaleString('zh-CN') : '未知'); }
+            else if (nt === 'report_result') { title = '举报处理结果'; snippet = n.extra_text || '管理员已处理你的举报'; }
+            else { title = '收到新评论'; snippet = n.extra_text || n.comment_content || '有人评论了你的帖子'; }
+
+            var actions = '';
+            if (nt === 'report' && n.report_id) {
+                actions = '<div class="ntf-actions">' +
+                    '<button class="btn-view" onclick="event.stopPropagation();viewReportDetail(\'' + n.report_id + '\')">查看</button>' +
+                    '<button class="btn-approve" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'approved\')">同意</button>' +
+                    '<button class="btn-reject" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'rejected\')">驳回</button>' +
+                    '</div>';
+            }
+            if (nt === 'feedback' && n.feedback_id) {
+                actions = '<div class="ntf-actions">' +
+                    '<button class="btn-view" onclick="event.stopPropagation();goToFeedbackDetail(\'' + n.feedback_id + '\')">查看反馈</button>' +
+                    '</div>';
+            }
+
+            return '<div class="ntf-card ' + (r ? '' : 'unread') + (nt === 'report' ? ' report-card' : '') + (nt === 'feedback' ? ' feedback-card' : '') +
+                '" data-id="' + n.id + '" data-postid="' + (n.post_id || '') + '" data-commentid="' + (n.source_id || '') +
+                '" data-ntftype="' + nt + '" data-reportid="' + (n.report_id || '') + '" data-feedbackid="' + (n.feedback_id || '') + '">' +
+                '<div class="ntf-dot"></div>' +
+                '<div class="ntf-type-icon ' + info.cls + '">' + info.svg + '</div>' +
+                '<div class="ntf-body">' +
+                    '<div class="ntf-title">' + title + '</div>' +
+                    '<div class="ntf-snippet">' + escapeHtml(snippet) + '</div>' +
+                    '<div class="ntf-meta"><span>' + t + '</span>' + (r ? '' : '<span class="unread-tag">未读</span>') + '</div>' +
+                    actions +
+                '</div>' +
+            '</div>';
+        }
+
+        function formatRelativeTime(isoStr) {
+            var now = new Date(), d = new Date(isoStr), diff = (now - d) / 1000;
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+            if (diff < 172800) return '昨天';
+            if (diff < 604800) return Math.floor(diff / 86400) + '天前';
+            return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric' });
         }
 
         async function markNotificationRead(id) {
             try {
                 await window.sb.from('notifications').update({ is_read: true }).eq('id', id);
-            } catch (e) { console.error(e); }
+                var n = allNotifications.find(x => x.id === id);
+                if (n) n.is_read = true;
+                updateUnreadTabCount();
+                if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+            } catch (e) {}
         }
 
-        document.getElementById('markAllReadBtn').addEventListener('click', async function() {
-            try {
-                await window.sb.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq(
-                    'is_read', false);
-                showToast('✅ 全部已读');
-                loadNotifications();
-                if (typeof updateNotificationBadge === 'function') {
-                    updateNotificationBadge();
-                } else {
-                    updateUnreadCountInFooter(0);
-                }
-            } catch (e) { showToast('操作失败'); }
-        });
-
-        function updateUnreadCountInFooter(count) {
-            const footerContainer = document.getElementById('footer-container');
-            if (!footerContainer) return;
-            const profileTab = footerContainer.querySelector('a[href="/liuyanban/profile.html"]');
-            if (!profileTab) return;
-            const oldBadge = profileTab.querySelector('.badge');
-            if (oldBadge) oldBadge.remove();
-            if (count > 0) {
-                const badge = document.createElement('span');
-                badge.className = 'badge';
-                badge.style.cssText =
-                    'position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:0.5em;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;transform:translateY(-2px);';
-                badge.textContent = count > 9 ? '9+' : count;
-                profileTab.appendChild(badge);
-            }
-        }
-
-        // ============================================================
-        // 初始化 - 检查URL参数
-        // ============================================================
-        (function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const view = urlParams.get('view');
-            if (view === 'messages') {
-                switchView('messagesView');
-                loadNotifications();
-            } else {
-                switchView('settingsView');
-            }
-
-            if (typeof updateNotificationBadge === 'function') {
-                updateNotificationBadge();
-            } else {
-                window.sb.from('notifications').select('*', { count: 'exact', head: true })
-                    .eq('user_id', currentUser.id)
-                    .eq('is_read', false)
-                    .then(({ count }) => {
-                        updateUnreadCountInFooter(count || 0);
+        // 举报处理
+        async function handleReport(reportId, result) {
+            var label = result === 'approved' ? '同意' : '驳回';
+            showConfirm('处理举报', '确定要' + label + '此举报吗？', async function() {
+                try {
+                    await window.sb.from('reports').update({
+                        status: result,
+                        reviewed_by: currentUser.id,
+                        reviewed_at: new Date().toISOString()
+                    }).eq('id', reportId);
+                    var rRes = await window.sb.from('reports').select('*').eq('id', reportId).single();
+                    var report = rRes.data;
+                    var tt = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[report.content_type] || '内容';
+                    await pushNotification(report.reporter_id, {
+                        type: 'report_result', notification_type: 'report_result',
+                        extra_text: '你对' + tt + '的举报已' + label + '：' + report.reason
                     });
-            }
-
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    const session = getSessionUser();
-                    if (session && session.id) {
-                        if (session.avatar_url !== currentUser.avatar_url || session.nickname !== currentUser
-                            .nickname) {
-                            Object.assign(currentUser, session);
-                            updateHeader();
-                        }
+                    if (result === 'approved') {
+                        await pushNotification(report.reported_user_id, {
+                            type: 'report_result', notification_type: 'report_result',
+                            extra_text: '你的' + tt + '被举报成立，管理员已处理。'
+                        });
                     }
-                }
+                    showToast('举报已' + label);
+                    loadNotifications();
+                } catch (err) { showToast('处理失败：' + err.message); }
             });
+        }
+        async function viewReportDetail(reportId) {
+            var r = (await window.sb.from('reports').select('*').eq('id', reportId).single()).data;
+            if (!r) return;
+            var tt = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[r.content_type] || '内容';
+            showConfirm('举报详情',
+                '类型：' + tt + '\n原因：' + r.reason + '\n描述：' + (r.description || '无') +
+                '\n快照：' + (r.content_snapshot || '无'),
+                function() {});
+        }
+        function goToFeedbackDetail(fid) {
+            switchView('adminFeedbackView');
+            loadAdminFeedback(fid);
+        }
+
+        document.querySelectorAll('.ntf-tab').forEach(tab => {
+            tab.onclick = function() {
+                document.querySelectorAll('.ntf-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentNtfFilter = this.dataset.filter;
+                renderNotifications();
+            };
+        });
+        document.getElementById('markAllReadBtn').onclick = async function() {
+            await window.sb.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
+            showToast('全部已读');
+            loadNotifications();
+            if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+        };
+
+        // ============ 反馈模块 ============
+        var allSites = [];
+        var selectedSiteId = null;
+        var fbCurrentTab = 'submit';
+
+        async function loadSites() {
+            var res = await window.sb.from('feedback_sites').select('*').order('sort_order', { ascending: true });
+            allSites = res.data || [];
+        }
+
+        async function initFeedbackView() {
+            if (!allSites.length) await loadSites();
+            renderSiteGrid();
+            fbCurrentTab = 'submit';
+            switchFbTab('submit');
+        }
+
+        function renderSiteGrid() {
+            var g = document.getElementById('siteGrid');
+            if (!allSites.length) {
+                g.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;grid-column:1/-1;font-size:0.85em;">暂无网站</div>';
+                return;
+            }
+            g.innerHTML = allSites.map(s => 
+                '<div class="site-card' + (selectedSiteId === s.id ? ' selected' : '') + '" data-id="' + s.id + '">' +
+                    '<div class="site-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>' +
+                    '<div class="site-name">' + escapeHtml(s.name) + '</div>' +
+                '</div>'
+            ).join('');
+            g.querySelectorAll('.site-card').forEach(el => {
+                el.onclick = function() {
+                    selectedSiteId = this.dataset.id;
+                    g.querySelectorAll('.site-card').forEach(x => x.classList.remove('selected'));
+                    this.classList.add('selected');
+                };
+            });
+        }
+
+        function switchFbTab(tab) {
+            fbCurrentTab = tab;
+            document.getElementById('fbSubmitPanel').style.display = tab === 'submit' ? 'block' : 'none';
+            document.getElementById('fbMinePanel').style.display = tab === 'mine' ? 'block' : 'none';
+            document.getElementById('fbTabNew').style.color = tab === 'submit' ? 'var(--primary)' : 'var(--text-muted)';
+            document.getElementById('fbTabMine').style.color = tab === 'mine' ? 'var(--primary)' : 'var(--text-muted)';
+            if (tab === 'mine') loadMyFeedback();
+        }
+        document.getElementById('fbTabNew').onclick = () => switchFbTab('submit');
+        document.getElementById('fbTabMine').onclick = () => switchFbTab('mine');
+
+        document.getElementById('fbSubmitBtn').onclick = async function() {
+            if (!selectedSiteId) return showToast('请先选择网站');
+            var content = document.getElementById('fbContent').value.trim();
+            if (!content) return showToast('请填写问题描述');
+            var contact = document.getElementById('fbContact').value.trim();
+            var site = allSites.find(s => s.id === selectedSiteId);
+            var btn = this;
+            btn.disabled = true; btn.textContent = '提交中...';
+            try {
+                var ins = await window.sb.from('feedback').insert([{
+                    user_id: currentUser.id,
+                    user_nickname: currentUser.nickname,
+                    site_id: selectedSiteId,
+                    site_name: site.name,
+                    content: content,
+                    contact: contact
+                }]).select();
+                if (ins.error) throw ins.error;
+
+                // 通知管理员
+                var adminRes = await window.sb.from('users').select('id').eq('phone', '17355394710').single();
+                if (adminRes.data) {
+                    await pushNotification(adminRes.data.id, {
+                        type: 'feedback', notification_type: 'feedback',
+                        feedback_id: ins.data[0].id,
+                        extra_text: '[' + site.name + '] ' + content.substring(0, 60)
+                    });
+                }
+                showToast('反馈已提交，感谢你的反馈！');
+                document.getElementById('fbContent').value = '';
+                document.getElementById('fbContact').value = '';
+                selectedSiteId = null;
+                renderSiteGrid();
+            } catch (err) { showToast('提交失败：' + err.message); }
+            btn.disabled = false; btn.textContent = '提交反馈';
+        };
+
+        async function loadMyFeedback() {
+            var c = document.getElementById('myFeedbackList');
+            c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>';
+            var res = await window.sb.from('feedback').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            var data = res.data || [];
+            if (!data.length) {
+                c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">还没有反馈记录</div>';
+                return;
+            }
+            var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
+            c.innerHTML = data.map(f =>
+                '<div class="fb-item">' +
+                    '<div class="fb-head">' +
+                        '<span class="fb-site">' + escapeHtml(f.site_name) + '</span>' +
+                        '<span class="fb-status ' + f.status + '">' + (statusMap[f.status] || f.status) + '</span>' +
+                    '</div>' +
+                    '<div class="fb-content">' + escapeHtml(f.content) + '</div>' +
+                    (f.admin_reply ? '<div class="fb-reply"><b>管理员回复：</b>' + escapeHtml(f.admin_reply) + '</div>' : '') +
+                    '<div class="fb-time">' + new Date(f.created_at).toLocaleString('zh-CN') + '</div>' +
+                '</div>'
+            ).join('');
+        }
+
+        // ============ 管理员：反馈管理 ============
+        var highlightFbId = null;
+        async function loadAdminFeedback(highlightId) {
+            highlightFbId = highlightId || null;
+            var c = document.getElementById('adminFeedbackList');
+            c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>';
+            var res = await window.sb.from('feedback').select('*').order('created_at', { ascending: false });
+            var data = res.data || [];
+            if (!data.length) {
+                c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">还没有反馈</div>';
+                return;
+            }
+            var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
+            c.innerHTML = data.map(f => {
+                var isHl = (highlightFbId && f.id === highlightFbId);
+                return '<div class="fb-item" style="' + (isHl ? 'border:2px solid var(--primary);' : '') + '">' +
+                    '<div class="fb-head">' +
+                        '<span class="fb-site">[' + escapeHtml(f.site_name) + '] ' + escapeHtml(f.user_nickname || '匿名') + '</span>' +
+                        '<span class="fb-status ' + f.status + '">' + (statusMap[f.status] || f.status) + '</span>' +
+                    '</div>' +
+                    '<div class="fb-content">' + escapeHtml(f.content) + '</div>' +
+                    (f.contact ? '<div class="fb-time">联系方式：' + escapeHtml(f.contact) + '</div>' : '') +
+                    (f.admin_reply ? '<div class="fb-reply"><b>已回复：</b>' + escapeHtml(f.admin_reply) + '</div>' : '') +
+                    '<div class="fb-time">' + new Date(f.created_at).toLocaleString('zh-CN') + '</div>' +
+                    '<div class="fb-actions">' +
+                        '<button class="btn-primary" style="padding:5px 14px;font-size:0.75em;width:auto;" onclick="replyFeedback(\'' + f.id + '\')">' + (f.admin_reply ? '重新回复' : '回复') + '</button>' +
+                        '<button class="btn-danger" style="padding:5px 14px;font-size:0.75em;width:auto;margin-top:0;" onclick="deleteFeedback(\'' + f.id + '\')">删除</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        // 回复反馈
+        var replyingFeedbackId = null;
+        function replyFeedback(fid) {
+            replyingFeedbackId = fid;
+            document.getElementById('replyText').value = '';
+            document.getElementById('replyModal').classList.add('active');
+            document.getElementById('replyText').focus();
+        }
+        document.getElementById('replyCancel').onclick = function() {
+            document.getElementById('replyModal').classList.remove('active');
+            replyingFeedbackId = null;
+        };
+        document.getElementById('replyOk').onclick = async function() {
+            var txt = document.getElementById('replyText').value.trim();
+            if (!txt) return showToast('请输入回复内容');
+            try {
+                var res = await window.sb.from('feedback').select('*').eq('id', replyingFeedbackId).single();
+                var f = res.data;
+                await window.sb.from('feedback').update({ admin_reply: txt, status: 'replied' }).eq('id', replyingFeedbackId);
+                // 通知反馈用户
+                if (f && f.user_id) {
+                    await pushNotification(f.user_id, {
+                        type: 'feedback', notification_type: 'feedback',
+                        feedback_id: replyingFeedbackId,
+                        extra_text: '管理员回复了你的反馈：' + txt.substring(0, 60)
+                    });
+                }
+                document.getElementById('replyModal').classList.remove('active');
+                replyingFeedbackId = null;
+                showToast('回复已发送');
+                loadAdminFeedback();
+            } catch (err) { showToast('回复失败：' + err.message); }
+        };
+
+        async function deleteFeedback(fid) {
+            showConfirm('删除反馈', '确定删除此条反馈吗？', async function() {
+                await window.sb.from('feedback').delete().eq('id', fid);
+                showToast('已删除');
+                loadAdminFeedback();
+            });
+        }
+
+        // ============ 管理员：网站管理 ============
+        async function loadAdminSites() {
+            await loadSites();
+            renderAdminSites();
+        }
+        function renderAdminSites() {
+            var c = document.getElementById('adminSitesList');
+            if (!allSites.length) {
+                c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">暂无网站，请在下方添加</div>';
+                return;
+            }
+            c.innerHTML = allSites.map(s =>
+                '<div class="admin-site-item">' +
+                    '<span class="site-name">' + escapeHtml(s.name) + '</span>' +
+                    '<div class="site-actions">' +
+                        '<button onclick="deleteSite(\'' + s.id + '\',\'' + escapeHtml(s.name) + '\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
+                        '删除</button>' +
+                    '</div>' +
+                '</div>'
+            ).join('');
+        }
+        document.getElementById('addSiteBtn').onclick = async function() {
+            var name = document.getElementById('newSiteName').value.trim();
+            if (!name) return showToast('请输入网站名称');
+            try {
+                var maxOrder = allSites.reduce((m, s) => Math.max(m, s.sort_order || 0), 0);
+                await window.sb.from('feedback_sites').insert([{ name: name, sort_order: maxOrder + 1 }]);
+                document.getElementById('newSiteName').value = '';
+                showToast('已添加');
+                await loadSites();
+                renderAdminSites();
+            } catch (err) { showToast('添加失败：' + err.message); }
+        };
+        async function deleteSite(sid, name) {
+            showConfirm('删除网站', '确定删除「' + name + '」吗？已有反馈不受影响。', async function() {
+                await window.sb.from('feedback_sites').delete().eq('id', sid);
+                showToast('已删除');
+                await loadSites();
+                renderAdminSites();
+            });
+        }
+
+        // ============ 初始化 ============
+        (function init() {
+            const params = new URLSearchParams(window.location.search);
+            const view = params.get('view');
+            if (view === 'messages') { switchView('messagesView'); loadNotifications(); }
+            else switchView('settingsView');
+
+            if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
         })();
 
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-        console.log('🌿 Seven戚 个人中心已加载（所有图标使用 Font Awesome，返回按钮 + 开发者头像链接）');
+        document.addEventListener('gesturestart', e => e.preventDefault());
     </script>
 </body>
 </html>
