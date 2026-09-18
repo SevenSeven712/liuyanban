@@ -130,6 +130,96 @@
     <div id="toast"></div>
 
     <script src="/liuyanban/common.js"></script>
+<script>
+// ============ 举报相关兜底（防止 common.js 缺失） ============
+window.pushNotification = window.pushNotification || async function(userId, payload) {
+    if (!window.sb || !userId) return;
+    try {
+        await window.sb.from('notifications').insert([Object.assign({ user_id: userId, is_read: false }, payload)]);
+    } catch (e) { console.warn('通知发送失败', e); }
+};
+
+window.openReportDialog = window.openReportDialog || function(reportedUserId, contentType, contentId, contentSnapshot) {
+    var old = document.getElementById('reportOverlay');
+    if (old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.className = 'report-overlay';
+    overlay.id = 'reportOverlay';
+    var typeText = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[contentType] || '内容';
+    overlay.innerHTML =
+        '<div class="report-panel">' +
+        '<div class="report-header"><h3>🚨 举报' + typeText + '</h3>' +
+        '<button class="report-close" onclick="closeReportDialog()">✕</button></div>' +
+        '<div class="report-body">' +
+        '<div class="report-field"><label>举报原因（必选）</label><div class="report-reasons">' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="色情低俗"> 色情低俗</label>' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="骚扰辱骂"> 骚扰辱骂</label>' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="垃圾广告"> 垃圾广告</label>' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="虚假信息"> 虚假信息</label>' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="政治敏感"> 政治敏感</label>' +
+        '<label class="report-reason-option"><input type="radio" name="reportReason" value="其他"> 其他</label>' +
+        '</div></div>' +
+        '<div class="report-field"><label>补充说明（选填）</label><textarea id="reportDescription" placeholder="请描述具体情况..." maxlength="500"></textarea></div>' +
+        '<div class="report-field"><label>被举报内容预览</label><div class="report-preview">' + (contentSnapshot ? String(contentSnapshot).replace(/</g,'&lt;') : '(无内容)') + '</div></div>' +
+        '</div>' +
+        '<div class="report-footer"><button class="report-cancel" onclick="closeReportDialog()">取消</button>' +
+        '<button class="report-submit" id="reportSubmitBtn">提交举报</button></div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+    document.getElementById('reportSubmitBtn').onclick = async function() {
+        var r = document.querySelector('input[name="reportReason"]:checked');
+        if (!r) { alert('请选择举报原因'); return; }
+        var d = document.getElementById('reportDescription');
+        var desc = d ? d.value.trim() : '';
+        try {
+            var cu = JSON.parse(localStorage.getItem('sq_user_session') || '{}');
+            if (!cu.id) { alert('请先登录'); return; }
+            var ins = await window.sb.from('reports').insert([{
+                reporter_id: cu.id, reported_user_id: reportedUserId,
+                content_type: contentType, content_id: contentId,
+                content_snapshot: contentSnapshot, reason: r.value, description: desc
+            }]).select();
+            if (ins.error) throw ins.error;
+            var adm = await window.sb.from('users').select('id').eq('phone','17355394710').single();
+            if (adm.data) {
+                await window.pushNotification(adm.data.id, {
+                    type: 'report', notification_type: 'report',
+                    report_id: ins.data[0].id, report_reason: r.value,
+                    extra_text: contentSnapshot ? String(contentSnapshot).substring(0,100) : ''
+                });
+            }
+            closeReportDialog();
+            alert('✅ 举报已提交，管理员会尽快处理');
+        } catch (err) { alert('举报失败：' + err.message); }
+    };
+    if (!document.getElementById('report-dialog-styles')) {
+        var s = document.createElement('style');
+        s.id = 'report-dialog-styles';
+        s.textContent = '.report-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;}' +
+        '.report-panel{background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}' +
+        '.report-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid #e8f0e8;}' +
+        '.report-header h3{font-size:1.05em;margin:0;}' +
+        '.report-close{background:none;border:none;font-size:1.3em;cursor:pointer;color:#8aaa9a;}' +
+        '.report-body{padding:16px 20px;overflow-y:auto;flex:1;}' +
+        '.report-field{margin-bottom:14px;}' +
+        '.report-field label{display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:6px;}' +
+        '.report-reasons{display:grid;grid-template-columns:1fr 1fr;gap:6px;}' +
+        '.report-reason-option{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #c8e0c8;border-radius:8px;font-size:0.85em;cursor:pointer;}' +
+        '.report-field textarea{width:100%;padding:10px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:0.85em;outline:none;min-height:70px;box-sizing:border-box;}' +
+        '.report-preview{background:#f5faf5;border:1px solid #e0e0e0;border-radius:8px;padding:10px;font-size:0.8em;color:#5a7a6a;max-height:80px;overflow:hidden;}' +
+        '.report-footer{display:flex;gap:8px;padding:12px 20px 18px;border-top:1px solid #e8f0e8;}' +
+        '.report-footer button{flex:1;padding:10px;border-radius:10px;border:none;font-weight:700;font-size:0.9em;cursor:pointer;}' +
+        '.report-cancel{background:#eaf3ea;color:#5a7a6a;}' +
+        '.report-submit{background:#e57373;color:#fff;}';
+        document.head.appendChild(s);
+    }
+};
+
+window.closeReportDialog = window.closeReportDialog || function() {
+    var el = document.getElementById('reportOverlay');
+    if (el) el.remove();
+};
+</script>
     <script>
         renderHeader('聊天群', 'chats');
         renderFooter('chats');
