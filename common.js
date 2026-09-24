@@ -1,5 +1,5 @@
 // ============================================================
-// 初始化 Supabase
+// 初始化 Supabase 客户端
 // ============================================================
 if (!window.sb) {
     var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
@@ -343,7 +343,7 @@ function showTopBanner(text) {
 // ============================================================
 // 站内通知推送
 // ============================================================
-async function pushNotification(userId, payload) {
+window.pushNotification = window.pushNotification || async function(userId, payload) {
     if (!window.sb || !userId) return;
     try {
         await window.sb.from('notifications').insert([Object.assign({
@@ -352,7 +352,7 @@ async function pushNotification(userId, payload) {
         }, payload)]);
         if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
     } catch (e) { console.warn('通知发送失败', e); }
-}
+};
 
 // ============================================================
 // 举报工具
@@ -449,7 +449,9 @@ function closeReportDialog() {
 
 async function doSubmitReport(reportedUserId, contentType, contentId, contentSnapshot, reason, description) {
     try {
-        await submitReport(currentUser.id, reportedUserId, contentType, contentId, contentSnapshot, reason, description);
+        var cu = getSessionUser();
+        if (!cu || !cu.id) { showToast('请先登录'); return; }
+        await submitReport(cu.id, reportedUserId, contentType, contentId, contentSnapshot, reason, description);
         closeReportDialog();
         showToast('✅ 举报已提交，管理员会尽快处理');
     } catch (err) {
@@ -483,3 +485,95 @@ function injectReportStyles() {
         '.report-submit{background:#e57373;color:#fff;}';
     document.head.appendChild(style);
 }
+
+// 让举报函数全局可用（跨页面调用）
+window.submitReport = submitReport;
+window.openReportDialog = openReportDialog;
+window.closeReportDialog = closeReportDialog;
+window.doSubmitReport = doSubmitReport;
+
+// ============================================================
+// 头像提醒弹窗（未设置头像的用户自动弹）
+// ============================================================
+function showAvatarPrompt() {
+    var old = document.getElementById('avatarPromptOverlay');
+    if (old) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'avatarPromptOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(30,58,46,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:apFadeIn 0.3s ease;';
+
+    overlay.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2em;text-align:center;box-shadow:0 8px 32px rgba(46,125,50,0.12);border:1px solid #c8e0c8;animation:apPopIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">' +
+            '<div style="width:72px;height:72px;border-radius:50%;background:#e8f5e9;display:grid;place-items:center;margin:0 auto 0.8em;">' +
+                '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<circle cx="12" cy="12" r="10"/>' +
+                    '<circle cx="12" cy="10" r="3"/>' +
+                    '<path d="M6.168 18.849A4 4 0 0 1 10 16h4a4 4 0 0 1 3.834 2.855"/>' +
+                '</svg>' +
+            '</div>' +
+            '<div style="font-size:1.15em;font-weight:700;color:#1e3a2e;margin-bottom:0.5em;line-height:1.4;">你还没有一个属于自己的标志呢！</div>' +
+            '<div style="font-size:0.9em;color:#5a7a6a;line-height:1.6;margin-bottom:1.4em;">快点为自己设置一个个性头像吧~</div>' +
+            '<div style="display:flex;gap:8px;">' +
+                '<button id="avatarPromptLater" style="flex:1;padding:0.75em;border-radius:10px;border:1.5px solid #c8e0c8;background:transparent;color:#5a7a6a;font-weight:600;font-size:0.9em;cursor:pointer;font-family:inherit;">稍后再说</button>' +
+                '<button id="avatarPromptGo" style="flex:1;padding:0.75em;border-radius:10px;border:none;background:#2e7d32;color:#fff;font-weight:700;font-size:0.9em;cursor:pointer;font-family:inherit;">去设置头像</button>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(overlay);
+
+    if (!document.getElementById('avatar-prompt-styles')) {
+        var style = document.createElement('style');
+        style.id = 'avatar-prompt-styles';
+        style.textContent =
+            '@keyframes apFadeIn{from{opacity:0}to{opacity:1}}' +
+            '@keyframes apPopIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}' +
+            '#avatarPromptLater:hover{background:#eaf3ea;border-color:#8aaa9a;}' +
+            '#avatarPromptGo:hover{background:#4caf50;box-shadow:0 0 20px rgba(46,125,50,0.3);}';
+        document.head.appendChild(style);
+    }
+
+    document.getElementById('avatarPromptLater').onclick = function() {
+        sessionStorage.setItem('sq_avatar_prompt_shown', '1');
+        overlay.remove();
+    };
+    document.getElementById('avatarPromptGo').onclick = function() {
+        sessionStorage.setItem('sq_avatar_prompt_shown', '1');
+        window.location.href = '/liuyanban/profile.html?view=avatar';
+    };
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            sessionStorage.setItem('sq_avatar_prompt_shown', '1');
+            overlay.remove();
+        }
+    });
+}
+window.showAvatarPrompt = showAvatarPrompt;
+
+// 自动检查：每个浏览器会话只弹一次
+(function autoAvatarCheck() {
+    function tryCheck() {
+        // 未登录 → 不弹
+        var user = typeof getSessionUser === 'function' ? getSessionUser() : null;
+        if (!user || !user.id) return;
+
+        // 已经在 profile 页 → 不弹（用户本来就在设置）
+        if (window.location.pathname.indexOf('profile.html') >= 0) return;
+
+        // 已有自定义头像（http 开头）→ 不弹
+        if (user.avatar_url && user.avatar_url.indexOf('http') === 0) return;
+
+        // 本次会话已弹过 → 不弹
+        if (sessionStorage.getItem('sq_avatar_prompt_shown') === '1') return;
+
+        showAvatarPrompt();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(tryCheck, 900);
+        });
+    } else {
+        setTimeout(tryCheck, 900);
+    }
+})();
