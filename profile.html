@@ -11,7 +11,8 @@
             --bg: #f5faf5; --bg-card: #ffffff; --bg-input: #eaf3ea;
             --border: #c8e0c8; --text: #1e3a2e; --text-muted: #5a7a6a;
             --text-light: #8aaa9a; --primary: #2e7d32; --primary-light: #4caf50;
-            --primary-bg: #e8f5e9; --shadow: 0 8px 32px rgba(46,125,50,0.12);
+            --primary-glow: rgba(76, 175, 80, 0.25); --primary-bg: #e8f5e9;
+            --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
             --radius: 16px; --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
             --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -22,12 +23,13 @@
         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
+        /* ===== 头部 ===== */
         .app-header { flex-shrink: 0; padding: 12px 16px 8px 16px; background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 50; min-height: 56px; gap: 8px; }
         .app-header .header-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
         .app-header .back-btn { background: none; border: none; cursor: pointer; color: var(--text); padding: 4px; display: none; flex-shrink: 0; }
         .app-header .back-btn.visible { display: flex; }
         .app-header .back-btn svg { width: 22px; height: 22px; }
-        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .app-header .brand { font-weight: 900; font-size: 1.1em; color: var(--text); display: flex; align-items: center; gap: 0.2em; white-space: nowrap; overflow: hidden; }
         .app-header .brand span { color: var(--primary); }
         .app-header .brand small { font-weight: 400; font-size: 0.55em; color: var(--text-muted); margin-left: 0.2em; }
         .app-header .user-area { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 99px; flex-shrink: 0; }
@@ -35,6 +37,7 @@
         .app-header .user-name { font-weight: 600; font-size: 0.8em; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .app-header .chevron { color: var(--text-muted); font-size: 0.6em; }
 
+        /* ===== 底部导航 ===== */
         .app-tabs { flex-shrink: 0; display: flex; background: rgba(255,255,255,0.96); border-top: 1px solid var(--border); padding: 6px 0 calc(6px + var(--safe-bottom)); z-index: 50; }
         .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; font-family: var(--font); font-size: 0.6em; font-weight: 600; color: var(--text-muted); padding: 4px 0; cursor: pointer; text-decoration: none; position: relative; }
         .tab-btn .tab-icon { font-size: 1.6em; line-height: 1.2; display: flex; align-items: center; justify-content: center; width: 1.7em; height: 1.7em; }
@@ -43,13 +46,16 @@
         .tab-btn.active::after { content: ''; position: absolute; top: -1px; left: 30%; right: 30%; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
         .tab-btn .badge { position: absolute; top: -2px; right: 15%; background: #e57373; color: #fff; font-size: 0.6em; font-weight: 700; padding: 1px 6px; border-radius: 99px; min-width: 16px; text-align: center; transform: translateY(-2px); }
 
+        /* ===== 内容 ===== */
         .profile-content { flex: 1; overflow-y: auto; padding: 16px 20px 12px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-        .view { width: 100%; max-width: 480px; display: none; flex-direction: column; }
+        .view { width: 100%; max-width: 480px; display: none; flex-direction: column; animation: fadeSlideIn 0.35s ease; }
         .view.active { display: flex; }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ===== 设置卡片 ===== */
         .settings-card { background: var(--bg-card); border-radius: var(--radius); padding: 1.8em 1.5em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
         .settings-title { font-size: 0.7em; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
-        .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: var(--radius-sm); margin-bottom: 4px; text-decoration: none; }
+        .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; border-radius: var(--radius-sm); margin-bottom: 4px; text-decoration: none; }
         .settings-item:last-child { border-bottom: none; margin-bottom: 0; }
         .settings-item:hover { background: var(--primary-bg); }
         .settings-item.no-click { cursor: default; }
@@ -60,37 +66,41 @@
         .settings-item .item-icon.warn { background: var(--warning-bg); color: var(--warning); }
         .settings-item .item-icon.danger { background: var(--danger-bg); color: var(--danger-text); }
         .settings-item .item-label { font-size: 0.95em; font-weight: 600; color: var(--text); }
-        .settings-item .item-sublabel { font-size: 0.7em; color: var(--text-light); margin-top: 2px; }
+        .settings-item .item-sublabel { font-size: 0.7em; color: var(--text-light); margin-top: 2px; font-weight: 400; }
         .settings-item .item-arrow { color: var(--text-light); display: flex; }
         .settings-item .item-arrow svg { width: 18px; height: 18px; }
 
+        /* ===== 开关 ===== */
         .toggle-switch { display: inline-block; position: relative; width: 52px; height: 30px; flex-shrink: 0; }
         .toggle-input { display: none; }
-        .toggle-label { position: absolute; top: 0; left: 0; width: 52px; height: 30px; background-color: #ccc; border-radius: 30px; cursor: pointer; transition: background-color 0.3s; }
-        .toggle-label::before { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; background-color: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+        .toggle-label { position: absolute; top: 0; left: 0; width: 52px; height: 30px; background-color: #ccc; border-radius: 30px; cursor: pointer; transition: background-color 0.3s ease; }
+        .toggle-label::before { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; background-color: #fff; border-radius: 50%; transition: transform 0.3s ease; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
         .toggle-input:checked + .toggle-label { background-color: var(--primary); }
         .toggle-input:checked + .toggle-label::before { transform: translateX(22px); }
 
+        /* ===== 资料卡 ===== */
         .profile-card { background: var(--bg-card); border-radius: var(--radius); padding: 2em 2.2em; width: 100%; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px; background-size: cover; background-position: center; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px; object-fit: cover; background-size: cover; background-position: center; }
         .avatar-upload { text-align: center; margin-top: 4px; margin-bottom: 16px; }
         .avatar-upload label { font-size: 0.8em; color: var(--primary); cursor: pointer; text-decoration: underline; }
         .avatar-upload input[type="file"] { display: none; }
         .field-group { margin-bottom: 16px; }
         .field-group label { display: block; font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; color: var(--text); }
+        .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); font-family: inherit; font-size: 0.9em; outline: none; transition: border-color 0.2s; color: var(--text); }
         .field-group textarea { resize: vertical; min-height: 100px; }
         .field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--primary); }
-        .btn-primary { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; font-family: inherit; }
+        .btn-primary { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; transition: background 0.2s; font-family: inherit; }
         .btn-primary:hover { background: var(--primary-light); }
         .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
-        .btn-danger { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--danger-bg); color: var(--danger-text); font-weight: 700; font-size: 1em; cursor: pointer; font-family: inherit; margin-top: 8px; }
-        .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-danger { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--danger-bg); color: var(--danger-text); font-weight: 700; font-size: 1em; cursor: pointer; transition: background 0.2s; font-family: inherit; margin-top: 8px; }
+        .btn-danger:hover { background: #ffcdd2; }
+        .btn-secondary-outline { width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85em; cursor: pointer; transition: all 0.2s; font-family: inherit; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-secondary-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
         .btn-secondary-outline svg { width: 16px; height: 16px; }
 
-        /* 网站选择网格 */
+        /* ===== 网站选择网格 ===== */
         .site-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
-        .site-card { padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative; transition: all 0.2s; }
+        .site-card { padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; position: relative; }
         .site-card:hover { border-color: var(--primary-light); }
         .site-card.selected { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 3px rgba(46,125,50,0.1); }
         .site-card.selected::after { content: ''; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; }
@@ -99,7 +109,7 @@
         .site-card .site-icon svg { width: 16px; height: 16px; }
         .site-card .site-name { font-size: 0.85em; font-weight: 600; line-height: 1.3; word-break: break-word; }
 
-        /* 反馈列表 */
+        /* ===== 反馈列表 ===== */
         .fb-item { padding: 12px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 10px; }
         .fb-item .fb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; flex-wrap: wrap; }
         .fb-item .fb-site { font-weight: 700; font-size: 0.9em; color: var(--text); }
@@ -115,7 +125,7 @@
         .fb-item .fb-actions .btn-reply { background: var(--primary-bg); color: var(--primary); }
         .fb-item .fb-actions .btn-del { background: var(--danger-bg); color: var(--danger-text); }
 
-        /* 管理网站列表 */
+        /* ===== 管理网站列表 ===== */
         .admin-site-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; }
         .admin-site-item .site-name { font-size: 0.9em; font-weight: 600; }
         .admin-site-item .site-actions button { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 4px 12px; border-radius: 99px; font-size: 0.75em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
@@ -125,15 +135,16 @@
         .admin-add-row input:focus { border-color: var(--primary); }
         .admin-add-row button { padding: 10px 18px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-        /* 消息中心 */
+        /* ===== 消息中心 ===== */
         .ntf-filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-input); border-radius: 99px; padding: 3px; overflow-x: auto; }
         .ntf-tab { flex: 1; padding: 6px 0; border: none; background: transparent; border-radius: 99px; font-family: inherit; font-size: 0.7em; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; }
         .ntf-tab.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(46,125,50,0.15); }
         .ntf-tab-badge { background: var(--danger); color: #fff; font-size: 0.8em; padding: 0 5px; border-radius: 99px; min-width: 16px; text-align: center; line-height: 16px; display: none; }
         .ntf-tab-badge.visible { display: inline-block; }
-        .ntf-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px; border-radius: 12px; margin-bottom: 8px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
+        .ntf-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px; border-radius: 12px; margin-bottom: 8px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; }
+        .ntf-card:hover { box-shadow: 0 4px 16px rgba(46,125,50,0.1); transform: translateY(-1px); }
         .ntf-card.unread { background: linear-gradient(135deg, #f0faf0 0%, #ffffff 100%); border-color: var(--primary); }
-        .ntf-card.unread::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); }
+        .ntf-card.unread::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-radius: 0 3px 3px 0; }
         .ntf-card.report-card { border-left: 4px solid var(--warning); }
         .ntf-card.feedback-card { border-left: 4px solid #2b6cff; }
         .ntf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: transparent; margin-top: 6px; }
@@ -153,11 +164,14 @@
         .ntf-meta { font-size: 0.7em; color: var(--text-light); display: flex; align-items: center; gap: 8px; }
         .ntf-meta .unread-tag { color: var(--primary); font-weight: 600; }
         .ntf-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-        .ntf-actions button { padding: 5px 12px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.72em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .ntf-actions button { padding: 5px 12px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.72em; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
         .ntf-actions button svg { width: 12px; height: 12px; }
         .ntf-actions .btn-approve { background: var(--success-bg); color: var(--success); }
+        .ntf-actions .btn-approve:hover { background: #c8e6c9; }
         .ntf-actions .btn-reject { background: var(--danger-bg); color: var(--danger-text); }
+        .ntf-actions .btn-reject:hover { background: #ffcdd2; }
         .ntf-actions .btn-view { background: #e3f2fd; color: #2b6cff; }
+        .ntf-actions .btn-view:hover { background: #bbdefb; }
         .ntf-group-label { font-size: 0.7em; font-weight: 700; color: var(--text-light); padding: 12px 4px 6px; text-transform: uppercase; letter-spacing: 0.05em; }
         .ntf-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 0.9em; }
         .ntf-empty .big { margin-bottom: 8px; opacity: 0.4; display: flex; justify-content: center; }
@@ -166,36 +180,45 @@
         .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ===== 关于我们 ===== */
         .about-card { text-align: center; padding: 20px 0; }
-        .about-card .about-avatar-link { display: inline-block; text-decoration: none; border-radius: 50%; }
-        .about-card .about-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 12px; }
+        .about-card .about-avatar-link { display: inline-block; text-decoration: none; transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 50%; }
+        .about-card .about-avatar-link:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(46, 125, 50, 0.3); }
+        .about-card .about-avatar { width: 100px; height: 100px; border-radius: 50%; background: #2e7d32; color: #fff; display: grid; place-items: center; font-size: 40px; font-weight: 900; margin: 0 auto 12px; cursor: pointer; object-fit: cover; }
         .about-card h2 { font-size: 1.4em; margin-bottom: 4px; }
         .about-card .sub { color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px; }
-        .about-card .desc { font-size: 0.95em; line-height: 1.6; max-width: 320px; margin: 0 auto 20px; }
-        .shop-ad { background: linear-gradient(135deg, #2e7d32, #4caf50); border-radius: var(--radius-sm); padding: 16px; color: #fff; margin-top: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; text-align: left; }
+        .about-card .desc { font-size: 0.95em; line-height: 1.6; color: var(--text); max-width: 320px; margin: 0 auto 20px; }
+        .shop-ad { background: linear-gradient(135deg, #2e7d32, #4caf50); border-radius: var(--radius-sm); padding: 16px; color: #fff; margin-top: 16px; cursor: pointer; transition: transform 0.2s; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; text-align: left; }
+        .shop-ad:hover { transform: scale(1.02); }
         .shop-ad svg { width: 36px; height: 36px; flex-shrink: 0; }
         .shop-ad h3 { font-size: 1.1em; margin-bottom: 4px; }
         .shop-ad p { font-size: 0.8em; opacity: 0.9; }
 
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s; z-index: 9999; pointer-events: none; white-space: nowrap; }
+        /* ===== Toast ===== */
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease; z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow); }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
+        /* ===== Modal ===== */
+        .custom-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
         .custom-modal.active { display: flex; }
         .modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; }
+        .modal-title { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; color: var(--text); }
         .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; white-space: pre-wrap; word-break: break-word; }
         .modal-body textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9em; outline: none; resize: vertical; min-height: 80px; box-sizing: border-box; }
         .modal-body textarea:focus { border-color: var(--primary); }
         .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-        .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: pointer; font-family: inherit; }
-        .modal-actions .btn-danger { background: var(--danger); color: #fff; width: auto; margin-top: 0; }
+        .modal-actions button { padding: 6px 18px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.85em; cursor: pointer; transition: background 0.2s; font-family: inherit; }
+        .modal-actions .btn-danger { background: var(--danger); color: #fff; margin-top: 0; width: auto; }
+        .modal-actions .btn-danger:hover { background: #c62828; }
         .modal-actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
+        .modal-actions .btn-secondary:hover { background: var(--border); }
         .modal-actions .btn-primary { background: var(--primary); color: #fff; width: auto; }
+        .modal-actions .btn-primary:hover { background: var(--primary-light); }
 
         @media (max-width: 480px) {
             .profile-content { padding: 12px 14px; }
-            .settings-card, .profile-card { padding: 1.2em 1em; }
+            .settings-card { padding: 1.2em 1em; }
+            .profile-card { padding: 1.2em 1.2em; }
             .app-header { padding: 10px 12px 6px 12px; min-height: 48px; }
             .app-header .brand { font-size: 0.95em; }
             .app-header .user-name { max-width: 50px; font-size: 0.7em; }
@@ -204,81 +227,170 @@
 </head>
 <body>
     <div id="mainApp">
-        <div class="app-header">
+        <!-- ===== 头部 ===== -->
+        <div class="app-header" id="customHeader">
             <div class="header-left">
                 <button class="back-btn" id="headerBackBtn" onclick="goBack()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"/>
+                        <polyline points="12 19 5 12 12 5"/>
+                    </svg>
                 </button>
-                <div class="brand">
+                <div class="brand" id="headerBrand">
                     Seven<span>戚</span><small id="headerSub">· 个人中心</small>
                 </div>
             </div>
-            <div class="user-area" onclick="window.location.href='/liuyanban/profile.html'">
+            <div class="user-area" id="headerUserArea" onclick="window.location.href='/liuyanban/profile.html'">
                 <div class="avatar" id="headerAvatar">U</div>
                 <span class="user-name" id="headerUserName">用户</span>
                 <span class="chevron">▾</span>
             </div>
         </div>
 
+        <!-- ===== 内容 ===== -->
         <div class="profile-content">
 
-            <!-- 设置 -->
+            <!-- ===== 设置 ===== -->
             <div class="view active" id="settingsView">
                 <div class="settings-card">
                     <div class="settings-title">设置中心</div>
 
-                    <div class="settings-item" id="goToProfileEdit">
+                    <div class="settings-item" id="goToProfileEdit" role="button" tabindex="0">
                         <div class="item-left">
-                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                            <div><div class="item-label">更新资料</div><div class="item-sublabel">头像、昵称管理</div></div>
+                            <div class="item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">更新资料</div>
+                                <div class="item-sublabel">头像、昵称管理</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
-                    <div class="settings-item" id="goToMessages">
+                    <div class="settings-item" id="goToMessages" role="button" tabindex="0">
                         <div class="item-left">
-                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
-                            <div><div class="item-label">消息中心</div><div class="item-sublabel" id="unreadHint">查看通知</div></div>
+                            <div class="item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                                    <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">消息中心</div>
+                                <div class="item-sublabel" id="unreadHint">查看评论通知</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
-                    <div class="settings-item" id="goToFeedback">
+                    <div class="settings-item" id="goToFeedback" role="button" tabindex="0">
                         <div class="item-left">
-                            <div class="item-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-                            <div><div class="item-label">反馈 Bug</div><div class="item-sublabel">选择软件 → 描述问题</div></div>
+                            <div class="item-icon warn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">反馈 Bug</div>
+                                <div class="item-sublabel">选择软件 → 描述问题</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
-                    <div class="settings-item" id="goToAdminFeedback" style="display:none;">
+                    <div class="settings-item" id="goToAdminFeedback" role="button" tabindex="0" style="display:none;">
                         <div class="item-left">
-                            <div class="item-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-                            <div><div class="item-label">反馈管理</div><div class="item-sublabel">查看/回复用户反馈（管理员）</div></div>
+                            <div class="item-icon danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">反馈管理</div>
+                                <div class="item-sublabel">查看/回复用户反馈（管理员）</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
-                    <div class="settings-item" id="goToManageSites" style="display:none;">
+                    <div class="settings-item" id="goToManageSites" role="button" tabindex="0" style="display:none;">
                         <div class="item-left">
-                            <div class="item-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-                            <div><div class="item-label">网站管理</div><div class="item-sublabel">增删反馈目标网站（管理员）</div></div>
+                            <div class="item-icon danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"/>
+                                    <rect x="14" y="3" width="7" height="7"/>
+                                    <rect x="14" y="14" width="7" height="7"/>
+                                    <rect x="3" y="14" width="7" height="7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">网站管理</div>
+                                <div class="item-sublabel">增删反馈目标网站（管理员）</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
-                    <div class="settings-item" id="goToAbout">
+                    <div class="settings-item" id="goToAbout" role="button" tabindex="0">
                         <div class="item-left">
-                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
-                            <div><div class="item-label">关于我们</div><div class="item-sublabel">创作者 &amp; 商城</div></div>
+                            <div class="item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">关于我们</div>
+                                <div class="item-sublabel">创作者 &amp; 商城</div>
+                            </div>
                         </div>
-                        <span class="item-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
                     </div>
 
                     <div class="settings-item no-click">
                         <div class="item-left">
-                            <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
-                            <div><div class="item-label">提醒音效</div><div class="item-sublabel" id="soundStatusHint">新消息提示音 · 已开启</div></div>
+                            <div class="item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">提醒音效</div>
+                                <div class="item-sublabel" id="soundStatusHint">新消息提示音 · 已开启</div>
+                            </div>
                         </div>
                         <div class="toggle-switch">
                             <input class="toggle-input" id="soundToggle" type="checkbox" />
@@ -292,11 +404,14 @@
                 </div>
             </div>
 
-            <!-- 更新资料 -->
+            <!-- ===== 更新资料 ===== -->
             <div class="view" id="profileEditView">
                 <div class="profile-card">
                     <button class="btn-secondary-outline" id="backToSettings">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
                     <div class="profile-avatar" id="profileAvatar">S</div>
@@ -313,16 +428,24 @@
                 </div>
             </div>
 
-            <!-- 消息中心 -->
+            <!-- ===== 消息中心 ===== -->
             <div class="view" id="messagesView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromMsg">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <span style="font-weight:700; font-size:1.1em;">消息中心</span>
-                        <button id="markAllReadBtn" style="background:none; border:none; color:var(--primary); font-size:0.75em; font-weight:600; cursor:pointer;">全部已读</button>
+                        <span style="font-weight:700; font-size:1.1em; display:flex; align-items:center; gap:6px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            消息中心
+                        </span>
+                        <button id="markAllReadBtn" style="background:none; border:none; color:var(--primary); font-size:0.75em; font-weight:600; cursor:pointer; padding:4px 8px; border-radius:6px;">全部已读</button>
                     </div>
                     <div class="ntf-filter-tabs" id="ntfFilterTabs">
                         <button class="ntf-tab active" data-filter="all">全部</button>
@@ -336,11 +459,14 @@
                 </div>
             </div>
 
-            <!-- 反馈 Bug -->
+            <!-- ===== 反馈 Bug ===== -->
             <div class="view" id="feedbackView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromFb">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
 
@@ -352,7 +478,6 @@
                         </div>
                     </div>
 
-                    <!-- 提交反馈 -->
                     <div id="fbSubmitPanel">
                         <div class="field-group">
                             <label>1. 选择问题网站</label>
@@ -371,7 +496,6 @@
                         <button class="btn-primary" id="fbSubmitBtn">提交反馈</button>
                     </div>
 
-                    <!-- 我的反馈 -->
                     <div id="fbMinePanel" style="display:none;">
                         <div id="myFeedbackList">
                             <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">加载中...</div>
@@ -380,11 +504,14 @@
                 </div>
             </div>
 
-            <!-- 管理员反馈管理 -->
+            <!-- ===== 管理员反馈管理 ===== -->
             <div class="view" id="adminFeedbackView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromAdminFb">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
                     <div style="font-weight:700; font-size:1.1em; margin-bottom:12px;">反馈管理</div>
@@ -394,11 +521,14 @@
                 </div>
             </div>
 
-            <!-- 网站管理 -->
+            <!-- ===== 网站管理 ===== -->
             <div class="view" id="manageSitesView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromSites">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
                     <div style="font-weight:700; font-size:1.1em; margin-bottom:12px;">网站管理</div>
@@ -410,11 +540,14 @@
                 </div>
             </div>
 
-            <!-- 关于我们 -->
+            <!-- ===== 关于我们 ===== -->
             <div class="view" id="aboutView">
                 <div class="profile-card" style="padding: 1.2em 1em;">
                     <button class="btn-secondary-outline" id="backToSettingsFromAbout">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         返回设置
                     </button>
                     <div class="about-card">
@@ -425,8 +558,15 @@
                         <div class="sub">全栈开发者 · 社区创始人</div>
                         <div class="desc">多多推广本网站，谢谢你们 Thanks♪(･ω･)ﾉ</div>
                         <div class="shop-ad" onclick="window.open('https://sevenseven712.github.io/shangcheng/', '_blank')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                            <div><h3>软件商城</h3><p>精选实用软件 → 点击进入</p></div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                            </svg>
+                            <div>
+                                <h3>软件商城</h3>
+                                <p>精选实用软件 → 点击进入</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -434,14 +574,15 @@
 
         </div>
 
+        <!-- ===== 底部导航 ===== -->
         <div id="footer-container"></div>
     </div>
 
-    <!-- 确认弹窗 -->
+    <!-- ===== 确认弹窗 ===== -->
     <div class="custom-modal" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title" id="confirmTitle">确认</div>
-            <div class="modal-body" id="confirmBody">确定？</div>
+            <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="confirmCancel">取消</button>
                 <button class="btn-danger" id="confirmOk">确定</button>
@@ -449,7 +590,7 @@
         </div>
     </div>
 
-    <!-- 反馈回复弹窗 -->
+    <!-- ===== 反馈回复弹窗 ===== -->
     <div class="custom-modal" id="replyModal">
         <div class="modal-box">
             <div class="modal-title">回复用户</div>
@@ -469,36 +610,29 @@
     <script>
         // ============ 工具 ============
         function showToast(msg) {
-            const t = document.getElementById('toast');
+            var t = document.getElementById('toast');
             if (!t) return;
             t.textContent = msg; t.classList.add('show');
             clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+            window.toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2800);
         }
         function escapeHtml(s) {
             if (!s) return '';
-            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            return String(s).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
         }
         function showConfirm(title, body, onOk) {
-            const modal = document.getElementById('confirmModal');
+            var modal = document.getElementById('confirmModal');
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmBody').textContent = body;
             modal.classList.add('active');
-            const c = document.getElementById('confirmCancel');
-            const o = document.getElementById('confirmOk');
-            const cleanup = () => { modal.classList.remove('active'); c.onclick = null; o.onclick = null; };
+            var c = document.getElementById('confirmCancel');
+            var o = document.getElementById('confirmOk');
+            var cleanup = function() { modal.classList.remove('active'); c.onclick = null; o.onclick = null; };
             c.onclick = cleanup;
-            o.onclick = () => { if (onOk) onOk(); cleanup(); };
+            o.onclick = function() { if (onOk) onOk(); cleanup(); };
         }
-
-        // ============ 兜底：通知推送 ============
-        window.pushNotification = window.pushNotification || async function(userId, payload) {
-            if (!window.sb || !userId) return;
-            try {
-                await window.sb.from('notifications').insert([Object.assign({ user_id: userId, is_read: false }, payload)]);
-                if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
-            } catch (e) { console.warn('通知发送失败', e); }
-        };
 
         // ============ Supabase ============
         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
@@ -506,18 +640,18 @@
         window.sb = window.sb || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ============ 会话 ============
-        const currentUser = getSessionUser();
+        var currentUser = getSessionUser();
         if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
-        const isAdmin = currentUser.phone === '17355394710';
+        var isAdmin = currentUser.phone === '17355394710';
 
         if (typeof renderFooter === 'function') renderFooter('profile');
 
         // ============ 头部 ============
         function updateHeader() {
-            const user = getSessionUser();
+            var user = getSessionUser();
             if (!user) return;
-            const av = document.getElementById('headerAvatar');
-            const nm = document.getElementById('headerUserName');
+            var av = document.getElementById('headerAvatar');
+            var nm = document.getElementById('headerUserName');
             if (user.avatar_url && user.avatar_url.startsWith('http')) {
                 av.style.backgroundImage = 'url(' + user.avatar_url + ')';
                 av.style.backgroundSize = 'cover';
@@ -528,7 +662,8 @@
                 av.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
             }
             nm.textContent = user.nickname || '用户';
-            const pa = document.getElementById('profileAvatar');
+
+            var pa = document.getElementById('profileAvatar');
             if (pa) {
                 if (user.avatar_url && user.avatar_url.startsWith('http')) {
                     pa.style.backgroundImage = 'url(' + user.avatar_url + ')';
@@ -540,54 +675,60 @@
                     pa.textContent = (user.nickname || 'U').charAt(0).toUpperCase();
                 }
             }
-            const ni = document.getElementById('profileNameInput');
+            var ni = document.getElementById('profileNameInput');
             if (ni) ni.value = user.nickname || '';
         }
         updateHeader();
 
         // ============ 视图切换 ============
-        const viewTitles = {
+        var viewTitles = {
             settingsView: '个人中心', profileEditView: '更新资料', messagesView: '消息中心',
             feedbackView: '反馈 Bug', adminFeedbackView: '反馈管理',
             manageSitesView: '网站管理', aboutView: '关于我们'
         };
         function switchView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            const t = document.getElementById(id);
+            document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+            var t = document.getElementById(id);
             if (t) t.classList.add('active');
-            const bb = document.getElementById('headerBackBtn');
-            const hs = document.getElementById('headerSub');
-            if (id === 'settingsView') { bb.classList.remove('visible'); hs.textContent = '· 个人中心'; }
-            else { bb.classList.add('visible'); hs.textContent = '· ' + (viewTitles[id] || ''); }
+            var bb = document.getElementById('headerBackBtn');
+            var hs = document.getElementById('headerSub');
+            if (id === 'settingsView') {
+                bb.classList.remove('visible');
+                hs.textContent = '· 个人中心';
+            } else {
+                bb.classList.add('visible');
+                hs.textContent = '· ' + (viewTitles[id] || '');
+            }
         }
         function goBack() { switchView('settingsView'); }
+        window.goBack = goBack;
 
         if (isAdmin) {
             document.getElementById('goToAdminFeedback').style.display = 'flex';
             document.getElementById('goToManageSites').style.display = 'flex';
         }
 
-        document.getElementById('goToProfileEdit').onclick = () => switchView('profileEditView');
-        document.getElementById('goToMessages').onclick = () => { switchView('messagesView'); loadNotifications(); };
-        document.getElementById('goToFeedback').onclick = () => { switchView('feedbackView'); initFeedbackView(); };
-        document.getElementById('goToAdminFeedback').onclick = () => { switchView('adminFeedbackView'); loadAdminFeedback(); };
-        document.getElementById('goToManageSites').onclick = () => { switchView('manageSitesView'); loadAdminSites(); };
-        document.getElementById('goToAbout').onclick = () => switchView('aboutView');
-        document.getElementById('backToSettings').onclick = () => switchView('settingsView');
-        document.getElementById('backToSettingsFromMsg').onclick = () => switchView('settingsView');
-        document.getElementById('backToSettingsFromFb').onclick = () => switchView('settingsView');
-        document.getElementById('backToSettingsFromAdminFb').onclick = () => switchView('settingsView');
-        document.getElementById('backToSettingsFromSites').onclick = () => switchView('settingsView');
-        document.getElementById('backToSettingsFromAbout').onclick = () => switchView('settingsView');
+        document.getElementById('goToProfileEdit').onclick = function() { switchView('profileEditView'); };
+        document.getElementById('goToMessages').onclick = function() { switchView('messagesView'); loadNotifications(); };
+        document.getElementById('goToFeedback').onclick = function() { switchView('feedbackView'); initFeedbackView(); };
+        document.getElementById('goToAdminFeedback').onclick = function() { switchView('adminFeedbackView'); loadAdminFeedback(); };
+        document.getElementById('goToManageSites').onclick = function() { switchView('manageSitesView'); loadAdminSites(); };
+        document.getElementById('goToAbout').onclick = function() { switchView('aboutView'); };
+        document.getElementById('backToSettings').onclick = function() { switchView('settingsView'); };
+        document.getElementById('backToSettingsFromMsg').onclick = function() { switchView('settingsView'); };
+        document.getElementById('backToSettingsFromFb').onclick = function() { switchView('settingsView'); };
+        document.getElementById('backToSettingsFromAdminFb').onclick = function() { switchView('settingsView'); };
+        document.getElementById('backToSettingsFromSites').onclick = function() { switchView('settingsView'); };
+        document.getElementById('backToSettingsFromAbout').onclick = function() { switchView('settingsView'); };
 
         // ============ 音效开关 ============
-        const soundToggle = document.getElementById('soundToggle');
-        const soundStatusHint = document.getElementById('soundStatusHint');
-        const soundEnabled = localStorage.getItem('sq_sound_enabled') !== 'false';
+        var soundToggle = document.getElementById('soundToggle');
+        var soundStatusHint = document.getElementById('soundStatusHint');
+        var soundEnabled = localStorage.getItem('sq_sound_enabled') !== 'false';
         soundToggle.checked = soundEnabled;
         soundStatusHint.textContent = soundEnabled ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
         soundToggle.onchange = function() {
-            const e = this.checked;
+            var e = this.checked;
             localStorage.setItem('sq_sound_enabled', e);
             soundStatusHint.textContent = e ? '新消息提示音 · 已开启' : '新消息提示音 · 已关闭';
             showToast(e ? '提醒音效已开启' : '提醒音效已关闭');
@@ -595,24 +736,24 @@
 
         // ============ 头像/昵称 ============
         async function uploadAvatar(file, userId) {
-            const ext = file.name.split('.').pop();
-            const fn = 'avatars/' + userId + '/profile.' + ext;
-            const { error } = await window.sb.storage.from('avatars').upload(fn, file, { upsert: true });
-            if (error) throw error;
-            const { data: urlData } = window.sb.storage.from('avatars').getPublicUrl(fn);
-            return urlData.publicUrl;
+            var ext = file.name.split('.').pop();
+            var fn = 'avatars/' + userId + '/profile.' + ext;
+            var up = await window.sb.storage.from('avatars').upload(fn, file, { upsert: true });
+            if (up.error) throw up.error;
+            var urlData = window.sb.storage.from('avatars').getPublicUrl(fn);
+            return urlData.data.publicUrl;
         }
         async function updateUser(id, up) {
-            const { error } = await window.sb.from('users').update(up).eq('id', id);
-            if (error) throw error;
+            var r = await window.sb.from('users').update(up).eq('id', id);
+            if (r.error) throw r.error;
         }
         document.getElementById('avatarFileInput').onchange = async function(e) {
-            const file = e.target.files[0];
+            var file = e.target.files[0];
             if (!file) return;
             if (file.size > 5 * 1024 * 1024) { showToast('图片不能超过 5MB'); this.value = ''; return; }
             try {
                 showToast('上传中...');
-                const url = await uploadAvatar(file, currentUser.id);
+                var url = await uploadAvatar(file, currentUser.id);
                 await updateUser(currentUser.id, { avatar_url: url });
                 currentUser.avatar_url = url;
                 setSessionUser(currentUser);
@@ -622,7 +763,7 @@
             this.value = '';
         };
         document.getElementById('saveProfileBtn').onclick = async function() {
-            const n = document.getElementById('profileNameInput').value.trim();
+            var n = document.getElementById('profileNameInput').value.trim();
             if (!n) return showToast('请输入昵称');
             if (n.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') return showToast('该昵称不可用');
             try {
@@ -634,11 +775,12 @@
             } catch (err) { showToast('更新失败：' + err.message); }
         };
 
+        // ============ 退出登录 ============
         function handleLogout() {
-            showConfirm('退出登录', '确定要退出登录吗？', () => {
+            showConfirm('退出登录', '确定要退出登录吗？', function() {
                 clearSession();
                 showToast('已退出登录');
-                setTimeout(() => window.location.href = '/liuyanban/index.html', 500);
+                setTimeout(function() { window.location.href = '/liuyanban/index.html'; }, 500);
             });
         }
         document.getElementById('logoutBtn').onclick = handleLogout;
@@ -657,18 +799,17 @@
                 allNotifications = res.data || [];
                 renderNotifications();
                 updateUnreadTabCount();
-                var u = allNotifications.filter(n => !n.is_read).length;
+                var u = allNotifications.filter(function(n) { return !n.is_read; }).length;
                 var h = document.getElementById('unreadHint');
                 if (h) h.textContent = u > 0 ? '有 ' + u + ' 条未读通知' : '暂无未读通知';
                 if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
             } catch (err) {
                 c.innerHTML = '<div class="ntf-empty">加载失败：' + escapeHtml(err.message) + '</div>';
-                console.error(err);
             }
         }
 
         function updateUnreadTabCount() {
-            var u = allNotifications.filter(n => !n.is_read).length;
+            var u = allNotifications.filter(function(n) { return !n.is_read; }).length;
             var b = document.getElementById('unreadTabCount');
             if (b) { b.textContent = u > 9 ? '9+' : u; b.className = 'ntf-tab-badge' + (u > 0 ? ' visible' : ''); }
         }
@@ -676,9 +817,9 @@
         function renderNotifications() {
             var c = document.getElementById('notificationList');
             var f = allNotifications;
-            if (currentNtfFilter === 'unread') f = f.filter(n => !n.is_read);
-            else if (currentNtfFilter === 'report') f = f.filter(n => n.notification_type === 'report' || n.type === 'report');
-            else if (currentNtfFilter === 'feedback') f = f.filter(n => n.notification_type === 'feedback' || n.type === 'feedback');
+            if (currentNtfFilter === 'unread') f = f.filter(function(n) { return !n.is_read; });
+            else if (currentNtfFilter === 'report') f = f.filter(function(n) { return n.notification_type === 'report' || n.type === 'report'; });
+            else if (currentNtfFilter === 'feedback') f = f.filter(function(n) { return n.notification_type === 'feedback' || n.type === 'feedback'; });
 
             if (!f.length) {
                 var msg = currentNtfFilter === 'unread' ? '没有未读通知' :
@@ -692,7 +833,7 @@
             var now = new Date();
             var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             var t1 = new Date(t0.getTime() - 86400000);
-            f.forEach(n => {
+            f.forEach(function(n) {
                 var d = new Date(n.created_at);
                 if (d >= t0) g.today.push(n);
                 else if (d >= t1) g.yesterday.push(n);
@@ -703,13 +844,13 @@
             function rg(label, items) {
                 if (!items.length) return '';
                 var s = '<div class="ntf-group-label">' + label + '</div>';
-                items.forEach(n => { s += renderNotificationCard(n); });
+                items.forEach(function(n) { s += renderNotificationCard(n); });
                 return s;
             }
             html += rg('今天', g.today) + rg('昨天', g.yesterday) + rg('更早', g.earlier);
             c.innerHTML = html;
 
-            c.querySelectorAll('.ntf-card').forEach(el => {
+            c.querySelectorAll('.ntf-card').forEach(function(el) {
                 el.onclick = function(e) {
                     if (e.target.closest('.ntf-actions')) return;
                     var id = this.dataset.id;
@@ -746,9 +887,9 @@
             var actions = '';
             if (nt === 'report' && n.report_id) {
                 actions = '<div class="ntf-actions">' +
-                    '<button class="btn-view" onclick="event.stopPropagation();viewReportDetail(\'' + n.report_id + '\')">查看</button>' +
-                    '<button class="btn-approve" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'approved\')">同意并处理</button>' +
-                    '<button class="btn-reject" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'rejected\')">驳回</button>' +
+                    '<button class="btn-view" onclick="event.stopPropagation();viewReportDetail(\'' + n.report_id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>查看</button>' +
+                    '<button class="btn-approve" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'approved\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>同意</button>' +
+                    '<button class="btn-reject" onclick="event.stopPropagation();handleReport(\'' + n.report_id + '\',\'rejected\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>驳回</button>' +
                     '</div>';
             }
             if (nt === 'feedback' && n.feedback_id) {
@@ -784,7 +925,7 @@
         async function markNotificationRead(id) {
             try {
                 await window.sb.from('notifications').update({ is_read: true }).eq('id', id);
-                var n = allNotifications.find(x => x.id === id);
+                var n = allNotifications.find(function(x) { return x.id === id; });
                 if (n) n.is_read = true;
                 updateUnreadTabCount();
                 if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
@@ -818,10 +959,7 @@
 
                         showToast('已驳回，举报人已收到通知');
                         loadNotifications();
-                    } catch (err) {
-                        showToast('驳回失败：' + err.message);
-                        console.error(err);
-                    }
+                    } catch (err) { showToast('驳回失败：' + err.message); }
                 });
             }
         }
@@ -836,14 +974,14 @@
                         return s.substring(0, 20) || '（无内容）';
                     }
                 } else if (report.content_type === 'message') {
-                    var r = await window.sb.from('messages').select('text').eq('id', report.content_id).single();
-                    if (r.data) return (r.data.text || '').substring(0, 20) || '（无内容）';
+                    var r2 = await window.sb.from('messages').select('text').eq('id', report.content_id).single();
+                    if (r2.data) return (r2.data.text || '').substring(0, 20) || '（无内容）';
                 } else if (report.content_type === 'chat') {
-                    var r = await window.sb.from('chats').select('content').eq('id', report.content_id).single();
-                    if (r.data) return (r.data.content || '').substring(0, 20) || '（无内容）';
+                    var r3 = await window.sb.from('chats').select('content').eq('id', report.content_id).single();
+                    if (r3.data) return (r3.data.content || '').substring(0, 20) || '（无内容）';
                 } else if (report.content_type === 'comment') {
-                    var r = await window.sb.from('post_comments').select('content').eq('id', report.content_id).single();
-                    if (r.data) return (r.data.content || '').substring(0, 20) || '（无内容）';
+                    var r4 = await window.sb.from('post_comments').select('content').eq('id', report.content_id).single();
+                    if (r4.data) return (r4.data.content || '').substring(0, 20) || '（无内容）';
                 }
             } catch (e) {}
             var s = (report.content_snapshot || '').replace(/<[^>]*>/g, '').trim();
@@ -981,10 +1119,7 @@
 
                 showToast('已处理，双方已收到通知');
                 loadNotifications();
-            } catch (err) {
-                showToast('处理失败：' + err.message);
-                console.error(err);
-            }
+            } catch (err) { showToast('处理失败：' + err.message); }
         }
         window.doApproveReport = doApproveReport;
 
@@ -1003,9 +1138,7 @@
                     '补充描述：' + (r.description || '无') + '\n' +
                     '当前状态：' + statusText;
                 showConfirm('举报详情', detailText, function() {});
-            } catch (err) {
-                showToast('加载失败：' + err.message);
-            }
+            } catch (err) { showToast('加载失败：' + err.message); }
         }
         window.viewReportDetail = viewReportDetail;
 
@@ -1015,9 +1148,9 @@
         }
         window.goToFeedbackDetail = goToFeedbackDetail;
 
-        document.querySelectorAll('.ntf-tab').forEach(tab => {
+        document.querySelectorAll('.ntf-tab').forEach(function(tab) {
             tab.onclick = function() {
-                document.querySelectorAll('.ntf-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.ntf-tab').forEach(function(t) { t.classList.remove('active'); });
                 this.classList.add('active');
                 currentNtfFilter = this.dataset.filter;
                 renderNotifications();
@@ -1052,16 +1185,16 @@
                 g.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;grid-column:1/-1;font-size:0.85em;">暂无网站</div>';
                 return;
             }
-            g.innerHTML = allSites.map(s => 
-                '<div class="site-card' + (selectedSiteId === s.id ? ' selected' : '') + '" data-id="' + s.id + '">' +
+            g.innerHTML = allSites.map(function(s) {
+                return '<div class="site-card' + (selectedSiteId === s.id ? ' selected' : '') + '" data-id="' + s.id + '">' +
                     '<div class="site-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>' +
                     '<div class="site-name">' + escapeHtml(s.name) + '</div>' +
-                '</div>'
-            ).join('');
-            g.querySelectorAll('.site-card').forEach(el => {
+                '</div>';
+            }).join('');
+            g.querySelectorAll('.site-card').forEach(function(el) {
                 el.onclick = function() {
                     selectedSiteId = this.dataset.id;
-                    g.querySelectorAll('.site-card').forEach(x => x.classList.remove('selected'));
+                    g.querySelectorAll('.site-card').forEach(function(x) { x.classList.remove('selected'); });
                     this.classList.add('selected');
                 };
             });
@@ -1075,15 +1208,15 @@
             document.getElementById('fbTabMine').style.color = tab === 'mine' ? 'var(--primary)' : 'var(--text-muted)';
             if (tab === 'mine') loadMyFeedback();
         }
-        document.getElementById('fbTabNew').onclick = () => switchFbTab('submit');
-        document.getElementById('fbTabMine').onclick = () => switchFbTab('mine');
+        document.getElementById('fbTabNew').onclick = function() { switchFbTab('submit'); };
+        document.getElementById('fbTabMine').onclick = function() { switchFbTab('mine'); };
 
         document.getElementById('fbSubmitBtn').onclick = async function() {
             if (!selectedSiteId) return showToast('请先选择网站');
             var content = document.getElementById('fbContent').value.trim();
             if (!content) return showToast('请填写问题描述');
             var contact = document.getElementById('fbContact').value.trim();
-            var site = allSites.find(s => s.id === selectedSiteId);
+            var site = allSites.find(function(s) { return s.id === selectedSiteId; });
             var btn = this;
             btn.disabled = true; btn.textContent = '提交中...';
             try {
@@ -1124,8 +1257,8 @@
                 return;
             }
             var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
-            c.innerHTML = data.map(f =>
-                '<div class="fb-item">' +
+            c.innerHTML = data.map(function(f) {
+                return '<div class="fb-item">' +
                     '<div class="fb-head">' +
                         '<span class="fb-site">' + escapeHtml(f.site_name) + '</span>' +
                         '<span class="fb-status ' + f.status + '">' + (statusMap[f.status] || f.status) + '</span>' +
@@ -1133,8 +1266,8 @@
                     '<div class="fb-content">' + escapeHtml(f.content) + '</div>' +
                     (f.admin_reply ? '<div class="fb-reply"><b>管理员回复：</b>' + escapeHtml(f.admin_reply) + '</div>' : '') +
                     '<div class="fb-time">' + new Date(f.created_at).toLocaleString('zh-CN') + '</div>' +
-                '</div>'
-            ).join('');
+                '</div>';
+            }).join('');
         }
 
         // ============ 管理员反馈管理 ============
@@ -1150,7 +1283,7 @@
                 return;
             }
             var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
-            c.innerHTML = data.map(f => {
+            c.innerHTML = data.map(function(f) {
                 var isHl = (highlightFbId && f.id === highlightFbId);
                 return '<div class="fb-item" style="' + (isHl ? 'border:2px solid var(--primary);' : '') + '">' +
                     '<div class="fb-head">' +
@@ -1210,10 +1343,7 @@
                     if (r.error) throw r.error;
                     showToast('已删除');
                     loadAdminFeedback();
-                } catch (err) {
-                    showToast('删除失败：' + err.message);
-                    console.error(err);
-                }
+                } catch (err) { showToast('删除失败：' + err.message); }
             });
         }
         window.deleteFeedback = deleteFeedback;
@@ -1229,22 +1359,22 @@
                 c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.85em;">暂无网站，请在下方添加</div>';
                 return;
             }
-            c.innerHTML = allSites.map(s =>
-                '<div class="admin-site-item">' +
+            c.innerHTML = allSites.map(function(s) {
+                return '<div class="admin-site-item">' +
                     '<span class="site-name">' + escapeHtml(s.name) + '</span>' +
                     '<div class="site-actions">' +
                         '<button onclick="deleteSite(\'' + s.id + '\',\'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
                         '删除</button>' +
                     '</div>' +
-                '</div>'
-            ).join('');
+                '</div>';
+            }).join('');
         }
         document.getElementById('addSiteBtn').onclick = async function() {
             var name = document.getElementById('newSiteName').value.trim();
             if (!name) return showToast('请输入网站名称');
             try {
-                var maxOrder = allSites.reduce((m, s) => Math.max(m, s.sort_order || 0), 0);
+                var maxOrder = allSites.reduce(function(m, s) { return Math.max(m, s.sort_order || 0); }, 0);
                 await window.sb.from('feedback_sites').insert([{ name: name, sort_order: maxOrder + 1 }]);
                 document.getElementById('newSiteName').value = '';
                 showToast('已添加');
@@ -1264,15 +1394,24 @@
 
         // ============ 初始化 ============
         (function init() {
-            const params = new URLSearchParams(window.location.search);
-            const view = params.get('view');
-            if (view === 'messages') { switchView('messagesView'); loadNotifications(); }
-            else switchView('settingsView');
+            var urlParams = new URLSearchParams(window.location.search);
+            var view = urlParams.get('view');
+            if (view === 'messages') {
+                switchView('messagesView');
+                loadNotifications();
+            } else if (view === 'avatar' || view === 'edit') {
+                // 从头像提醒弹窗直达更新资料页
+                switchView('profileEditView');
+            } else {
+                switchView('settingsView');
+            }
 
-            if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+            if (typeof updateNotificationBadge === 'function') {
+                updateNotificationBadge();
+            }
         })();
 
-        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
 </html>
