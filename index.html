@@ -1,20 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>登录 · Seven戚社区</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
+    <title>通行证 · Seven戚社区</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 样式（保持不变） ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         :root {
             --bg: #f5faf5;
             --bg-card: #ffffff;
@@ -25,20 +17,22 @@
             --text-light: #8aaa9a;
             --primary: #2e7d32;
             --primary-light: #4caf50;
-            --primary-glow: rgba(76, 175, 80, 0.25);
+            --primary-glow: rgba(46, 125, 50, 0.25);
             --primary-bg: #e8f5e9;
             --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+            --danger: #e57373;
+            --danger-bg: #ffebee;
             --radius: 16px;
             --radius-sm: 10px;
             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-            --danger: #e57373;
-            --danger-bg: #ffebee;
         }
-        html,
-        body {
+        html, body {
             height: 100%;
             font-family: var(--font);
             background: var(--bg);
+            background-image:
+                radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
             color: var(--text);
             display: flex;
             align-items: center;
@@ -47,43 +41,81 @@
             overflow: hidden;
         }
         .login-card {
-            width: 22em;
+            width: 23em;
             max-width: 92vw;
-            max-height: 90vh;
+            max-height: 92vh;
             overflow-y: auto;
             background: var(--bg-card);
             border-radius: var(--radius);
             padding: 2.2em 2em;
-            box-shadow: var(--shadow);
+            position: relative;
             border: 1px solid var(--border);
+            box-shadow: var(--shadow);
             -webkit-overflow-scrolling: touch;
         }
-        .login-card::-webkit-scrollbar {
-            width: 4px;
+        .login-card::-webkit-scrollbar { width: 4px; }
+        .login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+        .login-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background-image:
+                linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
+            background-size: 2em 2em;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
         }
-        .login-card::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 99px;
+        .login-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: linear-gradient(115deg,
+                    transparent 0%, transparent 40%,
+                    rgba(46, 125, 50, 0.03) 45%,
+                    rgba(46, 125, 50, 0.10) 50%,
+                    rgba(46, 125, 50, 0.03) 55%,
+                    transparent 60%, transparent 100%);
+            pointer-events: none;
+            z-index: 1;
+            animation: sweep 6s ease-in-out infinite;
         }
+        @keyframes sweep {
+            0%, 100% { background-position: 100% 100%; }
+            50% { background-position: 0% 0%; }
+        }
+        .login-card > * { position: relative; z-index: 2; }
+
         .login-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.2em;
+            margin-bottom: 1.5em;
         }
         .login-logo {
             font-weight: 900;
-            font-size: 1.4em;
+            font-size: 1.35em;
             color: var(--text);
             letter-spacing: -0.02em;
-        }
-        .login-logo span {
-            color: var(--primary);
-        }
-        .lang-switch {
             display: flex;
-            gap: 0.3em;
+            align-items: center;
+            gap: 0.35em;
         }
+        .login-logo span { color: var(--primary); }
+        .login-logo svg {
+            width: 1.3em;
+            height: 1.3em;
+            stroke: var(--primary);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 4px var(--primary-glow));
+        }
+        .lang-switch { display: flex; gap: 0.3em; }
         .lang-btn {
             background: transparent;
             border: 1.5px solid var(--border);
@@ -102,35 +134,40 @@
             color: #fff;
             box-shadow: 0 0 20px var(--primary-glow);
         }
-        .lang-btn:hover {
-            transform: scale(1.05);
-        }
+        .lang-btn:hover { filter: brightness(1.05); }
+
         .login-title {
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: 700;
             color: var(--text);
             text-align: center;
-            margin-bottom: 0.8em;
+            margin-bottom: 1em;
+        }
+        .login-title span {
+            display: block;
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 0.55em;
+            margin-top: 0.2em;
         }
         .login-form {
             display: flex;
             flex-direction: column;
             gap: 0.9em;
-            margin-top: 0.8em;
         }
-        .login-form .field-group {
+        .field-group {
             display: flex;
             flex-direction: column;
-            gap: 0.3em;
+            gap: 0.35em;
         }
-        .login-form .field-group label {
+        .field-group label {
             font-size: 0.7em;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
-        .login-form input {
+        .field-group input {
             width: 100%;
             padding: 0.8em 1em;
             border-radius: var(--radius-sm);
@@ -143,16 +180,62 @@
             transition: border-color 0.3s, box-shadow 0.3s;
             font-family: inherit;
         }
-        .login-form input:focus {
+        .field-group input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 4px var(--primary-glow);
         }
-        .login-form input::placeholder {
-            color: var(--text-light);
+        .field-group input::placeholder { color: var(--text-light); }
+
+        .oauth-row { display: flex; gap: 0.6em; }
+        .oauth-btn {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5em;
+            padding: 0.7em;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 250ms;
+            font-family: inherit;
         }
-        .login-form .login-continue {
+        .oauth-btn::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%; width: 0;
+            background: var(--primary);
+            z-index: 0;
+            transition: width 250ms;
+        }
+        .oauth-btn:hover { color: #fff; border-color: var(--primary); }
+        .oauth-btn:hover::before { width: 100%; }
+        .oauth-btn > * { position: relative; z-index: 1; }
+        .oauth-btn .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
+
+        .separator {
+            display: flex;
+            align-items: center;
+            gap: 0.6em;
+            color: var(--text-muted);
+            font-size: 0.75em;
+            margin: 0.2em 0;
+        }
+        .separator div {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .login-continue {
             width: 100%;
-            padding: 0.8em;
+            padding: 0.85em;
             border-radius: var(--radius-sm);
             border: 2px solid var(--primary);
             background: var(--primary);
@@ -166,15 +249,19 @@
             justify-content: center;
             gap: 0.5em;
             font-family: inherit;
-            margin-top: 0.2em;
+            margin-top: 0.3em;
         }
-        .login-form .login-continue:hover {
+        .login-continue:hover {
             background: var(--primary-light);
             border-color: var(--primary-light);
             box-shadow: 0 0 30px var(--primary-glow);
             transform: translateY(-1px);
         }
-        .login-form .login-continue .icon {
+        .login-continue:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .login-continue .icon {
             width: 1.2em;
             height: 1.2em;
             stroke: currentColor;
@@ -183,8 +270,8 @@
         }
         .login-footer {
             text-align: center;
-            margin-top: 1.2em;
-            font-size: 0.8em;
+            margin-top: 1.1em;
+            font-size: 0.82em;
             color: var(--text-muted);
         }
         .login-footer .switch-link {
@@ -196,31 +283,55 @@
             font-family: inherit;
             font-size: inherit;
             padding: 0 4px;
-        }
-        .login-footer .switch-link:hover {
-            color: var(--primary-light);
             text-decoration: underline;
+            text-underline-offset: 3px;
         }
+        .login-footer .switch-link:hover { color: var(--primary-light); }
+
         .login-error {
             color: #c62828;
-            font-size: 0.75em;
+            font-size: 0.78em;
             text-align: center;
             min-height: 1.5em;
             margin-top: 0.2em;
         }
-        .auth-card {
-            display: none;
-        }
-        .auth-card.active {
-            display: block;
-        }
 
-        .icon-svg {
-            width: 1.2em;
-            height: 1.2em;
-            stroke: currentColor;
-            stroke-width: 2.5;
+        /* 设备检测提示条 */
+        .device-hint {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-bg);
+            border: 1px solid var(--border);
+            font-size: 0.75em;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .device-hint svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            stroke: var(--primary);
             fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-top: 2px;
+        }
+        .device-hint.warn {
+            background: var(--danger-bg);
+            border-color: #ffcdd2;
+            color: #c62828;
+        }
+        .device-hint.warn svg { stroke: #c62828; }
+
+        .auth-card { display: none; }
+        .auth-card.active { display: block; animation: fadeIn 0.35s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         #toast {
@@ -240,89 +351,101 @@
             pointer-events: none;
             white-space: nowrap;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
+        #toast svg { width: 16px; height: 16px; flex-shrink: 0; }
         #toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
 
-        /* 自定义弹窗 (Modal) */
         .modal-overlay {
             position: fixed;
             inset: 0;
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(30, 58, 46, 0.35);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; opacity: 1; }
         .modal-box {
             background: var(--bg-card);
             border-radius: var(--radius);
-            max-width: 420px;
+            max-width: 400px;
             width: 100%;
-            padding: 24px;
+            padding: 2em;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-box .modal-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 0.4em;
+            border-radius: 50%;
+            background: var(--primary-bg);
+            display: grid;
+            place-items: center;
+            color: var(--primary);
+        }
+        .modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
+        .modal-box .modal-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
         .modal-box .modal-title {
-            font-size: 1.2em;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 1.25em;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 0.4em;
         }
         .modal-box .modal-body {
             font-size: 0.95em;
             color: var(--text-muted);
             line-height: 1.6;
-            margin-bottom: 16px;
-        }
-        .modal-box .modal-body .highlight {
-            color: var(--primary);
-            font-weight: 600;
-        }
-        .modal-box .modal-body .danger-text {
-            color: #c62828;
-            font-weight: 600;
+            margin-bottom: 1.4em;
+            white-space: pre-line;
         }
         .modal-box .modal-actions {
             display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-        .modal-box .modal-actions button {
-            padding: 6px 18px;
-            border-radius: var(--radius-sm);
-            border: none;
-            font-weight: 600;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
+            justify-content: center;
         }
         .modal-box .modal-actions .btn-primary {
+            padding: 0.6em 2em;
+            border-radius: var(--radius-sm);
+            border: none;
             background: var(--primary);
             color: #fff;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s, box-shadow 0.2s;
         }
         .modal-box .modal-actions .btn-primary:hover {
             background: var(--primary-light);
-        }
-        .modal-box .modal-actions .btn-secondary {
-            background: var(--bg-input);
-            color: var(--text-muted);
-        }
-        .modal-box .modal-actions .btn-secondary:hover {
-            background: var(--border);
+            box-shadow: 0 0 25px var(--primary-glow);
         }
 
         @media (max-width: 480px) {
-            .login-card {
-                padding: 1.6em 1.4em;
-            }
+            .login-card { padding: 1.6em 1.4em; }
+            .oauth-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -330,17 +453,48 @@
 
     <div class="login-card">
         <div class="login-header">
-            <div class="login-logo">🌿 <span>Seven</span>戚</div>
+            <div class="login-logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+                <span>Seven</span>戚
+            </div>
             <div class="lang-switch">
                 <button class="lang-btn active" data-lang="zh">中文</button>
-                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="en">EN</button>
             </div>
         </div>
 
-        <!-- 登录卡片 -->
+        <!-- ===== 登录卡片 ===== -->
         <div id="loginCard" class="auth-card active">
-            <div class="login-title">登录</div>
+            <div class="login-title">
+                <span id="loginMainTitle">欢迎回来</span>
+                <span id="loginSubTitle">登录以继续</span>
+            </div>
             <div class="login-form">
+                <div class="oauth-row">
+                    <button class="oauth-btn" id="googleBtn">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        <span id="googleText">Google</span>
+                    </button>
+                    <button class="oauth-btn" id="githubBtn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                        </svg>
+                        <span id="githubText">Github</span>
+                    </button>
+                </div>
+                <div class="separator">
+                    <div></div>
+                    <span id="orText">或</span>
+                    <div></div>
+                </div>
                 <div class="field-group">
                     <label id="phoneLabel">手机号</label>
                     <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11" />
@@ -349,21 +503,37 @@
                     <label id="passwordLabel">密码</label>
                     <input type="password" id="loginPassword" placeholder="请输入密码" />
                 </div>
-                <button class="login-continue" onclick="handleLogin()">
-                    <span>登录</span>
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                <button class="login-continue" id="loginBtn">
+                    <span id="loginBtnText">登录</span>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="m6 17 5-5-5-5"/>
+                        <path d="m13 17 5-5-5-5"/>
+                    </svg>
                 </button>
                 <div class="login-error" id="loginError"></div>
             </div>
             <div class="login-footer">
-                <span>没有账号？</span>
-                <button class="switch-link" onclick="showRegisterCard()">去注册</button>
+                <span id="noAccountText">没有账号？</span>
+                <button class="switch-link" id="toRegisterBtn">去注册</button>
             </div>
         </div>
 
-        <!-- 注册卡片 -->
+        <!-- ===== 注册卡片 ===== -->
         <div id="registerCard" class="auth-card">
-            <div class="login-title">注册</div>
+            <div class="login-title">
+                <span id="registerMainTitle">创建账户</span>
+                <span id="registerSubTitle">加入 Seven戚 社区</span>
+            </div>
+
+            <!-- 设备检测提示 -->
+            <div class="device-hint" id="deviceHint" style="margin-bottom:0.9em;">
+                <svg viewBox="0 0 24 24">
+                    <rect x="5" y="2" width="14" height="20" rx="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <span id="deviceHintText">正在检测本设备…</span>
+            </div>
+
             <div class="login-form">
                 <div class="field-group">
                     <label id="regNickLabel">昵称</label>
@@ -381,30 +551,37 @@
                     <label id="regPass2Label">确认密码</label>
                     <input type="password" id="regPassword2" placeholder="请再次输入密码" />
                 </div>
-                <button class="login-continue" onclick="handleRegister()">
-                    <span>注册</span>
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                <button class="login-continue" id="registerBtn">
+                    <span id="registerBtnText">注册</span>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="m6 17 5-5-5-5"/>
+                        <path d="m13 17 5-5-5-5"/>
+                    </svg>
                 </button>
                 <div class="login-error" id="registerError"></div>
             </div>
             <div class="login-footer">
-                <span>已有账号？</span>
-                <button class="switch-link" onclick="showLoginCard()">去登录</button>
+                <span id="hasAccountText">已有账号？</span>
+                <button class="switch-link" id="toLoginBtn">去登录</button>
             </div>
         </div>
     </div>
 
     <div id="toast"></div>
 
-    <!-- 封禁通知弹窗（仅用作提示，不再拦截登录） -->
-    <div class="modal-overlay" id="bannedModal">
+    <!-- ===== 通用提示弹窗 ===== -->
+    <div class="modal-overlay" id="uiModal">
         <div class="modal-box">
-            <div class="modal-title">⛔ 账号已被封禁</div>
-            <div class="modal-body" id="bannedContent">
-                <!-- 动态内容 -->
+            <div class="modal-icon" id="uiModalIconWrap">
+                <svg id="uiModalIcon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/>
+                </svg>
             </div>
+            <div class="modal-title" id="uiModalTitle">提示</div>
+            <div class="modal-body" id="uiModalBody">内容</div>
             <div class="modal-actions">
-                <button class="btn-primary" onclick="document.getElementById('bannedModal').classList.remove('active')">我知道了</button>
+                <button class="btn-primary" id="uiModalBtn">知道了</button>
             </div>
         </div>
     </div>
@@ -418,33 +595,247 @@
         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ============================================================
-        // 工具函数
+        // 设备 ID 相关
+        // ============================================================
+        var MAX_ACCOUNTS_PER_DEVICE = 2;
+
+        function getDeviceId() {
+            var id = localStorage.getItem('sq_device_id');
+            if (!id) {
+                if (window.crypto && crypto.randomUUID) {
+                    id = 'dev_' + crypto.randomUUID();
+                } else {
+                    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+                }
+                localStorage.setItem('sq_device_id', id);
+            }
+            return id;
+        }
+
+        async function getDeviceRegisterCount(deviceId) {
+            try {
+                var res = await window.sb.from('device_registrations')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('device_id', deviceId);
+                if (res.error) throw res.error;
+                return res.count || 0;
+            } catch (e) {
+                console.warn('设备检测失败:', e);
+                return 0; // 检测失败不阻止注册
+            }
+        }
+
+        async function recordDeviceRegistration(deviceId, userId, phone) {
+            try {
+                await window.sb.from('device_registrations').insert([{
+                    device_id: deviceId,
+                    user_id: userId,
+                    phone: phone
+                }]);
+            } catch (e) {
+                console.warn('设备记录写入失败:', e);
+            }
+        }
+
+        async function refreshDeviceHint() {
+            var hintEl = document.getElementById('deviceHint');
+            var textEl = document.getElementById('deviceHintText');
+            var t = T();
+            var deviceId = getDeviceId();
+            var count = await getDeviceRegisterCount(deviceId);
+            var remain = MAX_ACCOUNTS_PER_DEVICE - count;
+
+            if (remain <= 0) {
+                hintEl.classList.add('warn');
+                textEl.textContent = t.deviceLimitReached.replace('{n}', MAX_ACCOUNTS_PER_DEVICE);
+                document.getElementById('registerBtn').disabled = true;
+            } else {
+                hintEl.classList.remove('warn');
+                textEl.textContent = t.deviceHintLeft.replace('{n}', remain).replace('{total}', MAX_ACCOUNTS_PER_DEVICE);
+            }
+        }
+
+        // ============================================================
+        // 多语言
+        // ============================================================
+        var LANGS = {
+            zh: {
+                loginMainTitle: '欢迎回来',
+                loginSubTitle: '登录以继续',
+                registerMainTitle: '创建账户',
+                registerSubTitle: '加入 Seven戚 社区',
+                phoneLabel: '手机号',
+                phonePh: '请输入手机号',
+                passwordLabel: '密码',
+                passwordPh: '请输入密码',
+                regNickLabel: '昵称',
+                regNickPh: '请输入昵称',
+                regPhoneLabel: '手机号',
+                regPhonePh: '请输入手机号',
+                regPassLabel: '密码',
+                regPassPh: '请设置密码（至少6位）',
+                regPass2Label: '确认密码',
+                regPass2Ph: '请再次输入密码',
+                loginBtnText: '登录',
+                registerBtnText: '注册',
+                orText: '或',
+                noAccountText: '没有账号？',
+                toRegisterBtn: '去注册',
+                hasAccountText: '已有账号？',
+                toLoginBtn: '去登录',
+                googleText: 'Google',
+                githubText: 'Github',
+                modalTitle: '无法登录',
+                modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
+                modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
+                fillAll: '请填写完整信息',
+                badPhone: '手机号格式不正确（11位数字）',
+                shortPwd: '密码至少6位',
+                pwdMismatch: '两次密码不一致',
+                nicknameTaken: '该昵称不可用，请使用其他名称',
+                phoneExists: '手机号已注册',
+                loginSuccess: '登录成功！',
+                registerSuccess: '注册成功，请登录',
+                logging: '⏳ 登录中...',
+                registering: '⏳ 注册中...',
+                loginFail: '手机号未注册或密码错误',
+                deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
+                deviceLimitReached: '⚠️ 本设备已注册 {n} 个账号，无法继续注册',
+                deviceLimitTitle: '设备已达上限',
+                deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。'
+            },
+            en: {
+                loginMainTitle: 'Welcome back',
+                loginSubTitle: 'Sign in to continue',
+                registerMainTitle: 'Create account',
+                registerSubTitle: 'Join Seven Qi Community',
+                phoneLabel: 'Phone',
+                phonePh: 'Enter phone number',
+                passwordLabel: 'Password',
+                passwordPh: 'Enter password',
+                regNickLabel: 'Nickname',
+                regNickPh: 'Enter nickname',
+                regPhoneLabel: 'Phone',
+                regPhonePh: 'Enter phone number',
+                regPassLabel: 'Password',
+                regPassPh: 'At least 6 characters',
+                regPass2Label: 'Confirm password',
+                regPass2Ph: 'Re-enter password',
+                loginBtnText: 'Login',
+                registerBtnText: 'Register',
+                orText: 'OR',
+                noAccountText: "Don't have an account?",
+                toRegisterBtn: 'Sign up',
+                hasAccountText: 'Already have an account?',
+                toLoginBtn: 'Log in',
+                googleText: 'Google',
+                githubText: 'Github',
+                modalTitle: 'Login Unavailable',
+                modalDescGoogle: "Where'd you come from? You got a Google account?",
+                modalDescGithub: "Where'd you come from? You got a Github account?",
+                fillAll: 'Please fill in all fields',
+                badPhone: 'Invalid phone number (11 digits)',
+                shortPwd: 'Password must be at least 6 characters',
+                pwdMismatch: 'Passwords do not match',
+                nicknameTaken: 'This nickname is unavailable',
+                phoneExists: 'Phone number already registered',
+                loginSuccess: 'Login successful!',
+                registerSuccess: 'Registered, please log in',
+                logging: '⏳ Logging in...',
+                registering: '⏳ Registering...',
+                loginFail: 'Phone not registered or wrong password',
+                deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
+                deviceLimitReached: '⚠️ This device has registered {n} accounts. Registration disabled.',
+                deviceLimitTitle: 'Device Limit Reached',
+                deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.'
+            }
+        };
+        var currentLang = 'zh';
+        function T() { return LANGS[currentLang]; }
+
+        function applyLang(lang) {
+            currentLang = lang;
+            var t = T();
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('.lang-btn').forEach(function(b) {
+                b.classList.toggle('active', b.dataset.lang === lang);
+            });
+
+            document.getElementById('loginMainTitle').textContent = t.loginMainTitle;
+            document.getElementById('loginSubTitle').textContent = t.loginSubTitle;
+            document.getElementById('phoneLabel').textContent = t.phoneLabel;
+            document.getElementById('passwordLabel').textContent = t.passwordLabel;
+            document.getElementById('loginPhone').placeholder = t.phonePh;
+            document.getElementById('loginPassword').placeholder = t.passwordPh;
+            document.getElementById('loginBtnText').textContent = t.loginBtnText;
+            document.getElementById('orText').textContent = t.orText;
+            document.getElementById('noAccountText').textContent = t.noAccountText;
+            document.getElementById('toRegisterBtn').textContent = t.toRegisterBtn;
+            document.getElementById('googleText').textContent = t.googleText;
+            document.getElementById('githubText').textContent = t.githubText;
+
+            document.getElementById('registerMainTitle').textContent = t.registerMainTitle;
+            document.getElementById('registerSubTitle').textContent = t.registerSubTitle;
+            document.getElementById('regNickLabel').textContent = t.regNickLabel;
+            document.getElementById('regPhoneLabel').textContent = t.regPhoneLabel;
+            document.getElementById('regPassLabel').textContent = t.regPassLabel;
+            document.getElementById('regPass2Label').textContent = t.regPass2Label;
+            document.getElementById('regNick').placeholder = t.regNickPh;
+            document.getElementById('regPhone').placeholder = t.regPhonePh;
+            document.getElementById('regPassword').placeholder = t.regPassPh;
+            document.getElementById('regPassword2').placeholder = t.regPass2Ph;
+            document.getElementById('registerBtnText').textContent = t.registerBtnText;
+            document.getElementById('hasAccountText').textContent = t.hasAccountText;
+            document.getElementById('toLoginBtn').textContent = t.toLoginBtn;
+
+            // 刷新设备提示（会用到语言包）
+            if (document.getElementById('registerCard').classList.contains('active')) {
+                refreshDeviceHint();
+            }
+        }
+
+        // ============================================================
+        // 工具
         // ============================================================
         function showToast(msg) {
-            const toast = document.getElementById('toast');
+            var toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.classList.add('show');
             clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+            window.toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
         }
+
+        function showModal(title, body, isWarn) {
+            document.getElementById('uiModalTitle').textContent = title;
+            document.getElementById('uiModalBody').textContent = body;
+            var iconWrap = document.getElementById('uiModalIconWrap');
+            if (isWarn) iconWrap.classList.add('warn');
+            else iconWrap.classList.remove('warn');
+            document.getElementById('uiModal').classList.add('active');
+        }
+        document.getElementById('uiModalBtn').onclick = function() {
+            document.getElementById('uiModal').classList.remove('active');
+        };
+        document.getElementById('uiModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
 
         async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            var encoder = new TextEncoder();
+            var data = encoder.encode(password);
+            var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            var hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
         }
 
-        // 生成默认头像（基于昵称首字母）
         function generateDefaultAvatar(nickname) {
-            const colors = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8", "#2e7d32", "#e67e22"];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const initial = nickname.charAt(0).toUpperCase();
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-                <rect width="100" height="100" fill="${color}" rx="50"/>
-                <text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">${initial}</text>
-            </svg>`;
+            var colors = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8", "#2e7d32", "#e67e22"];
+            var color = colors[Math.floor(Math.random() * colors.length)];
+            var initial = nickname.charAt(0).toUpperCase();
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+                '<rect width="100" height="100" fill="' + color + '" rx="50"/>' +
+                '<text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">' + initial + '</text></svg>';
             return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
 
@@ -457,90 +848,116 @@
             document.getElementById('loginError').textContent = '';
             document.getElementById('registerError').textContent = '';
         }
-
         function showRegisterCard() {
             document.getElementById('registerCard').classList.add('active');
             document.getElementById('loginCard').classList.remove('active');
             document.getElementById('loginError').textContent = '';
             document.getElementById('registerError').textContent = '';
+            // 进入注册卡片时刷新设备提示
+            refreshDeviceHint();
         }
+        document.getElementById('toRegisterBtn').onclick = showRegisterCard;
+        document.getElementById('toLoginBtn').onclick = showLoginCard;
 
         // ============================================================
-        // 登录/注册逻辑（不再拦截封禁）
+        // 登录/注册
         // ============================================================
         async function registerUser(phone, password, nickname) {
-            const hashed = await hashPassword(password);
-            const avatar = generateDefaultAvatar(nickname);
-            const { data, error } = await window.sb
-                .from('users')
-                .insert([{ phone, password: hashed, nickname, avatar_url: avatar }]);
-            if (error) {
-                if (error.code === '23505') throw new Error('手机号已注册');
-                throw error;
+            var hashed = await hashPassword(password);
+            var avatar = generateDefaultAvatar(nickname);
+            var res = await window.sb.from('users')
+                .insert([{ phone: phone, password: hashed, nickname: nickname, avatar_url: avatar }])
+                .select();
+            if (res.error) {
+                if (res.error.code === '23505') throw new Error(T().phoneExists);
+                throw res.error;
             }
-            return data;
+            return res.data && res.data[0];
         }
 
         async function loginUser(phone, password) {
-            const hashed = await hashPassword(password);
-            const { data, error } = await window.sb
-                .from('users')
-                .select('*')
-                .eq('phone', phone)
-                .eq('password', hashed);
-            if (error) throw error;
-            if (!data || data.length === 0) throw new Error('手机号未注册或密码错误');
-            return data[0];
+            var hashed = await hashPassword(password);
+            var res = await window.sb.from('users').select('*').eq('phone', phone).eq('password', hashed);
+            if (res.error) throw res.error;
+            if (!res.data || res.data.length === 0) throw new Error(T().loginFail);
+            return res.data[0];
         }
 
         function handleLogin() {
-            const phone = document.getElementById('loginPhone').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const loginError = document.getElementById('loginError');
+            var t = T();
+            var phone = document.getElementById('loginPhone').value.trim();
+            var password = document.getElementById('loginPassword').value.trim();
+            var errEl = document.getElementById('loginError');
+            var btn = document.getElementById('loginBtn');
 
-            if (!phone || !password) { loginError.textContent = '请填写完整信息'; return; }
-            if (!/^\d{11}$/.test(phone)) { loginError.textContent = '手机号格式不正确（11位数字）'; return; }
-            if (password.length < 6) { loginError.textContent = '密码至少6位'; return; }
+            if (!phone || !password) { errEl.textContent = t.fillAll; return; }
+            if (!/^\d{11}$/.test(phone)) { errEl.textContent = t.badPhone; return; }
+            if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
 
-            loginError.textContent = '⏳ 登录中...';
+            errEl.textContent = t.logging;
+            btn.disabled = true;
+
             loginUser(phone, password)
-                .then(user => {
-                    loginError.textContent = '';
-                    // 保存会话（不拦截封禁）
+                .then(function(user) {
+                    errEl.textContent = '';
                     localStorage.setItem('sq_user_session', JSON.stringify(user));
-                    showToast('🎉 登录成功！');
-                    // 若被封禁，仅在控制台提示，不弹窗
-                    const now = new Date();
-                    const bannedUntil = user.banned_until ? new Date(user.banned_until) : null;
+                    showToast(t.loginSuccess);
+                    var now = new Date();
+                    var bannedUntil = user.banned_until ? new Date(user.banned_until) : null;
                     if (bannedUntil && bannedUntil > now) {
                         console.warn('用户已被封禁，仍可浏览');
                     }
-                    // ★★★ 修复：改为相对路径 ★★★
-                    window.location.href = '/liuyanban/posts.html';
+                    setTimeout(function() {
+                        window.location.href = '/liuyanban/posts.html';
+                    }, 400);
                 })
-                .catch(err => {
-                    loginError.textContent = err.message || '登录失败';
+                .catch(function(err) {
+                    errEl.textContent = err.message || t.loginFail;
+                    btn.disabled = false;
                 });
         }
 
-        function handleRegister() {
-            const nickname = document.getElementById('regNick').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
-            const password2 = document.getElementById('regPassword2').value.trim();
-            const registerError = document.getElementById('registerError');
+        async function handleRegister() {
+            var t = T();
+            var nickname = document.getElementById('regNick').value.trim();
+            var phone = document.getElementById('regPhone').value.trim();
+            var password = document.getElementById('regPassword').value.trim();
+            var password2 = document.getElementById('regPassword2').value.trim();
+            var errEl = document.getElementById('registerError');
+            var btn = document.getElementById('registerBtn');
 
-            if (!nickname || !phone || !password || !password2) { registerError.textContent = '请填写完整信息'; return; }
-            if (nickname.toLowerCase() === 'seven戚') { registerError.textContent = '该昵称不可用，请使用其他名称'; return; }
-            if (!/^\d{11}$/.test(phone)) { registerError.textContent = '手机号格式不正确（11位数字）'; return; }
-            if (password.length < 6) { registerError.textContent = '密码至少6位'; return; }
-            if (password !== password2) { registerError.textContent = '两次密码不一致'; return; }
+            if (!nickname || !phone || !password || !password2) { errEl.textContent = t.fillAll; return; }
+            if (nickname.toLowerCase() === 'seven戚') { errEl.textContent = t.nicknameTaken; return; }
+            if (!/^\d{11}$/.test(phone)) { errEl.textContent = t.badPhone; return; }
+            if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
+            if (password !== password2) { errEl.textContent = t.pwdMismatch; return; }
 
-            registerError.textContent = '⏳ 注册中...';
+            // ============ 设备检测 ============
+            var deviceId = getDeviceId();
+            btn.disabled = true;
+            errEl.textContent = t.registering;
+
+            var count = await getDeviceRegisterCount(deviceId);
+            if (count >= MAX_ACCOUNTS_PER_DEVICE) {
+                errEl.textContent = '';
+                btn.disabled = false;
+                showModal(
+                    t.deviceLimitTitle,
+                    t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE),
+                    true
+                );
+                return;
+            }
+
+            // ============ 注册 ============
             registerUser(phone, password, nickname)
-                .then(() => {
-                    registerError.textContent = '';
-                    showToast('✅ 注册成功，请登录');
+                .then(async function(newUser) {
+                    errEl.textContent = '';
+                    // 记录设备注册历史
+                    if (newUser && newUser.id) {
+                        await recordDeviceRegistration(deviceId, newUser.id, phone);
+                    }
+                    showToast(t.registerSuccess);
                     showLoginCard();
                     document.getElementById('loginPhone').value = phone;
                     document.getElementById('loginPassword').value = '';
@@ -549,42 +966,43 @@
                     document.getElementById('regPhone').value = '';
                     document.getElementById('regPassword').value = '';
                     document.getElementById('regPassword2').value = '';
+                    btn.disabled = false;
                 })
-                .catch(err => {
-                    registerError.textContent = err.message || '注册失败';
+                .catch(function(err) {
+                    errEl.textContent = err.message || '注册失败';
+                    btn.disabled = false;
                     console.error('注册失败:', err);
                 });
         }
 
-        // ============================================================
-        // 检查是否已登录（自动跳转）
-        // ============================================================
-        (function checkSession() {
-            const session = localStorage.getItem('sq_user_session');
-            if (session) {
-                try {
-                    const user = JSON.parse(session);
-                    if (user && user.id) {
-                        // ★★★ 修复：改为相对路径 ★★★
-                        window.location.href = '/liuyanban/posts.html';
-                        return;
-                    }
-                } catch (e) {}
-            }
-            showLoginCard();
-        })();
+        document.getElementById('loginBtn').onclick = handleLogin;
+        document.getElementById('registerBtn').onclick = handleRegister;
 
         // ============================================================
-        // 语言切换（仅界面文字）
+        // 第三方登录
         // ============================================================
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
+        document.getElementById('googleBtn').onclick = function(e) {
+            e.preventDefault();
+            showModal(T().modalTitle, T().modalDescGoogle);
+        };
+        document.getElementById('githubBtn').onclick = function(e) {
+            e.preventDefault();
+            showModal(T().modalTitle, T().modalDescGithub);
+        };
+
+        // ============================================================
+        // 语言切换
+        // ============================================================
+        document.querySelectorAll('.lang-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                applyLang(this.dataset.lang);
+            };
         });
 
-        document.querySelectorAll('input').forEach(inp => {
+        // ============================================================
+        // 回车提交
+        // ============================================================
+        document.querySelectorAll('input').forEach(function(inp) {
             inp.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     if (document.getElementById('loginCard').classList.contains('active')) {
@@ -596,10 +1014,25 @@
             });
         });
 
+        // ============================================================
+        // 已登录自动跳转
+        // ============================================================
+        (function checkSession() {
+            var session = localStorage.getItem('sq_user_session');
+            if (session) {
+                try {
+                    var user = JSON.parse(session);
+                    if (user && user.id) {
+                        window.location.href = '/liuyanban/posts.html';
+                        return;
+                    }
+                } catch (e) {}
+            }
+            applyLang('zh');
+            showLoginCard();
+        })();
+
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-
-        console.log('🌿 Seven戚 登录页已加载（封禁仅提示，不拦截）');
     </script>
-
 </body>
 </html>
