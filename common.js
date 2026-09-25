@@ -8,7 +8,8 @@ if (!window.sb) {
 }
 
 // ============================================================
-// 启动动画（每个浏览器会话首次进入时显示）+ 整页淡入
+// 启动动画（每个浏览器会话首次进入时显示）
+// 注意：页面初始隐藏已在各 HTML 的 <head> 中处理
 // ============================================================
 (function bootLoader() {
     // 每个浏览器会话只显示一次
@@ -70,14 +71,9 @@ if (!window.sb) {
                 '5%{opacity:1;text-shadow:0 0 4px #fff;transform:scale(1.1) translateY(-2px);}' +
                 '20%{opacity:0.2;}' +
                 '100%{opacity:0;}' +
-            '}' +
-            /* 整页淡入：默认隐藏页面内容 */
-            'html.sq-boot-hide,html.sq-boot-hide body{opacity:0 !important;transition:opacity 1s ease !important;}';
+            '}';
         document.head.appendChild(style);
     }
-
-    // ===== 让页面初始隐藏（等启动页快结束时再缓慢淡入） =====
-    document.documentElement.classList.add('sq-boot-hide');
 
     // ===== 注入 DOM + 时间轴 =====
     function insert() {
@@ -93,7 +89,7 @@ if (!window.sb) {
         var inner = document.createElement('div');
         inner.className = 'boot-loader-inner';
 
-        // ★ 文字：Seven戚  出品（中间两个空格做视觉分隔）
+        // 文字：Seven戚  出品
         var text = 'Seven戚  出品';
         var chars = text.split('');
         chars.forEach(function (c, i) {
@@ -111,22 +107,17 @@ if (!window.sb) {
         wrap.appendChild(inner);
         document.body.appendChild(wrap);
 
-        // ===== 时间轴 =====
-        // 0s       启动页出现，字逐字发光
+        // 时间轴
+        // 0s       启动页出现
         // 3.5s     字已几乎不可见
-        // 3.5~3.8s 黑屏停顿 0.3s（字体消失后静默一下）
-        // 3.8s     启动页开始缓慢淡出（1s） + 页面开始缓慢淡入（1s）
+        // 3.5~3.8s 黑屏停顿 0.3s
+        // 3.8s     启动页淡出（1s）+ 页面淡入（1s）
         // 4.8s     启动页移除
         setTimeout(function() {
-            // 停顿 0.3s
             setTimeout(function() {
-                // 启动页淡出
                 wrap.classList.add('fade-out');
-
-                // 页面淡入（和启动页淡出同步 1s）
+                // 页面淡入：移除 sq-boot-hide
                 document.documentElement.classList.remove('sq-boot-hide');
-
-                // 淡出结束后移除启动页 DOM
                 setTimeout(function() {
                     wrap.remove();
                 }, 1000);
