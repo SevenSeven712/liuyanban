@@ -8,6 +8,135 @@ if (!window.sb) {
 }
 
 // ============================================================
+// 启动动画（每个浏览器会话首次进入时显示）+ 整页淡入
+// ============================================================
+(function bootLoader() {
+    // 每个浏览器会话只显示一次
+    if (sessionStorage.getItem('sq_boot_shown') === '1') return;
+    sessionStorage.setItem('sq_boot_shown', '1');
+
+    // ===== 注入样式 =====
+    if (!document.getElementById('boot-loader-styles')) {
+        var style = document.createElement('style');
+        style.id = 'boot-loader-styles';
+        style.textContent =
+            '.boot-loader-wrapper{' +
+                'position:fixed;inset:0;z-index:9999999;' +
+                'background:#000;' +
+                'display:flex;align-items:center;justify-content:center;' +
+                'font-family:"Poppins","Space Grotesk","PingFang SC",sans-serif;' +
+                'font-size:1.6em;font-weight:600;' +
+                'user-select:none;color:#fff;' +
+                'transition:opacity 1s ease;' +
+                'overflow:hidden;' +
+            '}' +
+            '.boot-loader-wrapper.fade-out{opacity:0;pointer-events:none;}' +
+            '.boot-loader-inner{' +
+                'position:relative;' +
+                'display:flex;align-items:center;justify-content:center;' +
+                'height:120px;width:auto;margin:2rem;' +
+                'transform:scale(1.55);' +
+            '}' +
+            '.boot-loader{' +
+                'position:absolute;top:0;left:0;' +
+                'height:100%;width:100%;z-index:1;' +
+                'background-color:transparent;' +
+                '-webkit-mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px);' +
+                'mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px);' +
+            '}' +
+            '.boot-loader::after{' +
+                'content:"";' +
+                'position:absolute;top:0;left:0;width:100%;height:100%;' +
+                'background-image:' +
+                    'radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%),' +
+                    'radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%),' +
+                    'radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%),' +
+                    'radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%),' +
+                    'radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);' +
+                '-webkit-mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);' +
+                'mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);' +
+                'animation:boot-transform 2s infinite alternate, boot-opacity 4s infinite;' +
+                'animation-timing-function:cubic-bezier(0.6,0.8,0.5,1);' +
+            '}' +
+            '@keyframes boot-transform{0%{transform:translate(-55%);}100%{transform:translate(55%);}}' +
+            '@keyframes boot-opacity{0%,100%{opacity:0;}15%{opacity:1;}65%{opacity:0;}}' +
+            '.boot-letter{' +
+                'display:inline-block;opacity:0;' +
+                'animation:boot-letter-anim 4s infinite linear;' +
+                'z-index:2;white-space:pre;' +
+            '}' +
+            '@keyframes boot-letter-anim{' +
+                '0%{opacity:0;}' +
+                '5%{opacity:1;text-shadow:0 0 4px #fff;transform:scale(1.1) translateY(-2px);}' +
+                '20%{opacity:0.2;}' +
+                '100%{opacity:0;}' +
+            '}' +
+            /* 整页淡入：默认隐藏页面内容 */
+            'html.sq-boot-hide,html.sq-boot-hide body{opacity:0 !important;transition:opacity 1s ease !important;}';
+        document.head.appendChild(style);
+    }
+
+    // ===== 让页面初始隐藏（等启动页快结束时再缓慢淡入） =====
+    document.documentElement.classList.add('sq-boot-hide');
+
+    // ===== 注入 DOM + 时间轴 =====
+    function insert() {
+        if (!document.body) {
+            document.addEventListener('DOMContentLoaded', insert);
+            return;
+        }
+
+        var wrap = document.createElement('div');
+        wrap.className = 'boot-loader-wrapper';
+        wrap.id = 'bootLoader';
+
+        var inner = document.createElement('div');
+        inner.className = 'boot-loader-inner';
+
+        // ★ 文字：Seven戚  出品（中间两个空格做视觉分隔）
+        var text = 'Seven戚  出品';
+        var chars = text.split('');
+        chars.forEach(function (c, i) {
+            var span = document.createElement('span');
+            span.className = 'boot-letter';
+            span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
+            span.textContent = c;
+            inner.appendChild(span);
+        });
+
+        var loaderDiv = document.createElement('div');
+        loaderDiv.className = 'boot-loader';
+        inner.appendChild(loaderDiv);
+
+        wrap.appendChild(inner);
+        document.body.appendChild(wrap);
+
+        // ===== 时间轴 =====
+        // 0s       启动页出现，字逐字发光
+        // 3.5s     字已几乎不可见
+        // 3.5~3.8s 黑屏停顿 0.3s（字体消失后静默一下）
+        // 3.8s     启动页开始缓慢淡出（1s） + 页面开始缓慢淡入（1s）
+        // 4.8s     启动页移除
+        setTimeout(function() {
+            // 停顿 0.3s
+            setTimeout(function() {
+                // 启动页淡出
+                wrap.classList.add('fade-out');
+
+                // 页面淡入（和启动页淡出同步 1s）
+                document.documentElement.classList.remove('sq-boot-hide');
+
+                // 淡出结束后移除启动页 DOM
+                setTimeout(function() {
+                    wrap.remove();
+                }, 1000);
+            }, 300);
+        }, 3500);
+    }
+    insert();
+})();
+
+// ============================================================
 // SVG 图标库
 // ============================================================
 var SVG_ICONS = {
@@ -486,14 +615,13 @@ function injectReportStyles() {
     document.head.appendChild(style);
 }
 
-// 让举报函数全局可用（跨页面调用）
 window.submitReport = submitReport;
 window.openReportDialog = openReportDialog;
 window.closeReportDialog = closeReportDialog;
 window.doSubmitReport = doSubmitReport;
 
 // ============================================================
-// 头像提醒弹窗（未设置头像的用户自动弹）
+// 头像提醒弹窗
 // ============================================================
 function showAvatarPrompt() {
     var old = document.getElementById('avatarPromptOverlay');
@@ -527,9 +655,7 @@ function showAvatarPrompt() {
         style.id = 'avatar-prompt-styles';
         style.textContent =
             '@keyframes apFadeIn{from{opacity:0}to{opacity:1}}' +
-            '@keyframes apPopIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}' +
-            '#avatarPromptLater:hover{background:#eaf3ea;border-color:#8aaa9a;}' +
-            '#avatarPromptGo:hover{background:#4caf50;box-shadow:0 0 20px rgba(46,125,50,0.3);}';
+            '@keyframes apPopIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}';
         document.head.appendChild(style);
     }
 
@@ -550,25 +676,16 @@ function showAvatarPrompt() {
 }
 window.showAvatarPrompt = showAvatarPrompt;
 
-// 自动检查：每个浏览器会话只弹一次
+// 自动检查
 (function autoAvatarCheck() {
     function tryCheck() {
-        // 未登录 → 不弹
         var user = typeof getSessionUser === 'function' ? getSessionUser() : null;
         if (!user || !user.id) return;
-
-        // 已经在 profile 页 → 不弹（用户本来就在设置）
         if (window.location.pathname.indexOf('profile.html') >= 0) return;
-
-        // 已有自定义头像（http 开头）→ 不弹
         if (user.avatar_url && user.avatar_url.indexOf('http') === 0) return;
-
-        // 本次会话已弹过 → 不弹
         if (sessionStorage.getItem('sq_avatar_prompt_shown') === '1') return;
-
         showAvatarPrompt();
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(tryCheck, 900);
