@@ -184,6 +184,39 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .fixed-input-area button:hover{background:var(--primary-light)}
 .fixed-input-area button:disabled{opacity:.5;pointer-events:none}
 .fixed-input-area .admin-clear-btn{background:var(--danger);color:#fff;padding:6px 12px;border-radius:99px;border:none;font-size:.7em;cursor:pointer;display:none}
+.rp-list{padding:0 12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.rp-list:not(:empty){padding-top:12px;}
+.rp-card{flex-shrink:0;max-width:78%;align-self:center;background:linear-gradient(135deg,#ff7043,#e64a19);border-radius:14px;padding:13px 18px;color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(230,74,25,.3);transition:transform .15s;}
+.rp-card:active{transform:scale(.97)}
+.rp-card.grabbed{background:linear-gradient(135deg,#9e9e9e,#757575);box-shadow:none;cursor:default;}
+.rp-card.done{background:linear-gradient(135deg,#bdbdbd,#9e9e9e);box-shadow:none;cursor:default;}
+.rp-card.exclusive{background:linear-gradient(135deg,#8e24aa,#5e35b1);box-shadow:0 6px 18px rgba(94,53,177,.3);}
+.rp-card.exclusive.grabbed,.rp-card.exclusive.done{background:linear-gradient(135deg,#9e9e9e,#757575);}
+.rp-card .rp-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.88em;}
+.rp-card .rp-top svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+.rp-card .rp-sub{font-size:.7em;opacity:.9;margin-top:5px;}
+.rp-card .rp-amt{font-size:1.4em;font-weight:900;margin-top:4px;}
+.rp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:998;opacity:0;pointer-events:none;transition:opacity .3s;}
+.rp-backdrop.open{opacity:1;pointer-events:auto;}
+.rp-sheet{position:fixed;left:0;right:0;bottom:0;background:var(--bg-card);border-radius:20px 20px 0 0;z-index:999;padding:8px 20px calc(20px + var(--safe-b));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:82vh;overflow-y:auto;}
+.rp-sheet.open{transform:translateY(0);}
+.rp-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:6px auto 14px;}
+.rp-title{font-weight:800;font-size:1.05em;margin-bottom:16px;}
+.rp-field{margin-bottom:14px;}
+.rp-field label{display:block;font-size:.72em;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
+.rp-field input,.rp-field select{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:inherit;font-size:1em;outline:none;box-sizing:border-box;background:var(--bg-input);color:var(--text);}
+.rp-field input:focus,.rp-field select:focus{border-color:var(--primary);}
+.rp-type-row{display:flex;gap:8px;}
+.rp-type{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;color:var(--text-muted);font-weight:700;font-size:.82em;cursor:pointer;font-family:inherit;}
+.rp-type.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);}
+.rp-send{width:100%;padding:13px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:1em;cursor:pointer;font-family:inherit;margin-top:6px;}
+.rp-send:disabled{opacity:.5;pointer-events:none;}
+.rp-hint{font-size:.72em;color:var(--text-light);margin-top:10px;text-align:center;}
+.rp-rank-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:var(--bg-input);margin-bottom:6px;font-size:.85em;}
+.rp-rank-item .rr-left{display:flex;align-items:center;gap:10px;}
+.rp-rank-item .rr-no{width:20px;text-align:center;font-weight:800;color:var(--text-muted);}
+.rp-rank-item .rr-no.top1{color:#e6a700;}
+.rp-rank-item .rr-amt{font-weight:800;color:var(--primary);}
 .icon-svg{width:1.2em;height:1.2em;fill:currentColor;flex-shrink:0}
 .empty-state{text-align:center;color:var(--text-muted);padding:40px 20px;font-size:.85em}
 .empty-state .big{font-size:2.8em;margin-bottom:8px;opacity:.5}
@@ -242,6 +275,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
   <div id="header-container"></div>
   <div class="banned-banner" id="bannedBanner">账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span></div>
   <div class="app-content">
+    <div class="rp-list" id="rpList"></div>
     <div class="chat-messages" id="chatMessages"></div>
     <div class="pill-bar">
       <button class="pill-btn" id="roomPillBtn" type="button" onclick="location.href='/liuyanban/room.html'">
@@ -253,6 +287,10 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
       </button>
     </div>
     <div class="fixed-input-area">
+      <button id="chatRedPacketBtn" type="button" style="background:linear-gradient(135deg,#ff7043,#e64a19);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 9h16M12 3v6M9 6l3-3 3 3"/></svg>
+        红包
+      </button>
       <div class="input-wrapper">
         <input type="text" id="chatInput" placeholder="说点什么…" maxlength="200" />
         <button id="sendChatBtn" type="button">
@@ -264,6 +302,40 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
     </div>
   </div>
   <div id="footer-container"></div>
+</div>
+
+<div class="rp-backdrop" id="rpBackdrop"></div>
+<div class="rp-sheet" id="rpSheet">
+  <div class="rp-handle"></div>
+  <div class="rp-title">发红包</div>
+  <div class="rp-field">
+    <label>红包总积分</label>
+    <input type="number" id="crpTotal" placeholder="如 100" min="1" />
+  </div>
+  <div class="rp-field">
+    <label>类型</label>
+    <div class="rp-type-row">
+      <button type="button" class="rp-type active" data-t="group">拼手气（群红包）</button>
+      <button type="button" class="rp-type" data-t="exclusive">专属红包</button>
+    </div>
+  </div>
+  <div class="rp-field" id="crpCountField">
+    <label>可领份数（至少 2 份）</label>
+    <input type="number" id="crpCount" placeholder="如 5" min="2" />
+  </div>
+  <div class="rp-field" id="crpTargetField" style="display:none;">
+    <label>指定领取人（在线用户）</label>
+    <select id="crpTarget"></select>
+  </div>
+  <button class="rp-send" id="crpSendBtn">塞钱进红包</button>
+  <div class="rp-hint">将从你的小七币余额中扣除</div>
+</div>
+
+<div class="rp-backdrop" id="rpDetailBackdrop"></div>
+<div class="rp-sheet" id="rpDetailSheet">
+  <div class="rp-handle"></div>
+  <div class="rp-title" style="display:flex;justify-content:space-between;align-items:center;">红包详情<button id="rpDetailClose" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div id="rpDetailBody" style="padding:0 4px 20px;"></div>
 </div>
 
 <!-- 在线用户 overlay -->
@@ -672,6 +744,204 @@ async function loadAllChats(){
 }
 
 /* ============================================================
+   聊天群红包
+============================================================ */
+var crpState = { list: [], myGrabs: {}, channel: null };
+
+async function loadChatRedPackets(){
+  try{
+    var res = await window.sb.from('red_packets')
+      .select('*')
+      .eq('scope', 'chat')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if(res.error) throw res.error;
+    crpState.list = res.data || [];
+    await loadChatMyGrabs();
+    renderChatRedPackets();
+  }catch(e){ crpState.list = []; renderChatRedPackets(); }
+}
+
+async function loadChatMyGrabs(){
+  crpState.myGrabs = {};
+  if(!crpState.list.length) return;
+  try{
+    var ids = crpState.list.map(function(p){ return p.id; });
+    var res = await window.sb.from('red_packet_grabs')
+      .select('packet_id, amount')
+      .eq('user_id', currentUser.id)
+      .in('packet_id', ids);
+    (res.data || []).forEach(function(g){ crpState.myGrabs[g.packet_id] = g.amount; });
+  }catch(e){}
+}
+
+function renderChatRedPackets(){
+  var c = document.getElementById('rpList');
+  if(!c) return;
+  if(!crpState.list.length){ c.innerHTML = ''; return; }
+  c.innerHTML = crpState.list.map(function(p){
+    var mine = crpState.myGrabs[p.id];
+    var finished = p.remaining_count <= 0;
+    var isExclusive = !!p.target_user_id;
+    var cls = (isExclusive ? 'exclusive ' : '') + (mine !== undefined ? 'grabbed' : (finished ? 'done' : ''));
+    var sub, amtHtml = '';
+    if(mine !== undefined){
+      sub = isExclusive ? '专属红包 · 你已领取' : '你已领取 · 看看手气';
+      amtHtml = '<div class="rp-amt">' + mine + ' 币</div>';
+    } else if(finished){
+      sub = '手慢了，红包已领完';
+    } else if(isExclusive){
+      var isTarget = p.target_user_id === currentUser.id;
+      sub = isTarget ? '专属红包 · 点击领取' : '专属红包（非指定人无法领取）';
+    } else {
+      sub = '剩余 ' + p.remaining_count + '/' + p.count + ' 份';
+    }
+    return '<div class="rp-card ' + cls + '" data-rp="' + p.id + '">' +
+      '<div class="rp-top"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 9h16M12 3v6M9 6l3-3 3 3"/></svg>' +
+      escapeHtml(p.sender_name || '匿名') + (isExclusive ? ' 的专属红包' : ' 的红包') + '</div>' +
+      amtHtml +
+      '<div class="rp-sub">' + sub + '</div>' +
+    '</div>';
+  }).join('');
+  c.querySelectorAll('.rp-card').forEach(function(el){
+    el.onclick = function(){ openChatRedPacket(this.dataset.rp); };
+  });
+}
+
+async function openChatRedPacket(packetId){
+  var p = crpState.list.find(function(x){ return String(x.id) === String(packetId); });
+  if(!p) return;
+  var mine = crpState.myGrabs[p.id];
+  if(mine === undefined && p.remaining_count > 0 && p.sender_id !== currentUser.id){
+    await grabChatRedPacket(p.id);
+    p = crpState.list.find(function(x){ return String(x.id) === String(packetId); }) || p;
+    mine = crpState.myGrabs[p.id];
+  }
+  showChatRedPacketDetail(p, mine);
+}
+
+async function grabChatRedPacket(packetId){
+  try{
+    var res = await window.sb.rpc('grab_red_packet', { p_user_id: currentUser.id, p_packet_id: packetId });
+    if(res.error) throw res.error;
+    var d = res.data;
+    if(d && d.ok){
+      showToast('手气不错，抢到 ' + d.amount + ' 币！');
+      try{ var u = await window.sb.from('users').select('coins').eq('id', currentUser.id).single(); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
+      await loadChatRedPackets();
+    } else {
+      showToast((d && d.message) || '领取失败');
+      await loadChatRedPackets();
+    }
+  }catch(e){ showToast('领取失败：' + e.message); }
+}
+
+async function showChatRedPacketDetail(p, myAmount){
+  var body = document.getElementById('rpDetailBody');
+  body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载中…</div>';
+  openChatRpDetail();
+  try{
+    var res = await window.sb.from('red_packet_grabs')
+      .select('*').eq('packet_id', p.id).order('amount', { ascending: false });
+    var rows = res.data || [];
+    var html = '<div style="text-align:center;margin-bottom:18px;">' +
+      '<div style="font-size:.8em;color:var(--text-muted);">' + escapeHtml(p.sender_name || '匿名') + (p.target_user_id ? ' 的专属红包' : ' 的红包') + '</div>' +
+      '<div style="font-size:1.6em;font-weight:900;color:var(--primary);margin-top:4px;">' + p.total + ' 币</div>' +
+      '<div style="font-size:.75em;color:var(--text-light);margin-top:4px;">共 ' + p.count + ' 份 · 已领 ' + rows.length + ' 份</div>';
+    if(myAmount !== undefined) html += '<div style="margin-top:10px;font-size:.85em;font-weight:700;color:var(--primary);">你领到 ' + myAmount + ' 币</div>';
+    html += '</div>';
+    if(rows.length){
+      html += '<div style="font-size:.72em;font-weight:700;color:var(--text-muted);margin-bottom:8px;">领取排行榜</div>';
+      html += rows.map(function(g, i){
+        var noCls = i === 0 ? 'top1' : '';
+        return '<div class="rp-rank-item"><div class="rr-left"><span class="rr-no ' + noCls + '">' + (i+1) + '</span><span>' + escapeHtml(g.user_name || '用户') + '</span></div><span class="rr-amt">' + g.amount + ' 币</span></div>';
+      }).join('');
+      if(rows[0]) html += '<div style="font-size:.72em;color:var(--text-light);margin-top:8px;text-align:center;">🏆 手气最佳：' + escapeHtml(rows[0].user_name || '用户') + '（' + rows[0].amount + ' 币）</div>';
+    } else {
+      html += '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">还没有人领取</div>';
+    }
+    body.innerHTML = html;
+  }catch(e){
+    body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载失败：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+var crpType = 'group';
+function openChatRpSheet(){
+  if(isUserBanned()){ showToast('账号已被封禁'); return; }
+  crpType = 'group';
+  document.getElementById('crpTotal').value = '';
+  document.getElementById('crpCount').value = '';
+  syncCrpTypeUI();
+  buildCrpTargetOptions();
+  document.getElementById('rpBackdrop').classList.add('open');
+  document.getElementById('rpSheet').classList.add('open');
+}
+function closeChatRpSheet(){
+  document.getElementById('rpBackdrop').classList.remove('open');
+  document.getElementById('rpSheet').classList.remove('open');
+}
+function syncCrpTypeUI(){
+  document.querySelectorAll('.rp-type').forEach(function(b){ b.classList.toggle('active', b.dataset.t === crpType); });
+  document.getElementById('crpCountField').style.display = crpType === 'group' ? 'block' : 'none';
+  document.getElementById('crpTargetField').style.display = crpType === 'exclusive' ? 'block' : 'none';
+}
+function buildCrpTargetOptions(){
+  var sel = document.getElementById('crpTarget');
+  var opts = ['<option value="">请选择在线用户</option>'];
+  Object.keys(onlineUsers).forEach(function(k){
+    var u = onlineUsers[k];
+    if(u.id === currentUser.id) return;
+    opts.push('<option value="' + u.id + '">' + escapeHtml(u.nickname || '用户') + '</option>');
+  });
+  sel.innerHTML = opts.join('');
+}
+async function sendChatRedPacket(){
+  var total = parseInt(document.getElementById('crpTotal').value, 10);
+  if(!total || total < 1){ showToast('请输入红包总积分'); return; }
+  var count, target = null;
+  if(crpType === 'exclusive'){
+    target = document.getElementById('crpTarget').value;
+    if(!target){ showToast('请选择指定领取人'); return; }
+    target = parseInt(target, 10);
+    count = 1;
+  } else {
+    count = parseInt(document.getElementById('crpCount').value, 10);
+    if(!count || count < 2){ showToast('份数至少 2 份'); return; }
+    if(count > total){ showToast('份数不能超过总积分'); return; }
+  }
+  var btn = document.getElementById('crpSendBtn');
+  btn.disabled = true;
+  try{
+    var res = await window.sb.rpc('send_red_packet', {
+      p_user_id: currentUser.id,
+      p_room_id: null,
+      p_total: total,
+      p_count: count,
+      p_scope: 'chat',
+      p_target_user_id: target
+    });
+    if(res.error) throw res.error;
+    var d = res.data;
+    if(!d || !d.ok){ showToast((d && d.message) || '发送失败'); btn.disabled = false; return; }
+    if(d.balance !== undefined){ currentUser.coins = d.balance; setSessionUser(currentUser); }
+    closeChatRpSheet();
+    showToast('红包已发出');
+    await loadChatRedPackets();
+  }catch(e){ showToast('发送失败：' + e.message); }
+  btn.disabled = false;
+}
+function openChatRpDetail(){
+  document.getElementById('rpDetailBackdrop').classList.add('open');
+  document.getElementById('rpDetailSheet').classList.add('open');
+}
+function closeChatRpDetail(){
+  document.getElementById('rpDetailBackdrop').classList.remove('open');
+  document.getElementById('rpDetailSheet').classList.remove('open');
+}
+
+
+/* ============================================================
    事件绑定
 ============================================================ */
 document.getElementById('sendChatBtn').addEventListener('click',sendChat);
@@ -679,6 +949,14 @@ document.getElementById('chatInput').addEventListener('keydown',function(e){
   if(e.key==='Enter')sendChat();
 });
 document.getElementById('clearChatBtn').addEventListener('click',clearAllChats);
+document.getElementById('chatRedPacketBtn').addEventListener('click',openChatRpSheet);
+document.getElementById('rpBackdrop').addEventListener('click',closeChatRpSheet);
+document.getElementById('crpSendBtn').addEventListener('click',sendChatRedPacket);
+document.getElementById('rpDetailBackdrop').addEventListener('click',closeChatRpDetail);
+document.getElementById('rpDetailClose').addEventListener('click',closeChatRpDetail);
+document.querySelectorAll('.rp-type').forEach(function(b){
+  b.addEventListener('click',function(){ crpType = this.dataset.t; syncCrpTypeUI(); });
+});
 document.addEventListener('gesturestart',function(e){e.preventDefault()});
 
 /* ============================================================
@@ -693,6 +971,7 @@ window.addEventListener('DOMContentLoaded',function(){
 
   updateBannedBanner();
   loadAllChats();
+  loadChatRedPackets();
   initPresence();  // ★ 启动在线用户
 
   if(currentUser&&currentUser.id){
@@ -706,6 +985,15 @@ window.addEventListener('DOMContentLoaded',function(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'chats'},function(){loadAllChats()})
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'chats'},function(){loadAllChats()})
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'chats'},function(){loadAllChats()})
+    .subscribe();
+
+  // 聊天群红包实时订阅（scope=chat）
+  crpState.channel = window.sb.channel('chats-rp-'+Date.now())
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(){loadChatRedPackets()})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(p){
+      var i = crpState.list.findIndex(function(x){ return x.id === p.new.id; });
+      if(i >= 0){ crpState.list[i] = p.new; renderChatRedPackets(); } else { loadChatRedPackets(); }
+    })
     .subscribe();
 
   // 会话同步
