@@ -60,6 +60,11 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .shop-card .state-tag.expired{background:#ffe0e0;color:#c62828;}
 .shop-card .expire-text{font-size:.62em;color:var(--text-light);}
 
+.shop-tabs{display:flex;gap:8px;margin:0 0 14px 0;background:var(--bg-input);padding:4px;border-radius:99px;}
+.shop-tab{flex:1;padding:9px;border:none;background:transparent;border-radius:99px;font-family:inherit;font-size:.82em;font-weight:700;color:var(--text-muted);cursor:pointer;transition:.2s;}
+.shop-tab.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(46,125,50,.12);}
+.shop-card.inuse{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.15);}
+.shop-card .state-tag.inuse{background:#2b6cff;color:#fff;}
 .loading-state{text-align:center;color:var(--text-muted);padding:40px 0;font-size:.85em;grid-column:1/-1;}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -91,6 +96,10 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
   </div>
   <div class="shop-body">
     <div class="act-banner" id="actBanner"></div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" data-tab="all" onclick="switchShopTab('all')">全部气泡</button>
+      <button class="shop-tab" data-tab="owned" onclick="switchShopTab('owned')">已拥有</button>
+    </div>
     <div class="shop-grid" id="shopGrid">
       <div class="loading-state"><div class="spinner"></div>正在加载皮肤…</div>
     </div>
@@ -116,9 +125,13 @@ var SKINS = ["原版","经典圆角","暗夜霓虹","渐变紫","粉嫩","毛玻
 
 var currentUser = null;
 var coinBalance = 0;
-var prices = {};      // skin_id -> {price, duration_days}
-var owned = {};       // skin_id -> expire_at (ms)
+var currentSkin = 0;  // 当前装备的气泡 skin_id
+var shopTab = 'all';  // 'all' | 'owned'
+var prices = {};
+var owned = {};
 var buyingSkin = null;
+var buyMode = 'buy';   // 'buy' | 'equip' | 'inuse'
+var buySkinId = 0;
 
 function getSessionUser(){ var s=localStorage.getItem('sq_user_session'); if(s){try{return JSON.parse(s)}catch(e){}} return null; }
 
@@ -135,8 +148,9 @@ async function init(){
   }
   // 刷新余额（防止本地缓存旧值）
   try{
-    var uq = await window.sb.from('users').select('coins').eq('id', currentUser.id).limit(1);
+    var uq = await window.sb.from('users').select('coins, bubble_skin').eq('id', currentUser.id).limit(1);
     coinBalance = (uq.data && uq.data[0] && uq.data[0].coins) || 0;
+    currentSkin = (uq.data && uq.data[0] && typeof uq.data[0].bubble_skin === 'number') ? uq.data[0].bubble_skin : 0;
   }catch(e){ coinBalance = currentUser.coins || 0; }
   document.getElementById('coinNum').textContent = coinBalance;
 
@@ -191,16 +205,24 @@ function finalPrice(base){
   return base;
 }
 
+function switchShopTab(t){
+  shopTab = t;
+  document.querySelectorAll('.shop-tab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === t); });
+  renderGrid();
+}
 function renderGrid(){
   var grid = document.getElementById('shopGrid');
   var html = '';
+  var now = Date.now();
   SKINS.forEach(function(name, i){
     var p = prices[i] || {price:100, duration_days:30};
     var isFree = (i === 0);
-    var now = Date.now();
     var exp = owned[i];
-    var isOwned = exp && exp > now;
+    var isOwned = (isFree || (exp && exp > now));
     var isExpired = exp && exp <= now;
+    var isInUse = (i === currentSkin);
+    // 已拥有 tab 只显示已拥有（含原版）
+    if(shopTab === 'owned' && !isOwned) return;
     var fp = finalPrice(p.price);
     var hasOff = fp < p.price;
     var priceLabel;
@@ -211,10 +233,10 @@ function renderGrid(){
     } else {
       priceLabel = '<span class="price-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg>'+p.price+' 小七币</span>';
     }
-    var tag = isOwned ? '<span class="state-tag owned">已拥有</span>' : (isExpired ? '<span class="state-tag expired">已过期</span>' : '');
-    var expText = isOwned ? '<span class="expire-text">有效期至 '+fmtExpire(exp)+'</span>' : '';
-    var ph = 56 + (i % 4) * 24;   // 预览区高度错落：56/80/104/128
-    html += '<div class="shop-card b'+i+' '+(isOwned?'owned':'')+'" data-skin="'+i+'" onclick="onCardClick('+i+')">'+
+    var tag = isInUse ? '<span class="state-tag inuse">使用中</span>' : (isOwned ? '<span class="state-tag owned">已拥有</span>' : (isExpired ? '<span class="state-tag expired">已过期</span>' : ''));
+    var expText = (isOwned && !isFree) ? '<span class="expire-text">有效期至 '+fmtExpire(exp)+'</span>' : '';
+    var ph = 56 + (i % 4) * 24;
+    html += '<div class="shop-card b'+i+' '+(isOwned?'owned':'')+' '+(isInUse?'inuse':'')+'" data-skin="'+i+'" onclick="onCardClick('+i+')">'+
       tag +
       '<div class="preview" style="min-height:'+ph+'px"><span class="row self"><span class="bubble">选择你的气泡</span></span></div>'+
       '<div class="info">'+
@@ -230,12 +252,15 @@ function onCardClick(i){
   var now = Date.now();
   var exp = owned[i];
   var isFree = (i === 0);
-  var isOwned = exp && exp > now;
+  var isOwned = (isFree || (exp && exp > now));
+  var isInUse = (i === currentSkin);
   var p = prices[i] || {price:100, duration_days:30};
   var fp = finalPrice(p.price);
   var canBuy = !isFree && !isOwned && coinBalance >= fp;
 
   buyingSkin = (isFree || isOwned) ? null : i;
+  buyMode = isInUse ? 'inuse' : (isOwned ? 'equip' : 'buy');
+  buySkinId = i;
 
   // 预览舞台：左（对方）右（自己）双气泡
   var stage = document.getElementById('previewStage');
@@ -249,12 +274,15 @@ function onCardClick(i){
   // 描述 + 按钮状态
   var okBtn = document.getElementById('buyOk');
   var desc = document.getElementById('buyDesc');
-  if(isFree){
+  if(isInUse){
+    desc.innerHTML = '当前使用中';
+    okBtn.textContent = '使用中'; okBtn.disabled = true;
+  } else if(isFree){
     desc.innerHTML = '原版皮肤，免费使用';
-    okBtn.textContent = '免费使用'; okBtn.disabled = false;
+    okBtn.textContent = '使用原版'; okBtn.disabled = false;
   } else if(isOwned){
     desc.innerHTML = '已拥有该皮肤<br><span style="color:var(--text-light);font-size:.9em">有效期至 '+fmtExpire(exp)+'</span>';
-    okBtn.textContent = '已拥有'; okBtn.disabled = true;
+    okBtn.textContent = '使用'; okBtn.disabled = false;
   } else {
     var priceHtml = fp < p.price
       ? '价格：<b>'+fp+' 小七币</b>（原价 <s>'+p.price+'</s>）'
@@ -272,8 +300,25 @@ function onCardClick(i){
 function closeBuy(){ document.getElementById('buyModal').classList.remove('active'); buyingSkin=null; }
 
 document.getElementById('buyOk').addEventListener('click', async function(){
-  if(buyingSkin === null){ closeBuy(); return; }  // 免费/已拥有：关闭
-  var i = buyingSkin;
+  var i = buySkinId;
+  // 装备模式（原版 / 已拥有）
+  if(buyMode === 'equip'){
+    this.disabled = true; this.textContent = '处理中…';
+    try{
+      var er = await window.sb.rpc('equip_skin', { p_user_id: currentUser.id, p_skin_id: i });
+      if(er.error) throw er.error;
+      var eres = er.data || {};
+      if(!eres.ok) throw new Error(eres.message || '切换失败');
+      currentSkin = i;
+      currentUser.bubble_skin = i;
+      setSessionUser(currentUser);
+      closeBuy(); renderGrid();
+      showToast('已切换为「'+SKINS[i]+'」');
+    }catch(e){ showToast('切换失败：'+(e.message||e)); }
+    finally{ this.disabled = false; }
+    return;
+  }
+  if(buyingSkin === null){ closeBuy(); return; }
   this.disabled = true; this.textContent = '处理中…';
   try{
     // 调用数据库原子函数：校验余额 + 扣币 + 写记录在一个事务内完成
@@ -283,6 +328,8 @@ document.getElementById('buyOk').addEventListener('click', async function(){
     if(!res.ok) throw new Error(res.message || '购买失败');
     coinBalance = res.balance;
     owned[i] = new Date(res.expire_at).getTime();
+    if(typeof res.bubble_skin === 'number') currentSkin = res.bubble_skin;
+    currentUser.bubble_skin = currentSkin;
     document.getElementById('coinNum').textContent = coinBalance;
     // 同步本地缓存
     currentUser.coins = coinBalance;
