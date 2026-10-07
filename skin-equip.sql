@@ -7,7 +7,7 @@
 alter table users add column if not exists bubble_skin int not null default 0;
 
 -- 2) 更新原子购买函数：购买成功后自动装备该皮肤
-create or replace function buy_skin(p_user_id bigint, p_skin_id int)
+create or replace function buy_skin(p_user_id uuid, p_skin_id int)
 returns jsonb
 language plpgsql
 security definer
@@ -78,10 +78,10 @@ begin
 end;
 $$;
 
-grant execute on function buy_skin(bigint, int) to anon, authenticated;
+grant execute on function buy_skin(uuid, int) to anon, authenticated;
 
 -- 3) 新增"装备皮肤"函数（用户手动切换已拥有的皮肤 / 换回原版）
-create or replace function equip_skin(p_user_id bigint, p_skin_id int)
+create or replace function equip_skin(p_user_id uuid, p_skin_id int)
 returns jsonb
 language plpgsql
 security definer
@@ -109,4 +109,4 @@ begin
 end;
 $$;
 
-grant execute on function equip_skin(bigint, int) to anon, authenticated;
+grant execute on function equip_skin(uuid, int) to anon, authenticated;
