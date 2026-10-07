@@ -169,6 +169,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .role-ids-input{width:100%;box-sizing:border-box;min-height:70px;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8em;outline:none;resize:vertical;margin-bottom:8px}
 .btn-role{background:var(--primary-bg);color:var(--primary)}
 .admin-user-card .user-actions .btn-role{background:var(--primary-bg);color:var(--primary)}
+.admin-user-card .user-actions .btn-coin{background:linear-gradient(135deg,#fff7e0,#ffe9b0);color:#a67c00}
 .admin-cat-item,.admin-role-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);flex-wrap:wrap;gap:8px}
 .admin-cat-item .cat-info,.admin-role-item .role-info{display:flex;align-items:center;gap:10px}
 .admin-cat-item .cat-actions,.admin-role-item .role-actions{display:flex;gap:4px;flex-wrap:wrap}
@@ -882,8 +883,9 @@ async function renderAdminPanel(){
         '<div class="user-info"><div class="name-row"><span class="nickname">'+escapeHtml(u.nickname)+'</span>'+
         (role?'<span class="role-badge" style="background:'+role.role_color+'">'+escapeHtml(role.role_name)+'</span>':"")+
         '<span class="status-badge '+(isBanned?"banned":"normal")+'">'+(isBanned?"已封禁":"正常")+'</span></div>'+
-        '<div class="phone-row">'+escapeHtml(u.phone)+'</div></div></div>'+
+        '<div class="phone-row">'+escapeHtml(u.phone)+' · <b style="color:var(--primary)">'+(u.coins||0)+' 币</b></div></div></div>'+
         '<div class="user-actions">'+
+        '<button class="btn-coin" onclick="adjustCoinsPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\',\''+(u.coins||0)+'\')">调币</button>'+
         (isBanned?'<button class="btn-unban" onclick="unbanUserById(\''+u.id+'\')">解封</button>':'<button class="btn-ban" onclick="banUserPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">封号</button>')+
         '<button class="btn-role" onclick="assignRolePrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">发身份</button>'+
         '<button class="btn-login" onclick="loginAsUser(\''+u.id+'\')">一键登录</button></div></div>';
@@ -944,6 +946,65 @@ window.addNewCategory = async function() {
     document.getElementById('newCatName').value = '';
     await loadCategories();
     renderAdminPanel();
+};
+window.adjustCoinsPrompt = function(userId, nickname, currentCoins) {
+    var old = document.getElementById('coinAdjustOverlay');
+    if (old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'coinAdjustOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.2);">' +
+            '<div style="padding:18px 20px 10px;font-weight:800;font-size:1.05em;">调整小七币</div>' +
+            '<div style="padding:0 20px 16px;font-size:.82em;color:#5a7a6a;">用户：' + escapeHtml(nickname) + ' · 当前余额 <b style="color:#2e7d32">' + currentCoins + '</b> 币</div>' +
+            '<div style="padding:0 20px 16px;">' +
+                '<label style="display:block;font-size:.72em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">操作</label>' +
+                '<div style="display:flex;gap:8px;margin-bottom:14px;">' +
+                    '<button type="button" class="ca-type" data-t="add" style="flex:1;padding:9px;border-radius:10px;border:2px solid #2e7d32;background:#e8f5e9;color:#2e7d32;font-weight:700;cursor:pointer;font-family:inherit;">加币 +</button>' +
+                    '<button type="button" class="ca-type" data-t="sub" style="flex:1;padding:9px;border-radius:10px;border:2px solid #c8e0c8;background:#fff;color:#5a7a6a;font-weight:700;cursor:pointer;font-family:inherit;">减币 −</button>' +
+                '</div>' +
+                '<label style="display:block;font-size:.72em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">数量</label>' +
+                '<input type="number" id="caAmount" min="1" placeholder="如 50" style="width:100%;padding:10px 12px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:.95em;outline:none;box-sizing:border-box;margin-bottom:14px;" />' +
+                '<label style="display:block;font-size:.72em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">事由（可选，会显示在用户账单里）</label>' +
+                '<input type="text" id="caReason" placeholder="如 活动奖励" maxlength="40" style="width:100%;padding:10px 12px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:.95em;outline:none;box-sizing:border-box;" />' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;padding:12px 20px 18px;border-top:1px solid #e8f0e8;">' +
+                '<button id="caCancel" style="flex:1;padding:10px;border-radius:10px;border:none;background:#eaf3ea;color:#5a7a6a;font-weight:700;font-size:.9em;cursor:pointer;font-family:inherit;">取消</button>' +
+                '<button id="caOk" style="flex:1;padding:10px;border-radius:10px;border:none;background:#2e7d32;color:#fff;font-weight:700;font-size:.9em;cursor:pointer;font-family:inherit;">确认</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+    var type = 'add';
+    overlay.querySelectorAll('.ca-type').forEach(function(b){
+        b.onclick = function(){
+            type = this.dataset.t;
+            overlay.querySelectorAll('.ca-type').forEach(function(x){ x.style.borderColor='#c8e0c8'; x.style.background='#fff'; x.style.color='#5a7a6a'; });
+            this.style.borderColor = (type==='add'?'#2e7d32':'#c62828');
+            this.style.background = (type==='add'?'#e8f5e9':'#ffebee');
+            this.style.color = (type==='add'?'#2e7d32':'#c62828');
+        };
+    });
+    overlay.querySelector('#caCancel').onclick = function(){ overlay.remove(); };
+    overlay.querySelector('#caOk').onclick = async function(){
+        var amt = parseInt(overlay.querySelector('#caAmount').value, 10);
+        if (!amt || amt < 1) return showToast('请输入有效数量');
+        var reason = overlay.querySelector('#caReason').value.trim() || (type==='add'?'管理员发放':'管理员扣除');
+        var signed = type === 'add' ? amt : -amt;
+        overlay.remove();
+        try {
+            var r = await window.sb.rpc('admin_adjust_coins', { p_user_id: userId, p_amount: signed, p_reason: reason });
+            if (r.error) throw r.error;
+            var d = r.data;
+            if (!d || !d.ok) { showToast((d && d.message) || '操作失败'); return; }
+            showToast((type==='add'?'已加 ':'已扣 ') + amt + ' 币');
+            await window.pushNotification(userId, {
+                type: 'coin',
+                notification_type: 'coin',
+                extra_text: (type==='add'?'管理员给你发放了 ':'管理员扣除了你 ') + amt + ' 小七币（' + reason + '），当前余额 ' + d.balance + ' 币'
+            });
+            renderAdminPanel();
+        } catch(e) { showToast('操作失败：' + e.message); }
+    };
 };
 window.banUserPrompt = function(userId, nickname) {
     showPrompt('封号设置', '为用户 "' + nickname + '" 设置解封时间', '选择解封时间', async function(until) {
