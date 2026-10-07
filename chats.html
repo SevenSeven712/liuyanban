@@ -33,16 +33,19 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .banned-banner{flex-shrink:0;background:#ffebee;color:#c62828;padding:6px 16px;font-size:.8em;font-weight:600;text-align:center;border-bottom:1px solid #ffcdd2;display:none}
 .banned-banner.active{display:block}
 .app-content{flex:1;min-height:0;display:flex;flex-direction:column}
-.chat-messages{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
 .time-divider{text-align:center;font-size:.7em;color:var(--text-light);padding:6px 0;position:relative}
 .time-divider span{background:var(--bg);padding:0 12px;position:relative;z-index:1}
 .time-divider::before{content:'';position:absolute;left:10%;right:10%;top:50%;height:1px;background:var(--border);z-index:0}
-.row{display:flex;align-items:flex-start;gap:8px;max-width:85%;flex-shrink:0;}
+.row{display:flex;align-items:flex-start;gap:8px;max-width:85%;}
 .row.other{align-self:flex-start;}
 .row.self{align-self:flex-end;flex-direction:row-reverse;}
 .row .avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;cursor:pointer;background-size:cover;background-position:center;overflow:hidden;}
 .row .avatar.self-av{background:#4caf50;}
-.row .bubble-wrap{display:flex;flex-direction:column;cursor:pointer;min-width:0;}
+.row .bubble-wrap{display:flex;flex-direction:column;cursor:pointer;min-width:0;align-items:flex-start;}
+.row.self .bubble-wrap{align-items:flex-end;}
+.row .bubble{padding:9px 13px;font-size:.88em;line-height:1.5;word-break:break-word;position:relative;transition:transform .15s;}
+.row .bubble:hover{transform:scale(1.02);}
 .row .uname{font-size:.68em;color:var(--text-muted);margin-bottom:3px;display:flex;align-items:center;gap:6px;}
 .row.self .uname{flex-direction:row-reverse;text-align:right;}
 /* ===== 气泡皮肤（来自 bubble-demo.html，共 45 种 b0~b44）===== */
