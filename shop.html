@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>皮肤商店 · Seven戚</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="common.js"></script>
+<link rel="stylesheet" href="bubbles.css" />
+<style>
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#f5faf5; --bg-card:#fff; --bg-input:#eaf3ea; --border:#c8e0c8;
+  --text:#1e3a2e; --text-muted:#5a7a6a; --text-light:#8aaa9a;
+  --primary:#2e7d32; --primary-light:#4caf50; --primary-bg:#e8f5e9;
+  --primary-glow:rgba(46,125,50,.25); --shadow:0 8px 32px rgba(46,125,50,.12);
+  --radius:16px; --radius-sm:10px; --gold:#e6a817;
+  --font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);}
+#mainApp{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+
+.app-header{flex-shrink:0;padding:12px 16px;background:rgba(255,255,255,.92);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;z-index:50;min-height:56px;}
+.app-header .back{background:none;border:none;cursor:pointer;color:var(--text);display:flex;padding:4px;border-radius:8px;}
+.app-header .back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.app-header .title{font-weight:800;font-size:1.05em;flex:1;}
+.app-header .coin-box{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#fff7e0,#ffe9b0);border:1px solid #f0d98a;border-radius:99px;padding:5px 12px;font-weight:800;font-size:.85em;color:#a67c00;}
+.app-header .coin-box svg{width:16px;height:16px;}
+
+.shop-body{flex:1;overflow-y:auto;padding:14px 14px calc(20px + var(--safe-bottom));-webkit-overflow-scrolling:touch;}
+
+.act-banner{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;position:relative;overflow:hidden;display:none;}
+.act-banner.show{display:block;}
+.act-banner::after{content:'';position:absolute;right:-20px;top:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(255,255,255,.25),transparent 70%);}
+.act-banner .act-title{font-weight:900;font-size:1.05em;margin-bottom:4px;}
+.act-banner .act-desc{font-size:.8em;opacity:.92;line-height:1.5;}
+.act-banner .act-off{display:inline-block;background:#fff;color:#2e7d32;font-size:.72em;font-weight:800;padding:2px 10px;border-radius:99px;margin-top:8px;}
+
+.shop-grid{column-count:2;column-gap:12px;}
+.shop-card{background:var(--bg-card);border:2px solid var(--border);border-radius:var(--radius);padding:14px;display:inline-flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;transition:all .18s;position:relative;width:100%;margin-bottom:12px;break-inside:avoid;-webkit-column-break-inside:avoid;}
+.shop-card:hover{border-color:var(--primary-light);transform:translateY(-2px);}
+.shop-card:active{transform:scale(.98);}
+.shop-card.owned{border-color:var(--primary);background:linear-gradient(180deg,#fff,#f2fbf2);}
+.shop-card .preview{width:100%;display:flex;align-items:center;justify-content:center;min-height:52px;padding:4px 0;}
+.shop-card .preview .row{margin:0;display:flex;max-width:100%;}
+.shop-card .preview .bubble{padding:7px 11px;font-size:.8em;line-height:1.4;white-space:normal;word-break:break-word;max-width:100%;}
+.preview-stage{display:flex;flex-direction:column;gap:14px;padding:20px 16px;margin:0 0 16px;background:var(--bg-input);border-radius:var(--radius-sm);}
+.preview-stage .row{margin:0;display:flex;}
+.preview-stage .row.other{justify-content:flex-start;}
+.preview-stage .row.self{justify-content:flex-end;}
+.preview-stage .bubble{padding:9px 14px;font-size:.9em;line-height:1.4;white-space:nowrap;}
+.shop-card .info{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;}
+.shop-card .name{font-size:.85em;font-weight:700;color:var(--text);}
+.shop-card .price-row{display:flex;align-items:center;gap:4px;font-size:.78em;font-weight:700;color:#a67c00;}
+.shop-card .price-row svg{width:14px;height:14px;}
+.shop-card .price-row.free{color:var(--primary);}
+.shop-card .state-tag{position:absolute;top:8px;right:8px;font-size:.6em;font-weight:800;padding:2px 8px;border-radius:99px;}
+.shop-card .state-tag.owned{background:var(--primary);color:#fff;}
+.shop-card .state-tag.expired{background:#ffe0e0;color:#c62828;}
+.shop-card .expire-text{font-size:.62em;color:var(--text-light);}
+
+.loading-state{text-align:center;color:var(--text-muted);padding:40px 0;font-size:.85em;grid-column:1/-1;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* 购买确认弹窗 */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(30,58,46,.4);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal-box{background:#fff;border-radius:var(--radius);max-width:360px;width:100%;padding:1.8em;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;}
+.modal-box .mb-icon{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;background:var(--primary-bg);display:grid;place-items:center;color:var(--primary);}
+.modal-box .mb-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.modal-box h3{font-size:1.05em;margin-bottom:8px;}
+.modal-box p{font-size:.85em;color:var(--text-muted);line-height:1.6;margin-bottom:18px;}
+.modal-box .mb-actions{display:flex;gap:10px;}
+.modal-box .mb-actions button{flex:1;padding:11px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-weight:700;font-size:.9em;cursor:pointer;}
+.modal-box .mb-cancel{background:var(--bg-input);color:var(--text-muted);}
+.modal-box .mb-ok{background:var(--primary);color:#fff;}
+.modal-box .mb-ok:disabled{opacity:.5;pointer-events:none;}
+
+#toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:.7em 1.6em;border-radius:2em;font-weight:600;font-size:.85em;opacity:0;transition:all .4s ease;z-index:3000;pointer-events:none;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="mainApp">
+  <div class="app-header">
+    <button class="back" onclick="history.back()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <span class="title">皮肤商店</span>
+    <div class="coin-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg><span id="coinNum">--</span></div>
+  </div>
+  <div class="shop-body">
+    <div class="act-banner" id="actBanner"></div>
+    <div class="shop-grid" id="shopGrid">
+      <div class="loading-state"><div class="spinner"></div>正在加载皮肤…</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="buyModal">
+  <div class="modal-box">
+    <h3 id="buyTitle">皮肤预览</h3>
+    <div class="preview-stage" id="previewStage"></div>
+    <p id="buyDesc"></p>
+    <div class="mb-actions">
+      <button class="mb-cancel" onclick="closeBuy()">取消</button>
+      <button class="mb-ok" id="buyOk">购买</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SKINS = ["原版","经典圆角","暗夜霓虹","渐变紫","粉嫩","毛玻璃","新拟态","星空","烫金黑","手写便签","立体凸起","极光","莫兰迪","赛博绿","果冻","渐变描边","亚克力","暗金","泡泡渐变","樱桃红","黑白","微信绿","磨砂蓝","梦幻紫粉","霓虹白底","✨流光边框","✨呼吸发光","✨渐变流动","✨微微浮动","✨闪光掠过","✨果冻弹跳","✨星星闪烁","✨液态流动","✨霓虹脉冲","✨打字光标","🐱猫爪","🌸樱花","⭐星星","🐰兔耳","💗爱心","☁️云朵","🍀四叶草","🌙月亮","🎀蝴蝶结","🌈彩虹云"];
+
+var currentUser = null;
+var coinBalance = 0;
+var prices = {};      // skin_id -> {price, duration_days}
+var owned = {};       // skin_id -> expire_at (ms)
+var buyingSkin = null;
+
+function getSessionUser(){ var s=localStorage.getItem('sq_user_session'); if(s){try{return JSON.parse(s)}catch(e){}} return null; }
+
+function fmtExpire(ms){
+  var d = new Date(ms);
+  return (d.getMonth()+1)+'月'+d.getDate()+'日';
+}
+
+async function init(){
+  currentUser = getSessionUser();
+  if(!currentUser){
+    document.getElementById('shopGrid').innerHTML = '<div class="loading-state">请先登录后查看皮肤商店</div>';
+    return;
+  }
+  // 刷新余额（防止本地缓存旧值）
+  try{
+    var uq = await window.sb.from('users').select('coins').eq('id', currentUser.id).limit(1);
+    coinBalance = (uq.data && uq.data[0] && uq.data[0].coins) || 0;
+  }catch(e){ coinBalance = currentUser.coins || 0; }
+  document.getElementById('coinNum').textContent = coinBalance;
+
+  await Promise.all([loadPrices(), loadOwned(), loadActivities()]);
+  renderGrid();
+}
+
+var discount = 0;    // 当前活动折扣（几折），0 表示无折扣
+
+async function loadPrices(){
+  try{
+    var r = await window.sb.from('skin_prices').select('*');
+    if(r.error) throw r.error;
+    (r.data||[]).forEach(function(p){ prices[p.skin_id] = p; });
+  }catch(e){ console.warn('loadPrices failed', e); }
+}
+async function loadOwned(){
+  try{
+    var r = await window.sb.from('skin_purchases').select('skin_id,expire_at').eq('user_id', currentUser.id);
+    if(r.error) throw r.error;
+    (r.data||[]).forEach(function(p){
+      var ms = new Date(p.expire_at).getTime();
+      if(!owned[p.skin_id] || ms > owned[p.skin_id]) owned[p.skin_id] = ms;
+    });
+  }catch(e){ console.warn('loadOwned failed', e); }
+}
+async function loadActivities(){
+  try{
+    var r = await window.sb.from('shop_activities').select('*').eq('active', true).order('created_at', {ascending:false});
+    if(r.error) throw r.error;
+    var now = Date.now();
+    var list = r.data || [];
+    var a = null;
+    for(var k=0;k<list.length;k++){
+      var it = list[k];
+      if(it.start_at && new Date(it.start_at).getTime() > now) continue;
+      if(it.end_at && new Date(it.end_at).getTime() < now) continue;
+      a = it; break;
+    }
+    if(!a) return;
+    discount = (a.discount > 0 && a.discount < 10) ? a.discount : 0;
+    var banner = document.getElementById('actBanner');
+    banner.innerHTML = '<div class="act-title">'+escapeHtml(a.title)+'</div>'+
+      (a.description ? '<div class="act-desc">'+escapeHtml(a.description)+'</div>' : '')+
+      (discount ? '<span class="act-off">限时 '+discount+' 折</span>' : '');
+    banner.classList.add('show');
+  }catch(e){ console.warn('loadActivities failed', e); }
+}
+
+function finalPrice(base){
+  if(discount > 0 && discount < 10) return Math.max(1, Math.round(base * discount / 10));
+  return base;
+}
+
+function renderGrid(){
+  var grid = document.getElementById('shopGrid');
+  var html = '';
+  SKINS.forEach(function(name, i){
+    var p = prices[i] || {price:100, duration_days:30};
+    var isFree = (i === 0);
+    var now = Date.now();
+    var exp = owned[i];
+    var isOwned = exp && exp > now;
+    var isExpired = exp && exp <= now;
+    var fp = finalPrice(p.price);
+    var hasOff = fp < p.price;
+    var priceLabel;
+    if(isFree){
+      priceLabel = '<span class="price-row free">免费</span>';
+    } else if(hasOff){
+      priceLabel = '<span class="price-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg><s style="opacity:.5;font-weight:600">'+p.price+'</s> '+fp+' 小七币</span>';
+    } else {
+      priceLabel = '<span class="price-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg>'+p.price+' 小七币</span>';
+    }
+    var tag = isOwned ? '<span class="state-tag owned">已拥有</span>' : (isExpired ? '<span class="state-tag expired">已过期</span>' : '');
+    var expText = isOwned ? '<span class="expire-text">有效期至 '+fmtExpire(exp)+'</span>' : '';
+    var ph = 56 + (i % 4) * 24;   // 预览区高度错落：56/80/104/128
+    html += '<div class="shop-card b'+i+' '+(isOwned?'owned':'')+'" data-skin="'+i+'" onclick="onCardClick('+i+')">'+
+      tag +
+      '<div class="preview" style="min-height:'+ph+'px"><span class="row self"><span class="bubble">选择你的气泡</span></span></div>'+
+      '<div class="info">'+
+        '<div class="name">'+escapeHtml(name)+'</div>'+
+        priceLabel + expText +
+      '</div>'+
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function onCardClick(i){
+  var now = Date.now();
+  var exp = owned[i];
+  var isFree = (i === 0);
+  var isOwned = exp && exp > now;
+  var p = prices[i] || {price:100, duration_days:30};
+  var fp = finalPrice(p.price);
+  var canBuy = !isFree && !isOwned && coinBalance >= fp;
+
+  buyingSkin = (isFree || isOwned) ? null : i;
+
+  // 预览舞台：左（对方）右（自己）双气泡
+  var stage = document.getElementById('previewStage');
+  stage.className = 'preview-stage b'+i+' '+(isOwned?'self':'');
+  stage.innerHTML =
+    '<span class="row other"><span class="bubble">在吗？</span></span>' +
+    '<span class="row self"><span class="bubble">你好呀</span></span>';
+
+  document.getElementById('buyTitle').textContent = SKINS[i];
+
+  // 描述 + 按钮状态
+  var okBtn = document.getElementById('buyOk');
+  var desc = document.getElementById('buyDesc');
+  if(isFree){
+    desc.innerHTML = '原版皮肤，免费使用';
+    okBtn.textContent = '免费使用'; okBtn.disabled = false;
+  } else if(isOwned){
+    desc.innerHTML = '已拥有该皮肤<br><span style="color:var(--text-light);font-size:.9em">有效期至 '+fmtExpire(exp)+'</span>';
+    okBtn.textContent = '已拥有'; okBtn.disabled = true;
+  } else {
+    var priceHtml = fp < p.price
+      ? '价格：<b>'+fp+' 小七币</b>（原价 <s>'+p.price+'</s>）'
+      : '价格：<b>'+fp+' 小七币</b>';
+    var warn = coinBalance < fp
+      ? '<br><span style="color:#c62828">小七币不足，还差 '+(fp-coinBalance)+' 币</span>'
+      : '<br>购买后余额：'+(coinBalance-fp)+' 币';
+    desc.innerHTML = priceHtml+'<br>有效期：'+p.duration_days+' 天'+warn;
+    okBtn.textContent = coinBalance < fp ? '余额不足' : '购买';
+    okBtn.disabled = !canBuy;
+  }
+
+  document.getElementById('buyModal').classList.add('active');
+}
+function closeBuy(){ document.getElementById('buyModal').classList.remove('active'); buyingSkin=null; }
+
+document.getElementById('buyOk').addEventListener('click', async function(){
+  if(buyingSkin === null){ closeBuy(); return; }  // 免费/已拥有：关闭
+  var i = buyingSkin;
+  this.disabled = true; this.textContent = '处理中…';
+  try{
+    // 调用数据库原子函数：校验余额 + 扣币 + 写记录在一个事务内完成
+    var r = await window.sb.rpc('buy_skin', { p_user_id: currentUser.id, p_skin_id: i });
+    if(r.error) throw r.error;
+    var res = r.data || {};
+    if(!res.ok) throw new Error(res.message || '购买失败');
+    coinBalance = res.balance;
+    owned[i] = new Date(res.expire_at).getTime();
+    document.getElementById('coinNum').textContent = coinBalance;
+    // 同步本地缓存
+    currentUser.coins = coinBalance;
+    setSessionUser(currentUser);
+    closeBuy();
+    renderGrid();
+    showToast('购买成功！「'+SKINS[i]+'」已解锁');
+  }catch(e){
+    showToast('购买失败：'+(e.message||e));
+  }finally{
+    this.disabled = false; this.textContent = '确认购买';
+  }
+});
+
+init();
+</script>
+</body>
+</html>
