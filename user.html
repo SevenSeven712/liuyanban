@@ -58,14 +58,14 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .btn-edit-profile{flex:1;padding:11px;border:2px solid #fff;border-radius:10px;font-weight:800;font-family:inherit;font-size:.9em;cursor:pointer;background:#fff;color:var(--primary)}
 
 
-/* 六宫格导航 */
-.nav-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 4px}
-.nav-cell{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .18s;text-align:center}
-.nav-cell:hover{border-color:var(--primary);background:var(--primary-bg)}
-.nav-cell:active{transform:scale(.97)}
-.nav-cell .ic{width:40px;height:40px;border-radius:50%;background:var(--primary-bg);display:grid;place-items:center;color:var(--primary)}
-.nav-cell .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.nav-cell .tx{font-size:.78em;font-weight:700;color:var(--text)}
+/* 宫格导航 */
+.nav-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin:18px 0 4px}
+.nav-cell{background:none;border:none;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform .18s;text-align:center}
+.nav-cell:active{transform:scale(.92)}
+.nav-cell .ic{width:52px;height:52px;border-radius:50%;background:var(--primary-bg);display:grid;place-items:center;color:var(--primary);transition:all .18s;box-shadow:0 2px 8px rgba(46,125,50,.10)}
+.nav-cell:hover .ic{background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(46,125,50,.28);transform:translateY(-2px)}
+.nav-cell .ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-cell .tx{font-size:.72em;font-weight:600;color:var(--text-muted)}
 .nav-cell .sub{font-size:.62em;color:var(--text-light);margin-top:-4px}
 /* Tab */
 .tabs{display:flex;gap:8px;margin:16px 0 12px;border-bottom:1px solid var(--border)}
@@ -293,6 +293,9 @@ async function render(){
       '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=about\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div class="tx">关于我们</div></div>' +
       (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=adminfeedback\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3h18v14H5l-2 2V3z"/><path d="M8 8h8M8 12h5"/></svg></div><div class="tx">反馈管理</div></div>' : '') +
       (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=sites\'"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="tx">网站管理</div></div>' : '') +
+      '<div class="nav-cell" onclick="location.href=\'/liuyanban/shop.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="M9 13a3 3 0 0 0 6 0"/></svg></div><div class="tx">皮肤商店</div></div>' +
+      '<div class="nav-cell" onclick="location.href=\'/liuyanban/activity.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 5.9 6.4.5-4.9 4.2 1.5 6.3L12 15.8 6.6 18.9l1.5-6.3L3.2 8.4l6.4-.5z"/></svg></div><div class="tx">活动</div></div>' +
+      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=shopadmin\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="tx">商店管理</div></div>' : '') +
       '</div>';
   }
   // 帖子列表
