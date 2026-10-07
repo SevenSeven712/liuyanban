@@ -1024,19 +1024,26 @@
                             '<label style="display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:8px;">处理措施（必选）</label>' +
                             '<div style="display:flex;flex-direction:column;gap:8px;">' +
                                 '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
-                                    '<input type="radio" name="measureType" value="warn" style="accent-color:#2e7d32;"> 警告（发送警告通知）' +
+                                    '<input type="checkbox" name="measureType" value="warn" style="accent-color:#2e7d32;"> 警告（发送警告通知）' +
                                 '</label>' +
                                 '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
-                                    '<input type="radio" name="measureType" value="delete" style="accent-color:#2e7d32;"> 删除违规内容' +
+                                    '<input type="checkbox" name="measureType" value="delete" style="accent-color:#2e7d32;"> 删除违规内容' +
                                 '</label>' +
                                 '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
-                                    '<input type="radio" name="measureType" value="ban" style="accent-color:#2e7d32;"> 禁言处理' +
+                                    '<input type="checkbox" name="measureType" value="ban" style="accent-color:#2e7d32;"> 禁言处理' +
+                                '</label>' +
+                                '<label class="measure-opt" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #c8e0c8;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;">' +
+                                    '<input type="checkbox" name="measureType" value="deduct" style="accent-color:#2e7d32;"> 扣除小七币' +
                                 '</label>' +
                             '</div>' +
                         '</div>' +
                         '<div id="banDaysGroup" style="display:none;margin-bottom:14px;">' +
                             '<label style="display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">禁言天数</label>' +
                             '<input type="number" id="banDays" value="3" min="1" max="3650" style="width:100%;padding:10px 12px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:0.9em;outline:none;box-sizing:border-box;">' +
+                        '</div>' +
+                        '<div id="deductGroup" style="display:none;margin-bottom:14px;">' +
+                            '<label style="display:block;font-size:0.75em;font-weight:600;color:#5a7a6a;margin-bottom:6px;">扣除数量（小七币）</label>' +
+                            '<input type="number" id="deductAmount" value="50" min="1" style="width:100%;padding:10px 12px;border:2px solid #c8e0c8;border-radius:10px;font-family:inherit;font-size:0.9em;outline:none;box-sizing:border-box;">' +
                         '</div>' +
                         '<div style="background:#f5faf5;border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;font-size:0.78em;color:#5a7a6a;line-height:1.5;">' +
                             '处理后，举报人和被举报人都会收到站内通知。' +
@@ -1050,69 +1057,87 @@
 
             document.body.appendChild(overlay);
 
-            var radios = overlay.querySelectorAll('input[name="measureType"]');
+            var boxes = overlay.querySelectorAll('input[name="measureType"]');
             var banGroup = overlay.querySelector('#banDaysGroup');
+            var deductGroup = overlay.querySelector('#deductGroup');
 
-            radios.forEach(function(r) {
-                r.onchange = function() {
-                    banGroup.style.display = this.value === 'ban' ? 'block' : 'none';
-                    overlay.querySelectorAll('.measure-opt').forEach(function(el) {
-                        el.style.borderColor = '#c8e0c8';
-                        el.style.background = '#fff';
-                    });
-                    this.parentElement.style.borderColor = '#2e7d32';
-                    this.parentElement.style.background = '#e8f5e9';
-                };
-            });
+            function syncGroups() {
+                var checked = {};
+                boxes.forEach(function(b) { if (b.checked) checked[b.value] = true; });
+                banGroup.style.display = checked.ban ? 'block' : 'none';
+                deductGroup.style.display = checked.deduct ? 'block' : 'none';
+                boxes.forEach(function(b) {
+                    b.parentElement.style.borderColor = b.checked ? '#2e7d32' : '#c8e0c8';
+                    b.parentElement.style.background = b.checked ? '#e8f5e9' : '#fff';
+                });
+            }
+            boxes.forEach(function(b) { b.onchange = syncGroups; });
 
             overlay.querySelector('#measureClose').onclick = function() { overlay.remove(); };
             overlay.querySelector('#measureCancel').onclick = function() { overlay.remove(); };
             overlay.querySelector('#measureOk').onclick = async function() {
-                var sel = overlay.querySelector('input[name="measureType"]:checked');
-                if (!sel) { alert('请选择处理措施'); return; }
-                var measure = sel.value;
+                var measures = [];
+                boxes.forEach(function(b) { if (b.checked) measures.push(b.value); });
+                if (!measures.length) { alert('请至少选择一项处理措施'); return; }
                 var days = parseInt(overlay.querySelector('#banDays').value) || 3;
+                var deductAmt = parseInt(overlay.querySelector('#deductAmount').value) || 0;
                 overlay.remove();
-                await doApproveReport(reportId, measure, days);
+                await doApproveReport(reportId, measures, days, deductAmt);
             };
         }
         window.openMeasureDialog = openMeasureDialog;
 
-        async function doApproveReport(reportId, measure, banDays) {
+        async function doApproveReport(reportId, measures, banDays, deductAmt) {
             try {
+                if (!Array.isArray(measures)) measures = [measures];
                 var rRes = await window.sb.from('reports').select('*').eq('id', reportId).single();
                 if (rRes.error) throw rRes.error;
                 var report = rRes.data;
                 var typeText = { post: '帖子', comment: '评论', message: '留言', chat: '聊天消息' }[report.content_type] || '内容';
                 var snippet = await getFullSnippet(report);
+                var measureTexts = [];
 
-                await window.sb.from('reports').update({
-                    status: 'approved',
-                    reviewed_by: currentUser.id,
-                    reviewed_at: new Date().toISOString(),
-                    measure: measure,
-                    ban_days: measure === 'ban' ? banDays : null,
-                    admin_note: measure + (measure === 'ban' ? '（' + banDays + '天）' : '')
-                }).eq('id', reportId);
-
-                var measureText = '';
-                if (measure === 'ban') {
+                if (measures.indexOf('delete') >= 0) {
+                    var tableMap = { post: 'posts', comment: 'post_comments', message: 'messages', chat: 'chats' };
+                    var table = tableMap[report.content_type];
+                    if (table) { await window.sb.from(table).delete().eq('id', report.content_id); }
+                    measureTexts.push('删除违规内容');
+                }
+                if (measures.indexOf('ban') >= 0) {
                     var until = new Date(Date.now() + banDays * 86400000).toISOString();
                     await window.sb.from('users').update({
                         banned_reason: '被举报违规',
                         banned_until: until
                     }).eq('id', report.reported_user_id);
-                    measureText = '禁言 ' + banDays + ' 天（至 ' + new Date(until).toLocaleString('zh-CN') + '）';
-                } else if (measure === 'delete') {
-                    var tableMap = { post: 'posts', comment: 'post_comments', message: 'messages', chat: 'chats' };
-                    var table = tableMap[report.content_type];
-                    if (table) {
-                        await window.sb.from(table).delete().eq('id', report.content_id);
-                    }
-                    measureText = '删除违规内容';
-                } else if (measure === 'warn') {
-                    measureText = '警告（已发送警告通知）';
+                    measureTexts.push('禁言 ' + banDays + ' 天（至 ' + new Date(until).toLocaleString('zh-CN') + '）');
                 }
+                if (measures.indexOf('warn') >= 0) {
+                    measureTexts.push('警告（已发送警告通知）');
+                }
+                if (measures.indexOf('deduct') >= 0 && deductAmt > 0) {
+                    var dr = await window.sb.rpc('admin_adjust_coins', {
+                        p_user_id: report.reported_user_id,
+                        p_amount: -deductAmt,
+                        p_reason: '违规扣除（举报处理）'
+                    });
+                    if (!dr.error && dr.data && dr.data.ok) {
+                        measureTexts.push('扣除 ' + deductAmt + ' 小七币');
+                    } else {
+                        measureTexts.push('扣除 ' + deductAmt + ' 小七币失败（' + ((dr.data && dr.data.message) || '余额不足') + '）');
+                    }
+                }
+
+                var measureText = measureTexts.join('；') || '无';
+                var measureStr = measures.join(',');
+
+                await window.sb.from('reports').update({
+                    status: 'approved',
+                    reviewed_by: currentUser.id,
+                    reviewed_at: new Date().toISOString(),
+                    measure: measureStr,
+                    ban_days: measures.indexOf('ban') >= 0 ? banDays : null,
+                    admin_note: measureText
+                }).eq('id', reportId);
 
                 await window.pushNotification(report.reporter_id, {
                     type: 'report_result',
