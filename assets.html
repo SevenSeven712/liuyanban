@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>我的资产 · Seven戚</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="common.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#f5faf5; --bg-card:#fff; --border:#c8e0c8; --text:#1e3a2e; --text-muted:#5a7a6a; --text-light:#8aaa9a;
+  --primary:#2e7d32; --primary-light:#4caf50; --primary-bg:#e8f5e9; --radius:16px; --radius-sm:10px;
+  --shadow:0 8px 32px rgba(46,125,50,.12);
+  --font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --danger:#e57373; --danger-text:#c62828;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);}
+#mainApp{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+.app-header{flex-shrink:0;padding:12px 16px;background:rgba(255,255,255,.92);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;z-index:50;min-height:56px;}
+.app-header .back{background:none;border:none;cursor:pointer;color:var(--text);display:flex;padding:4px;border-radius:8px;}
+.app-header .back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.app-header .title{font-weight:800;font-size:1.05em;}
+.asset-body{flex:1;overflow-y:auto;padding:20px 16px calc(24px + var(--safe-bottom));-webkit-overflow-scrolling:touch;}
+.balance-card{background:linear-gradient(135deg,#2e7d32,#4caf50);border-radius:var(--radius);padding:28px 24px;color:#fff;text-align:center;box-shadow:0 12px 32px rgba(46,125,50,.28);position:relative;overflow:hidden;}
+.balance-card::after{content:"";position:absolute;top:-40%;right:-20%;width:200px;height:200px;background:rgba(255,255,255,.08);border-radius:50%;}
+.balance-card .bc-label{font-size:.8em;opacity:.85;font-weight:600;letter-spacing:.05em;}
+.balance-card .bc-num{font-size:2.8em;font-weight:900;margin:8px 0 4px;line-height:1;position:relative;z-index:1;}
+.balance-card .bc-num small{font-size:.35em;font-weight:700;opacity:.85;margin-left:6px;}
+.balance-card .bc-coin{font-size:.75em;opacity:.8;}
+.section-title{font-size:.72em;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px 2px;}
+.tx-list{display:flex;flex-direction:column;gap:8px;}
+.tx-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.tx-item .tx-info{min-width:0;flex:1;}
+.tx-item .tx-reason{font-size:.86em;font-weight:600;color:var(--text);word-break:break-word;}
+.tx-item .tx-time{font-size:.68em;color:var(--text-light);margin-top:3px;}
+.tx-item .tx-amount{font-size:1.05em;font-weight:800;white-space:nowrap;}
+.tx-item .tx-amount.plus{color:var(--primary);}
+.tx-item .tx-amount.minus{color:var(--danger-text);}
+.empty{text-align:center;color:var(--text-muted);padding:50px 20px;font-size:.85em;line-height:1.8;}
+.empty svg{width:48px;height:48px;stroke:var(--text-light);fill:none;stroke-width:1.5;margin-bottom:10px;}
+.refresh-btn{display:block;width:100%;margin-top:20px;padding:11px;border-radius:var(--radius-sm);border:2px solid var(--border);background:transparent;color:var(--text-muted);font-weight:700;font-size:.85em;cursor:pointer;font-family:inherit;transition:.2s;}
+.refresh-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg);}
+</style>
+</head>
+<body>
+<div id="mainApp">
+  <div class="app-header">
+    <button class="back" onclick="history.back()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <span class="title">我的资产</span>
+  </div>
+  <div class="asset-body">
+    <div class="balance-card">
+      <div class="bc-label">小七币余额</div>
+      <div class="bc-num" id="balanceNum">--<small>币</small></div>
+      <div class="bc-coin">Seven戚 · 通行货币</div>
+    </div>
+    <div class="section-title">最近账单（最多 20 条）</div>
+    <div class="tx-list" id="txList">
+      <div class="empty"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg><div>加载中…</div></div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">刷新</button>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+(function(){
+  var currentUser = getSessionUser();
+  if (!currentUser || !currentUser.id) { window.location.href = '/liuyanban/index.html'; return; }
+
+  function fmtTime(t){
+    var d = new Date(t);
+    var now = new Date();
+    var diff = (now - d) / 1000;
+    if (diff < 60) return '刚刚';
+    if (diff < 3600) return Math.floor(diff/60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff/3600) + ' 小时前';
+    return d.toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+
+  async function loadBalance(){
+    try {
+      var r = await window.sb.from('users').select('coins').eq('id', currentUser.id).single();
+      var c = (r.data && r.data.coins) || 0;
+      document.getElementById('balanceNum').innerHTML = c + '<small>币</small>';
+      // 同步本地缓存
+      currentUser.coins = c;
+      setSessionUser(currentUser);
+    } catch(e){
+      document.getElementById('balanceNum').innerHTML = '--<small>币</small>';
+    }
+  }
+
+  async function loadTx(){
+    var list = document.getElementById('txList');
+    try {
+      var r = await window.sb.from('coin_transactions')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (r.error) throw r.error;
+      var rows = r.data || [];
+      if (!rows.length){
+        list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 10h8M8 14h5"/></svg><div>还没有任何收支记录</div></div>';
+        return;
+      }
+      list.innerHTML = rows.map(function(t){
+        var plus = t.amount >= 0;
+        return '<div class="tx-item">' +
+          '<div class="tx-info">' +
+            '<div class="tx-reason">' + escapeHtml(t.reason || '调整') + '</div>' +
+            '<div class="tx-time">' + fmtTime(t.created_at) + '</div>' +
+          '</div>' +
+          '<div class="tx-amount ' + (plus ? 'plus' : 'minus') + '">' + (plus ? '+' : '') + t.amount + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e){
+      list.innerHTML = '<div class="empty"><div>账单加载失败：' + escapeHtml(e.message) + '</div></div>';
+    }
+  }
+
+  async function refreshAll(){ await loadBalance(); await loadTx(); }
+
+  document.getElementById('refreshBtn').onclick = function(){ showToast('已刷新'); refreshAll(); };
+  refreshAll();
+})();
+</script>
+</body>
+</html>
