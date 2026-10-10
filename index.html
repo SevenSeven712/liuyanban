@@ -702,7 +702,8 @@
                 deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
                 deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
                 deviceLimitTitle: '设备已达上限',
-                deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。'
+                deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。',
+                netError: '网络异常，请检查网络后重试'
             },
             en: {
                 loginMainTitle: 'Welcome back',
@@ -747,7 +748,8 @@
                 deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
                 deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
                 deviceLimitTitle: 'Device Limit Reached',
-                deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.'
+                deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.',
+                netError: 'Network error, please check your connection and try again'
             }
         };
         var currentLang = 'zh';
@@ -877,12 +879,26 @@
         }
         async function registerUser(phone, password, nickname) {
             var email = phoneToEmail(phone);
+            // 0. 先查业务表：该手机号是否已注册
+            try {
+                var exist = await window.sb.from('users').select('id').eq('phone', phone).limit(1);
+                if (exist.data && exist.data.length) throw new Error(T().phoneExists);
+            } catch (e) {
+                if (e.message === T().phoneExists) throw e;
+                // 查询本身失败则忽略，继续尝试注册
+            }
             // 1. 用 Supabase Auth 注册（邮箱=手机号@sq.local）
-            var signRes = await window.sb.auth.signUp({ email: email, password: password });
+            var signRes;
+            try {
+                signRes = await window.sb.auth.signUp({ email: email, password: password });
+            } catch (netErr) {
+                throw new Error(T().netError);
+            }
             if (signRes.error) {
-                if ((signRes.error.message || '').toLowerCase().indexOf('already') >= 0)
+                var emsg = ((signRes.error.message || '') + ' ' + (signRes.error.error_description || '')).toLowerCase();
+                if (emsg.indexOf('already') >= 0 || emsg.indexOf('registered') >= 0 || signRes.error.status === 422)
                     throw new Error(T().phoneExists);
-                throw signRes.error;
+                throw new Error(signRes.error.message || T().netError);
             }
             var authId = signRes.data && signRes.data.user ? signRes.data.user.id : null;
             // 2. 写入业务资料表
