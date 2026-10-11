@@ -609,7 +609,7 @@ function showConfirm(title,body,onOk,prefKey,prefLabel){
 
 var currentUser=getSessionUser();
 if(!currentUser||!currentUser.id)window.location.href='/liuyanban/index.html';
-var isAdmin=!!(currentUser&&currentUser.phone==='17355394710');
+var isAdmin=!!(currentUser&&currentUser.is_admin===true);
 if(isAdmin)document.getElementById('createRoomBtn').style.display='inline-flex';
 function isUserBanned(){if(!currentUser||!currentUser.banned_until)return false;return new Date(currentUser.banned_until)>new Date()}
 
@@ -1710,7 +1710,7 @@ function renderDoudizhu(game,el){
   var st=game.state||{},players=game.players||[];
   var order=st.order||[];
   var myHand=st.hands?st.hands[currentUser.id]:null;
-  var isAdminNow=!!(currentUser&&currentUser.phone==="17355394710");
+  var isAdminNow=!!(currentUser&&currentUser.is_admin===true);
   if(st.phase==="finished"){
     var msg=st.aborted?"游戏已中止":(st.winnerSide==="landlord"?"地主获胜":"农民获胜");
     var h1='<div class="ddz-result"><div class="big">'+msg+"</div>";
@@ -1763,7 +1763,7 @@ function renderDoudizhu(game,el){
   if(handEl){handEl.querySelectorAll(".ddz-card").forEach(function(c){c.onclick=function(){this.classList.toggle("sel");};});}
 }
 function ddzPeek(uid){
-  if(!currentUser||currentUser.phone!=="17355394710"){showToast("无权查看");return;}
+  if(!currentUser||currentUser.is_admin!==true){showToast("无权查看");return;}
   var game=state.room&&state.room.current_game;
   if(!game||game.type!=="doudizhu")return;
   var st=game.state||{};var hand=(st.hands&&st.hands[uid])||[];
@@ -2021,7 +2021,6 @@ async function sendRedPacket(){
   btn.disabled = true;
   try{
     var res = await window.sb.rpc('send_red_packet', {
-      p_user_id: currentUser.id,
       p_room_id: state.room.id,
       p_total: total,
       p_count: count
@@ -2054,7 +2053,6 @@ async function openRedPacketDetail(packetId){
 async function grabRedPacket(packetId){
   try{
     var res = await window.sb.rpc('grab_red_packet', {
-      p_user_id: currentUser.id,
       p_packet_id: packetId
     });
     if(res.error) throw res.error;
