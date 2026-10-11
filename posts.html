@@ -303,7 +303,7 @@ window.openReportDialog = window.openReportDialog || function(reportedUserId, co
                 content_snapshot: contentSnapshot, reason: r.value, description: desc
             }]).select();
             if (ins.error) throw ins.error;
-            var adm = await window.sb.from('users').select('id').eq('phone','17355394710').single();
+            var adm = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
             if (adm.data) {
                 await window.pushNotification(adm.data.id, {
                     type: 'report', notification_type: 'report',
@@ -393,7 +393,7 @@ function getUserAvatar(user) {
 
 var currentUser = getSessionUser();
 if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
-var isAdmin = (currentUser.phone === '17355394710');
+var isAdmin = (currentUser.is_admin === true);
 if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
 
 var categories = [];
@@ -548,16 +548,15 @@ function roleTagHTML(userId){
   if(!r) return '';
   return '<span class="role-tag" style="background:'+escapeHtml(r.role_color||'#2e7d32')+'">'+escapeHtml(r.role_name||'')+'</span>';
 }
-async function banUser(userId, reason, until) { await window.sb.from('users').update({ banned_reason: reason, banned_until: until }).eq('id', userId); }
-async function unbanUser(userId) { await window.sb.from('users').update({ banned_until: null }).eq('id', userId); }
+async function banUser(userId, reason, until) { await window.sb.rpc('admin_ban_user', { p_user_id: userId, p_reason: reason, p_until: until }); }
+async function unbanUser(userId) { await window.sb.rpc('admin_unban_user', { p_user_id: userId }); }
 async function assignRoleToUser(userId, roleName, roleColor) {
-    await window.sb.from('user_roles').delete().eq('user_id', userId);
-    await window.sb.from('user_roles').insert([{ user_id: userId, role_name: roleName, role_color: roleColor }]);
+    await window.sb.rpc('admin_set_role', { p_user_id: userId, p_role_name: roleName, p_role_color: roleColor });
 }
 async function removeRoleFromAll(roleName) {
     var roles = await fetchUserRoles();
     for (var i = 0; i < roles.length; i++) {
-        if (roles[i].role_name === roleName) await window.sb.from('user_roles').delete().eq('id', roles[i].id);
+        if (roles[i].role_name === roleName) await window.sb.rpc('admin_remove_role', { p_user_id: roles[i].user_id });
     }
 }
 async function loadPollData(postId) {
@@ -992,7 +991,7 @@ window.adjustCoinsPrompt = function(userId, nickname, currentCoins) {
         var signed = type === 'add' ? amt : -amt;
         overlay.remove();
         try {
-            var r = await window.sb.rpc('admin_adjust_coins', { p_user_id: userId, p_amount: signed, p_reason: reason });
+            var r = await window.sb.rpc('admin_adjust_coins', { p_target_user_id: userId, p_amount: signed, p_reason: reason });
             if (r.error) throw r.error;
             var d = r.data;
             if (!d || !d.ok) { showToast((d && d.message) || '操作失败'); return; }
@@ -1030,7 +1029,7 @@ window.loginAsUser = async function(userId) {
         var user = res.data;
         setSessionUser(user);
         currentUser = user;
-        isAdmin = (user.phone === '17355394710');
+        isAdmin = (user.is_admin === true);
         renderHeader('帖子广场', 'posts');
         renderFooter('posts');
         await loadCategories();
@@ -1142,7 +1141,7 @@ async function loadAllData() {
         if (session && session.id) {
             if (!currentUser || currentUser.id !== session.id || currentUser.avatar_url !== session.avatar_url || currentUser.nickname !== session.nickname) {
                 currentUser = session;
-                isAdmin = (currentUser.phone === '17355394710');
+                isAdmin = (currentUser.is_admin === true);
                 renderHeader('帖子广场', 'posts');
                 renderFooter('posts');
                 if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
