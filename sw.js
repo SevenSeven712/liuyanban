@@ -2,6 +2,16 @@
 self.addEventListener('install', function (e) { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 
+// fetch handler（Chrome 要求 PWA 安装必须有）
+self.addEventListener('fetch', function (e) {
+  // 网络优先，不做离线缓存，避免影响实时数据
+  e.respondWith(
+    fetch(e.request).catch(function () {
+      return caches.match(e.request);
+    })
+  );
+});
+
 // 点击系统通知 → 打开聊天页
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
