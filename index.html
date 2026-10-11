@@ -915,6 +915,9 @@
 
         async function loginUser(phone, password) {
             var email = phoneToEmail(phone);
+            // 0. 先清除任何已存在的旧会话，防止换账号时残留上一个账号
+            try { await window.sb.auth.signOut(); } catch (e) {}
+
             // 1. 先用 Supabase Auth 登录
             var signRes = await window.sb.auth.signInWithPassword({ email: email, password: password });
 
