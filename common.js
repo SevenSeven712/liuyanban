@@ -153,9 +153,9 @@ function getSessionUser() {
     return null;
 }
 function setSessionUser(user) { localStorage.setItem('sq_user_session', JSON.stringify(user)); }
-function clearSession() {
+async function clearSession() {
     localStorage.removeItem('sq_user_session');
-    try { if (window.sb) window.sb.auth.signOut(); } catch (e) {}
+    try { if (window.sb) await window.sb.auth.signOut(); } catch (e) {}
 }
 
 // 用 Supabase Auth 的真实会话校验并刷新本地缓存
@@ -520,7 +520,7 @@ async function submitReport(reporterId, reportedUserId, contentType, contentId, 
     if (res.error) throw res.error;
     var report = res.data[0];
 
-    var adminRes = await window.sb.from('users').select('id').eq('phone', '17355394710').single();
+    var adminRes = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
     if (adminRes.data) {
         await pushNotification(adminRes.data.id, {
             type: 'report',
