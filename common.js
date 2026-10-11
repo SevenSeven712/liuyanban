@@ -947,7 +947,7 @@ function showSystemNotification(title, body, url) {
 window.showSystemNotification = showSystemNotification;
 
 // ============================================================
-// PWA 安装到桌面
+// PWA 安装到桌面（自定义弹窗 UI）
 // ============================================================
 var deferredInstallPrompt = null;
 
@@ -960,28 +960,89 @@ function isPWAInstalled() {
     return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
 }
 
+function showInstallModal() {
+    var old = document.getElementById('pwaInstallModal');
+    if (old) old.remove();
+
+    var ua = (navigator.userAgent || '').toLowerCase();
+    var isWechat = ua.indexOf('micromessenger') >= 0;
+    var isIOS = /iphone|ipad|ipod/.test(ua);
+    var isAndroid = /android/.test(ua);
+
+    var steps = '';
+    if (isWechat) {
+        steps = '当前在<b>微信</b>里打开，无法直接安装。<br>请点右上角「⋯」→ <b>「在浏览器打开」</b>，再用浏览器安装。';
+    } else if (isIOS) {
+        steps = '1. 用 <b>Safari</b> 打开本页<br>2. 点底部 <b>分享</b> 按钮 ⬆️<br>3. 选择 <b>「添加到主屏幕」</b><br>4. 点右上角 <b>「添加」</b>';
+    } else if (isAndroid) {
+        steps = '点右上角 <b>浏览器菜单</b>（⋮）<br>选择 <b>「安装应用」</b> 或 <b>「添加到主屏幕」</b>';
+    } else {
+        steps = '点浏览器地址栏右侧的 <b>安装图标</b>（显示器带箭头）<br>或在浏览器菜单里选 <b>「安装此应用」</b>';
+    }
+
+    var canNativeInstall = !!deferredInstallPrompt;
+
+    var html = '' +
+      '<div class="pwa-modal-mask" id="pwaInstallModal">' +
+        '<div class="pwa-modal">' +
+          '<div class="pwa-modal-close" onclick="closeInstallModal()">✕</div>' +
+          '<img class="pwa-modal-icon" src="/liuyanban/icon.svg" alt="图标" />' +
+          '<div class="pwa-modal-title">安装到桌面</div>' +
+          '<div class="pwa-modal-sub">把 Seven戚 装成 App，随时一键打开</div>' +
+          '<div class="pwa-modal-steps">' + steps + '</div>' +
+          (canNativeInstall ? '<button class="pwa-modal-btn" onclick="doNativeInstall()">立即安装</button>' : '') +
+          '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">' + (canNativeInstall ? '稍后再说' : '我知道了') + '</button>' +
+        '</div>' +
+      '</div>';
+
+    var wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap.firstChild);
+
+    if (!document.getElementById('pwa-modal-style')) {
+        var st = document.createElement('style');
+        st.id = 'pwa-modal-style';
+        st.textContent = '' +
+          '.pwa-modal-mask{position:fixed;inset:0;z-index:100000;background:rgba(30,58,46,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:pwaFade .25s ease}' +
+          '@keyframes pwaFade{from{opacity:0}to{opacity:1}}' +
+          '.pwa-modal{background:#fff;border-radius:20px;max-width:340px;width:100%;padding:28px 24px 20px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pwaPop .3s cubic-bezier(.34,1.56,.64,1)}' +
+          '@keyframes pwaPop{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}' +
+          '.pwa-modal-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:#f0f0f0;color:#888;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;user-select:none}' +
+          '.pwa-modal-close:hover{background:#e0e0e0}' +
+          '.pwa-modal-icon{width:80px;height:80px;border-radius:20px;box-shadow:0 8px 24px rgba(46,125,50,.25);margin-bottom:16px}' +
+          '.pwa-modal-title{font-size:1.25em;font-weight:800;color:#1e3a2e;margin-bottom:6px}' +
+          '.pwa-modal-sub{font-size:.82em;color:#5a7a6a;margin-bottom:18px}' +
+          '.pwa-modal-steps{font-size:.85em;color:#1e3a2e;line-height:1.8;background:#e8f5e9;border-radius:12px;padding:14px 16px;margin-bottom:18px;text-align:left}' +
+          '.pwa-modal-steps b{color:#2e7d32}' +
+          '.pwa-modal-btn{width:100%;padding:13px;border:none;border-radius:12px;background:#2e7d32;color:#fff;font-weight:800;font-size:.95em;cursor:pointer;font-family:inherit;transition:.2s;margin-bottom:10px}' +
+          '.pwa-modal-btn:hover{background:#4caf50;box-shadow:0 6px 20px rgba(46,125,50,.35)}' +
+          '.pwa-modal-btn.ghost{background:#f0f0f0;color:#5a7a6a;margin-bottom:0}' +
+          '.pwa-modal-btn.ghost:hover{background:#e5e5e5;box-shadow:none}';
+        document.head.appendChild(st);
+    }
+}
+window.showInstallModal = showInstallModal;
+
+function closeInstallModal() {
+    var m = document.getElementById('pwaInstallModal');
+    if (m) m.remove();
+}
+window.closeInstallModal = closeInstallModal;
+
+async function doNativeInstall() {
+    if (!deferredInstallPrompt) { closeInstallModal(); return; }
+    deferredInstallPrompt.prompt();
+    try {
+        var r = await deferredInstallPrompt.userChoice;
+        if (r && r.outcome === 'accepted') showToast('正在安装…');
+    } catch (e) {}
+    deferredInstallPrompt = null;
+    closeInstallModal();
+}
+window.doNativeInstall = doNativeInstall;
+
 async function installPWA() {
     if (isPWAInstalled()) { showToast('已经安装过了，直接在桌面打开即可'); return; }
-    if (deferredInstallPrompt) {
-        deferredInstallPrompt.prompt();
-        try {
-            var r = await deferredInstallPrompt.userChoice;
-            if (r && r.outcome === 'accepted') showToast('正在安装…');
-            else showToast('已取消');
-        } catch (e) {}
-        deferredInstallPrompt = null;
-        return;
-    }
-    // 浏览器没给安装提示（iOS / 微信 / 不支持）→ 给手动引导
-    var ua = (navigator.userAgent || '').toLowerCase();
-    if (ua.indexOf('micromessenger') >= 0) {
-        alert('当前在微信里打开，无法安装。\n\n请点右上角「…」→「在浏览器打开」，再用浏览器安装。');
-    } else if (/iphone|ipad|ipod/.test(ua)) {
-        alert('iPhone 安装方法：\n1. 用 Safari 打开本页\n2. 点底部分享按钮 ⬆️\n3. 选择「添加到主屏幕」\n4. 点「添加」');
-    } else if (/android/.test(ua)) {
-        alert('安卓安装方法：\n点右上角浏览器菜单 →「添加到主屏幕」或「安装应用」');
-    } else {
-        alert('安装方法：\n点浏览器地址栏右侧的「安装」图标，\n或浏览器菜单 →「安装此应用」');
-    }
+    showInstallModal();
 }
 window.installPWA = installPWA;
