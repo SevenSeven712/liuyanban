@@ -131,6 +131,27 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .modal-actions button{padding:9px 20px;border:none;border-radius:8px;font-weight:700;font-family:inherit;font-size:.85em;cursor:pointer}
 .modal-actions .btn-danger{background:var(--danger);color:#fff}
 .modal-actions .btn-secondary{background:var(--bg-input);color:var(--text-muted)}
+/* 管理员查看资产区块 */
+.admin-asset-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-top:16px}
+.section-title{font-size:.72em;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.adm-coins{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adm-coins-num{font-size:1.6em;font-weight:900;color:var(--primary)}
+.adm-coins-unit{font-size:.8em;color:var(--text-muted)}
+.adm-coin-actions{margin-left:auto;display:flex;gap:8px}
+.adm-coin-actions button{padding:6px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:700;font-size:.78em;cursor:pointer;font-family:inherit}
+.adm-coin-actions button.minus{background:var(--danger)}
+.adm-skin-list{display:flex;flex-direction:column;gap:6px}
+.adm-skin-item{display:flex;justify-content:space-between;font-size:.82em;padding:8px 12px;background:var(--bg-input);border-radius:8px}
+.adm-skin-name{font-weight:600}
+.adm-skin-exp{color:var(--text-light);font-size:.9em}
+.tx-list{display:flex;flex-direction:column;gap:6px}
+.tx-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--bg-input);border-radius:8px}
+.tx-item .tx-info{min-width:0;flex:1}
+.tx-item .tx-reason{font-size:.8em;font-weight:600}
+.tx-item .tx-time{font-size:.66em;color:var(--text-light);margin-top:2px}
+.tx-item .tx-amount{font-weight:800;white-space:nowrap}
+.tx-item .tx-amount.plus{color:var(--primary)}
+.tx-item .tx-amount.minus{color:#c62828}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.82);color:#fff;padding:10px 20px;border-radius:10px;font-size:.85em;opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -191,6 +212,10 @@ var viewingUser = null;   // 被查看的用户
 var isSelf = false;
 var iFollowed = false;
 var myPosts = [];
+
+// 皮肤名称（与 shop.html 保持一致）
+var SKINS = ["原版","经典圆角","暗夜霓虹","渐变紫","粉嫩","毛玻璃","新拟态","星空","烫金黑","手写便签","立体凸起","极光","莫兰迪","赛博绿","果冻","渐变描边","亚克力","暗金","泡泡渐变","樱桃红","黑白","微信绿","磨砂蓝","梦幻紫粉","霓虹白底","✨流光边框","✨呼吸发光","✨渐变流动","✨微微浮动","✨闪光掠过","✨果冻弹跳","✨星星闪烁","✨液态流动","✨霓虹脉冲","✨打字光标","🐱猫爪","🌸樱花","⭐星星","🐰兔耳","💗爱心","☁️云朵","🍀四叶草","🌙月亮","🎀蝴蝶结","🌈彩虹云"];
+var adminViewData = null;   // 管理员查看他人时的资产数据
 
 function $(id){ return document.getElementById(id); }
 function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -254,10 +279,39 @@ async function loadPosts(){
   myPosts = r.data || [];
 }
 
+// 管理员查看他人时，拉取其资产（余额/账单/皮肤）
+async function loadAdminView(){
+  adminViewData = null;
+  var amIAdmin = currentUser && currentUser.is_admin === true;
+  if (isSelf || !amIAdmin) return;
+  try {
+    var r = await window.sb.rpc('admin_get_user_assets', { p_user_id: viewingUser.id });
+    if (r.data && r.data.ok) adminViewData = r.data;
+  } catch(e) {}
+}
+
+// 管理员调币
+async function adminAdjustCoins(delta){
+  var amt = prompt(delta > 0 ? '加多少小七币？' : '扣多少小七币？', '100');
+  if (amt === null) return;
+  amt = parseInt(amt, 10);
+  if (!amt || amt <= 0) return showToast('请输入有效数量');
+  var signed = delta > 0 ? amt : -amt;
+  try {
+    var r = await window.sb.rpc('admin_adjust_coins', { p_target_user_id: viewingUser.id, p_amount: signed, p_reason: signed > 0 ? '管理员发放' : '管理员扣除' });
+    if (r.error) throw r.error;
+    if (!r.data || !r.data.ok) return showToast((r.data && r.data.message) || '操作失败');
+    showToast((signed > 0 ? '已加 ' : '已扣 ') + amt + ' 币');
+    await render();
+  } catch(e) { showToast('操作失败：' + e.message); }
+}
+window.adminAdjustCoins = adminAdjustCoins;
+
 async function render(){
   if (!(await loadUser())) return;
   await loadFollow();
   await loadPosts();
+  await loadAdminView();
   var counts = await loadCounts();
   var age = calcAge(viewingUser.birthday);
 
@@ -306,6 +360,50 @@ async function render(){
       (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=shopadmin\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="tx">商店管理</div></div>' : '') +
       '</div>';
   }
+  // ===== 管理员查看他人时的资产区块 =====
+  var adminHtml = '';
+  if (!isSelf && adminViewData) {
+    var d = adminViewData;
+    var amIAdmin = currentUser && currentUser.is_admin === true;
+    adminHtml += '<div class="admin-asset-box">';
+    adminHtml += '<div class="section-title">账号资产（管理员可见）</div>';
+    adminHtml += '<div class="adm-coins"><span class="adm-coins-num">' + (d.coins || 0) + '</span><span class="adm-coins-unit">小七币</span>';
+    if (amIAdmin) {
+      adminHtml += '<span class="adm-coin-actions"><button onclick="adminAdjustCoins(1)">+加币</button><button class="minus" onclick="adminAdjustCoins(-1)">-扣币</button></span>';
+    }
+    adminHtml += '</div>';
+
+    // 已拥有资产（皮肤）
+    adminHtml += '<div class="section-title" style="margin-top:16px;">已拥有资产</div>';
+    var skins = d.skins || [];
+    if (skins.length) {
+      adminHtml += '<div class="adm-skin-list">';
+      skins.forEach(function(s){
+        var name = SKINS[s.skin_id] || ('皮肤#' + s.skin_id);
+        var exp = new Date(s.expire_at).toLocaleDateString('zh-CN');
+        adminHtml += '<div class="adm-skin-item"><span class="adm-skin-name">' + escapeHtml(name) + '</span><span class="adm-skin-exp">至 ' + exp + '</span></div>';
+      });
+      adminHtml += '</div>';
+    } else {
+      adminHtml += '<div class="empty" style="padding:16px;">暂无资产</div>';
+    }
+
+    // 账单
+    adminHtml += '<div class="section-title" style="margin-top:16px;">最近账单</div>';
+    var txs = d.transactions || [];
+    if (txs.length) {
+      adminHtml += '<div class="tx-list">';
+      txs.forEach(function(t){
+        var plus = t.amount >= 0;
+        adminHtml += '<div class="tx-item"><div class="tx-info"><div class="tx-reason">' + escapeHtml(t.reason || '调整') + '</div><div class="tx-time">' + new Date(t.created_at).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + '</div></div><div class="tx-amount ' + (plus ? 'plus' : 'minus') + '">' + (plus ? '+' : '') + t.amount + '</div></div>';
+      });
+      adminHtml += '</div>';
+    } else {
+      adminHtml += '<div class="empty" style="padding:16px;">暂无账单</div>';
+    }
+    adminHtml += '</div>';
+  }
+
   // 帖子列表
   var postsHtml = '<div class="tabs"><button class="tab active">' + (isSelf ? '我的帖子' : '他的帖子') + ' (' + myPosts.length + ')</button></div>';
   if (myPosts.length) {
@@ -319,7 +417,7 @@ async function render(){
     postsHtml += '<div class="empty">还没有发过帖子</div>';
   }
 
-  $('pageContent').innerHTML = hero + navHtml + postsHtml;
+  $('pageContent').innerHTML = hero + navHtml + adminHtml + postsHtml;
 }
 
 function goPost(id){ location.href = '/liuyanban/posts.html?post=' + id; }
