@@ -305,7 +305,7 @@ document.getElementById('buyOk').addEventListener('click', async function(){
   if(buyMode === 'equip'){
     this.disabled = true; this.textContent = '处理中…';
     try{
-      var er = await window.sb.rpc('equip_skin', { p_user_id: currentUser.id, p_skin_id: i });
+      var er = await window.sb.rpc('equip_skin', { p_skin_id: i });
       if(er.error) throw er.error;
       var eres = er.data || {};
       if(!eres.ok) throw new Error(eres.message || '切换失败');
@@ -322,7 +322,7 @@ document.getElementById('buyOk').addEventListener('click', async function(){
   this.disabled = true; this.textContent = '处理中…';
   try{
     // 调用数据库原子函数：校验余额 + 扣币 + 写记录在一个事务内完成
-    var r = await window.sb.rpc('buy_skin', { p_user_id: currentUser.id, p_skin_id: i });
+    var r = await window.sb.rpc('buy_skin', { p_skin_id: i });
     if(r.error) throw r.error;
     var res = r.data || {};
     if(!res.ok) throw new Error(res.message || '购买失败');
