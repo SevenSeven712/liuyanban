@@ -644,7 +644,7 @@
         // ============ 会话 ============
         var currentUser = getSessionUser();
         if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
-        var isAdmin = currentUser.phone === '17355394710';
+        var isAdmin = currentUser.is_admin === true;
 
 
 
@@ -774,7 +774,7 @@
         document.getElementById('saveProfileBtn').onclick = async function() {
             var n = document.getElementById('profileNameInput').value.trim();
             if (!n) return showToast('请输入昵称');
-            if (n.toLowerCase() === 'seven戚' && currentUser.phone !== '17355394710') return showToast('该昵称不可用');
+            if (n.toLowerCase() === 'seven戚' && currentUser.is_admin !== true) return showToast('该昵称不可用');
             try {
                 await updateUser(currentUser.id, { nickname: n });
                 currentUser.nickname = n;
@@ -786,10 +786,10 @@
 
         // ============ 退出登录 ============
         function handleLogout() {
-            showConfirm('退出登录', '确定要退出登录吗？', function() {
-                clearSession();
+            showConfirm('退出登录', '确定要退出登录吗？', async function() {
+                await clearSession();
                 showToast('已退出登录');
-                setTimeout(function() { window.location.href = '/liuyanban/index.html'; }, 500);
+                window.location.href = '/liuyanban/index.html';
             });
         }
         document.getElementById('logoutBtn').onclick = handleLogout;
@@ -1105,10 +1105,11 @@
                 }
                 if (measures.indexOf('ban') >= 0) {
                     var until = new Date(Date.now() + banDays * 86400000).toISOString();
-                    await window.sb.from('users').update({
-                        banned_reason: '被举报违规',
-                        banned_until: until
-                    }).eq('id', report.reported_user_id);
+                    await window.sb.rpc('admin_ban_user', {
+                        p_user_id: report.reported_user_id,
+                        p_reason: '被举报违规',
+                        p_until: until
+                    });
                     measureTexts.push('禁言 ' + banDays + ' 天（至 ' + new Date(until).toLocaleString('zh-CN') + '）');
                 }
                 if (measures.indexOf('warn') >= 0) {
@@ -1116,7 +1117,7 @@
                 }
                 if (measures.indexOf('deduct') >= 0 && deductAmt > 0) {
                     var dr = await window.sb.rpc('admin_adjust_coins', {
-                        p_user_id: report.reported_user_id,
+                        p_target_user_id: report.reported_user_id,
                         p_amount: -deductAmt,
                         p_reason: '违规扣除（举报处理）'
                     });
@@ -1264,7 +1265,7 @@
                 }]).select();
                 if (ins.error) throw ins.error;
 
-                var adminRes = await window.sb.from('users').select('id').eq('phone', '17355394710').single();
+                var adminRes = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
                 if (adminRes.data) {
                     await window.pushNotification(adminRes.data.id, {
                         type: 'feedback', notification_type: 'feedback',
