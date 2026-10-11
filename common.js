@@ -931,8 +931,8 @@ function showSystemNotification(title, body, url) {
         if (Notification.permission !== 'granted') return;
         var opts = {
             body: body || '',
-            icon: '/liuyanban/icon-192.png',
-            badge: '/liuyanban/icon-192.png',
+            icon: '/liuyanban/icon.svg',
+            badge: '/liuyanban/icon.svg',
             data: { url: url || '/liuyanban/chats.html' }
         };
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
