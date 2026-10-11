@@ -377,7 +377,7 @@ function showConfirm(title,body,onOk){var m=document.getElementById('confirmModa
 
 var currentUser=getSessionUser();
 if(!currentUser||!currentUser.id)window.location.href='/liuyanban/index.html';
-var isAdmin=!!(currentUser&&currentUser.phone==='17355394710');
+var isAdmin=!!(currentUser&&currentUser.is_admin===true);
 // 拉取当前用户最新的气泡皮肤，更新缓存（保证自己发的消息用对皮肤）
 async function syncMySkin(){
   if(!currentUser||!currentUser.id)return;
@@ -833,7 +833,7 @@ async function openChatRedPacket(packetId){
 
 async function grabChatRedPacket(packetId){
   try{
-    var res = await window.sb.rpc('grab_red_packet', { p_user_id: currentUser.id, p_packet_id: packetId });
+    var res = await window.sb.rpc('grab_red_packet', { p_packet_id: packetId });
     if(res.error) throw res.error;
     var d = res.data;
     if(d && d.ok){
@@ -924,7 +924,6 @@ async function sendChatRedPacket(){
   btn.disabled = true;
   try{
     var res = await window.sb.rpc('send_red_packet', {
-      p_user_id: currentUser.id,
       p_room_id: null,
       p_total: total,
       p_count: count,
