@@ -970,10 +970,17 @@ function showInstallModal() {
     var isAndroid = /android/.test(ua);
 
     var steps = '';
+    var iosDiagram = '';
     if (isWechat) {
         steps = '当前在<b>微信</b>里打开，无法直接安装。<br>请点右上角「⋯」→ <b>「在浏览器打开」</b>，再用浏览器安装。';
     } else if (isIOS) {
-        steps = '1. 用 <b>Safari</b> 打开本页<br>2. 点底部 <b>分享</b> 按钮 ⬆️<br>3. 选择 <b>「添加到主屏幕」</b><br>4. 点右上角 <b>「添加」</b>';
+        steps = '<div class="pwa-ios-step"><span class="pwa-ios-num">1</span>用 <b>Safari</b> 打开本页</div>' +
+                '<div class="pwa-ios-step"><span class="pwa-ios-num">2</span>点底部中间的 <b>分享按钮</b>' +
+                  '<span class="pwa-share-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>' +
+                '</div>' +
+                '<div class="pwa-ios-step"><span class="pwa-ios-num">3</span>往下滑，选 <b>「添加到主屏幕」</b></div>' +
+                '<div class="pwa-ios-step"><span class="pwa-ios-num">4</span>点右上角 <b>「添加」</b></div>' +
+                '<div class="pwa-ios-tip">💡 装到桌面后，才能正常接收新消息通知</div>';
     } else if (isAndroid) {
         steps = '点右上角 <b>浏览器菜单</b>（⋮）<br>选择 <b>「安装应用」</b> 或 <b>「添加到主屏幕」</b>';
     } else {
@@ -981,6 +988,16 @@ function showInstallModal() {
     }
 
     var canNativeInstall = !!deferredInstallPrompt;
+    var installed = isPWAInstalled();
+
+    var btnHtml;
+    if (installed) {
+      btnHtml = '<button class="pwa-modal-btn disabled" disabled>已安装</button>' +
+                '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">关闭</button>';
+    } else {
+      btnHtml = '<button class="pwa-modal-btn" onclick="handleInstallClick()">下载到桌面</button>' +
+                '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">稍后再说</button>';
+    }
 
     var html = '' +
       '<div class="pwa-modal-mask" id="pwaInstallModal">' +
@@ -990,8 +1007,7 @@ function showInstallModal() {
           '<div class="pwa-modal-title">安装到桌面</div>' +
           '<div class="pwa-modal-sub">把 Seven戚 装成 App，随时一键打开</div>' +
           '<div class="pwa-modal-steps">' + steps + '</div>' +
-          (canNativeInstall ? '<button class="pwa-modal-btn" onclick="doNativeInstall()">立即安装</button>' : '') +
-          '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">' + (canNativeInstall ? '稍后再说' : '我知道了') + '</button>' +
+          btnHtml +
         '</div>' +
       '</div>';
 
@@ -1014,8 +1030,14 @@ function showInstallModal() {
           '.pwa-modal-sub{font-size:.82em;color:#5a7a6a;margin-bottom:18px}' +
           '.pwa-modal-steps{font-size:.85em;color:#1e3a2e;line-height:1.8;background:#e8f5e9;border-radius:12px;padding:14px 16px;margin-bottom:18px;text-align:left}' +
           '.pwa-modal-steps b{color:#2e7d32}' +
+          '.pwa-ios-step{display:flex;align-items:center;gap:8px;margin-bottom:10px;line-height:1.5}' +
+          '.pwa-ios-num{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#2e7d32;color:#fff;font-size:.75em;font-weight:800;display:flex;align-items:center;justify-content:center}' +
+          '.pwa-share-icon{display:inline-flex;width:22px;height:22px;color:#2e7d32;margin-left:2px;vertical-align:middle}' +
+          '.pwa-share-icon svg{width:100%;height:100%}' +
+          '.pwa-ios-tip{margin-top:6px;font-size:.9em;color:#e67e22;background:#fff8e1;border-radius:8px;padding:8px 10px}' +
           '.pwa-modal-btn{width:100%;padding:13px;border:none;border-radius:12px;background:#2e7d32;color:#fff;font-weight:800;font-size:.95em;cursor:pointer;font-family:inherit;transition:.2s;margin-bottom:10px}' +
           '.pwa-modal-btn:hover{background:#4caf50;box-shadow:0 6px 20px rgba(46,125,50,.35)}' +
+          '.pwa-modal-btn.disabled{background:#c8c8c8;color:#fff;cursor:not-allowed;box-shadow:none}' +
           '.pwa-modal-btn.ghost{background:#f0f0f0;color:#5a7a6a;margin-bottom:0}' +
           '.pwa-modal-btn.ghost:hover{background:#e5e5e5;box-shadow:none}';
         document.head.appendChild(st);
@@ -1041,8 +1063,37 @@ async function doNativeInstall() {
 }
 window.doNativeInstall = doNativeInstall;
 
+// 点击「下载到桌面」
+function handleInstallClick() {
+    if (deferredInstallPrompt) {
+        doNativeInstall();
+    } else {
+        // 手机端/不支持原生安装 → 提示按上方步骤操作
+        showToast('请按上方步骤操作');
+    }
+}
+window.handleInstallClick = handleInstallClick;
+
 async function installPWA() {
     if (isPWAInstalled()) { showToast('已经安装过了，直接在桌面打开即可'); return; }
     showInstallModal();
 }
 window.installPWA = installPWA;
+
+// iOS 用户首次访问，自动弹一次安装引导（每个浏览器只弹一次）
+(function autoPromptIOS() {
+    try {
+        if (isPWAInstalled()) return;
+        var ua = (navigator.userAgent || '').toLowerCase();
+        // 只在真正的 Safari（iOS）里自动提示，微信里不弹（用户也没法装）
+        var isIOS = /iphone|ipad|ipod/.test(ua);
+        var isSafari = isIOS && ua.indexOf('safari') >= 0 && ua.indexOf('crios') < 0 && ua.indexOf('fxios') < 0;
+        var isWechat = ua.indexOf('micromessenger') >= 0;
+        if (!isSafari || isWechat) return;
+        if (localStorage.getItem('sq_ios_install_prompted') === '1') return;
+        setTimeout(function () {
+            localStorage.setItem('sq_ios_install_prompted', '1');
+            showInstallModal();
+        }, 3000);
+    } catch (e) {}
+})();
