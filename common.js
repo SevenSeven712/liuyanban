@@ -424,7 +424,11 @@ async function initializeGlobalChatListener() {
             if (!newMsg || newMsg.user_id === user.id) return;
             updateChatBadge();
             if (getSoundEnabled()) playReminderSound();
-            if (!window.location.href.includes('chats.html')) showChatNotificationBanner();
+            if (!window.location.href.includes('chats.html')) {
+                showChatNotificationBanner();
+                var nm = newMsg.content || newMsg.text || '收到一条新消息';
+                showSystemNotification('Seven戚 · 新消息', String(nm).substring(0, 50), '/liuyanban/chats.html');
+            }
         })
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, function () {
             updateChatBadge();
@@ -899,3 +903,85 @@ window.showAvatarPrompt = showAvatarPrompt;
   // 暴露给页面主动调用
   window.updateGlobalBanBanner = updateBanner;
 })();
+
+// ============================================================
+// PWA：Service Worker + 系统通知
+// ============================================================
+(function initPWA() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+    navigator.serviceWorker.register('/liuyanban/sw.js', { scope: '/liuyanban/' }).catch(function (e) {
+        console.warn('SW 注册失败:', e);
+    });
+})();
+
+// 请求通知权限（登录后才请求，避免骚扰）
+function requestNotifyPermission() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+window.requestNotifyPermission = requestNotifyPermission;
+
+// 发一条系统通知（网页开着/后台时可见）
+function showSystemNotification(title, body, url) {
+    try {
+        if (!('Notification' in window)) return;
+        if (Notification.permission !== 'granted') return;
+        var opts = {
+            body: body || '',
+            icon: '/liuyanban/icon-192.png',
+            badge: '/liuyanban/icon-192.png',
+            data: { url: url || '/liuyanban/chats.html' }
+        };
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(function (reg) {
+                reg.showNotification(title, opts);
+            });
+        } else {
+            new Notification(title, opts);
+        }
+    } catch (e) {}
+}
+window.showSystemNotification = showSystemNotification;
+
+// ============================================================
+// PWA 安装到桌面
+// ============================================================
+var deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+});
+
+function isPWAInstalled() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+
+async function installPWA() {
+    if (isPWAInstalled()) { showToast('已经安装过了，直接在桌面打开即可'); return; }
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        try {
+            var r = await deferredInstallPrompt.userChoice;
+            if (r && r.outcome === 'accepted') showToast('正在安装…');
+            else showToast('已取消');
+        } catch (e) {}
+        deferredInstallPrompt = null;
+        return;
+    }
+    // 浏览器没给安装提示（iOS / 微信 / 不支持）→ 给手动引导
+    var ua = (navigator.userAgent || '').toLowerCase();
+    if (ua.indexOf('micromessenger') >= 0) {
+        alert('当前在微信里打开，无法安装。\n\n请点右上角「…」→「在浏览器打开」，再用浏览器安装。');
+    } else if (/iphone|ipad|ipod/.test(ua)) {
+        alert('iPhone 安装方法：\n1. 用 Safari 打开本页\n2. 点底部分享按钮 ⬆️\n3. 选择「添加到主屏幕」\n4. 点「添加」');
+    } else if (/android/.test(ua)) {
+        alert('安卓安装方法：\n点右上角浏览器菜单 →「添加到主屏幕」或「安装应用」');
+    } else {
+        alert('安装方法：\n点浏览器地址栏右侧的「安装」图标，\n或浏览器菜单 →「安装此应用」');
+    }
+}
+window.installPWA = installPWA;

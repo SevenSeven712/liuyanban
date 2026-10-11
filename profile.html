@@ -2,6 +2,9 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8" />
+    <link rel="manifest" href="/liuyanban/manifest.json" />
+    <meta name="theme-color" content="#2e7d32" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 个人中心</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -342,6 +345,27 @@
                             <div>
                                 <div class="item-label">关于我们</div>
                                 <div class="item-sublabel">创作者 &amp; 商城</div>
+                            </div>
+                        </div>
+                        <span class="item-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </span>
+                    </div>
+
+                    <div class="settings-item" id="goToInstall" role="button" tabindex="0">
+                        <div class="item-left">
+                            <div class="item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="item-label">安装到桌面</div>
+                                <div class="item-sublabel">像 App 一样使用 Seven戚</div>
                             </div>
                         </div>
                         <span class="item-arrow">
@@ -720,6 +744,8 @@
         document.getElementById('goToAdminFeedback').onclick = function() { switchView('adminFeedbackView'); loadAdminFeedback(); };
         document.getElementById('goToManageSites').onclick = function() { switchView('manageSitesView'); loadAdminSites(); };
         document.getElementById('goToAbout').onclick = function() { switchView('aboutView'); };
+        var installBtn = document.getElementById('goToInstall');
+        if (installBtn) installBtn.onclick = function() { if (typeof installPWA === 'function') installPWA(); };
         function backToUser(){ window.location.href = '/liuyanban/user.html'; }
         window.backToUser = backToUser;
         document.getElementById('backToSettings').onclick = backToUser;
