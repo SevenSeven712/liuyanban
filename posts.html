@@ -887,7 +887,7 @@ async function renderAdminPanel(){
         '<button class="btn-coin" onclick="adjustCoinsPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\',\''+(u.coins||0)+'\')">调币</button>'+
         (isBanned?'<button class="btn-unban" onclick="unbanUserById(\''+u.id+'\')">解封</button>':'<button class="btn-ban" onclick="banUserPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">封号</button>')+
         '<button class="btn-role" onclick="assignRolePrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">发身份</button>'+
-        '<button class="btn-login" onclick="loginAsUser(\''+u.id+'\')">一键登录</button></div></div>';
+        '</div></div>';
     });
     adminPanelContent.innerHTML = usersHtml;
     return;
@@ -1021,26 +1021,9 @@ window.banUserPrompt = function(userId, nickname) {
 window.unbanUserById = async function(userId) {
     showConfirm('解封用户', '确定解封该用户吗？', async function() { await unbanUser(userId); showToast('已解封'); renderAdminPanel(); });
 };
-window.loginAsUser = async function(userId) {
-    try {
-        var res = await window.sb.rpc('admin_get_user', { p_user_id: userId });
-        if (res.error) throw res.error;
-        if (!res.data) return showToast('用户不存在');
-        var user = res.data;
-        setSessionUser(user);
-        currentUser = user;
-        isAdmin = (user.is_admin === true);
-        renderHeader('帖子广场', 'posts');
-        renderFooter('posts');
-        await loadCategories();
-        await loadAllData();
-        adminPanelOverlay.classList.remove('active');
-        if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-flex';
-        else document.getElementById('adminPanelBtn').style.display = 'none';
-        showToast('已切换到 ' + user.nickname);
-        if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
-    } catch (err) { showToast('一键登录失败：' + err.message); }
-};
+// 一键登录功能已移除：它与「缓存必须等于 Auth 真账号」的安全模型冲突，
+// 且本质是冒充他人身份。管理员若想查看某用户视角，请直接访问
+// /liuyanban/user.html?id=<用户id> 查看其主页。
 window.assignRolePrompt = function(userId, nickname){
   showPrompt("发放身份", "给「"+nickname+"」发放身份（格式：名称#颜色，如 版主#2e7d32）", "如 版主#2e7d32", async function(val){
     if(!val) return;
