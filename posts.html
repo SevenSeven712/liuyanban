@@ -887,7 +887,7 @@ async function renderAdminPanel(){
         '<button class="btn-coin" onclick="adjustCoinsPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\',\''+(u.coins||0)+'\')">调币</button>'+
         (isBanned?'<button class="btn-unban" onclick="unbanUserById(\''+u.id+'\')">解封</button>':'<button class="btn-ban" onclick="banUserPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">封号</button>')+
         '<button class="btn-role" onclick="assignRolePrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">发身份</button>'+
-        '</div></div>';
+        '<button class="btn-login" onclick="viewUser(\''+u.id+'\')">查看主页</button></div></div>';
     });
     adminPanelContent.innerHTML = usersHtml;
     return;
@@ -1021,9 +1021,11 @@ window.banUserPrompt = function(userId, nickname) {
 window.unbanUserById = async function(userId) {
     showConfirm('解封用户', '确定解封该用户吗？', async function() { await unbanUser(userId); showToast('已解封'); renderAdminPanel(); });
 };
-// 一键登录功能已移除：它与「缓存必须等于 Auth 真账号」的安全模型冲突，
-// 且本质是冒充他人身份。管理员若想查看某用户视角，请直接访问
-// /liuyanban/user.html?id=<用户id> 查看其主页。
+// 「查看主页」：管理员点击后跳转到该用户主页查看（不切换身份，安全）
+window.viewUser = function(userId) {
+    if (!userId) return;
+    window.location.href = '/liuyanban/user.html?id=' + userId;
+};
 window.assignRolePrompt = function(userId, nickname){
   showPrompt("发放身份", "给「"+nickname+"」发放身份（格式：名称#颜色，如 版主#2e7d32）", "如 版主#2e7d32", async function(val){
     if(!val) return;
