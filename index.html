@@ -881,8 +881,8 @@
             var email = phoneToEmail(phone);
             // 0. 先查业务表：该手机号是否已注册
             try {
-                var exist = await window.sb.from('users').select('id').eq('phone', phone).limit(1);
-                if (exist.data && exist.data.length) throw new Error(T().phoneExists);
+                var exist = await window.sb.rpc('check_phone_registered', { p_phone: phone });
+                if (exist.data === true) throw new Error(T().phoneExists);
             } catch (e) {
                 if (e.message === T().phoneExists) throw e;
                 // 查询本身失败则忽略，继续尝试注册
@@ -921,15 +921,15 @@
             if (signRes.error) {
                 // 2. 老用户兼容：Auth 登录失败时，尝试用旧哈希匹配
                 var hashed = await hashPassword(password);
-                var oldRes = await window.sb.from('users').select('*').eq('phone', phone).eq('password', hashed);
-                var oldUser = oldRes.data && oldRes.data[0];
+                var oldRes = await window.sb.rpc('legacy_auth_lookup', { p_phone: phone, p_hash: hashed });
+                var oldUser = oldRes.data;
                 if (oldUser) {
                     // 老用户密码正确 -> 在 Auth 里补建账号并绑定
                     var su = await window.sb.auth.signUp({ email: email, password: password });
                     if (su.error && (su.error.message || '').toLowerCase().indexOf('already') < 0) throw su.error;
                     var newAuthId = su.data && su.data.user ? su.data.user.id : null;
                     if (newAuthId) {
-                        await window.sb.from('users').update({ auth_id: newAuthId }).eq('id', oldUser.id);
+                        await window.sb.rpc('bind_auth_to_phone', { p_phone: phone, p_hash: hashed, p_auth_id: newAuthId });
                         oldUser.auth_id = newAuthId;
                     }
                     // 重新登录建立会话
@@ -944,13 +944,9 @@
             var q = await window.sb.from('users').select('*').eq('auth_id', authUser.id).limit(1);
             var user = q.data && q.data[0];
             if (!user) {
-                // 兜底：按手机号找，并补写 auth_id
-                var q2 = await window.sb.from('users').select('*').eq('phone', phone).limit(1);
-                user = q2.data && q2.data[0];
-                if (user) {
-                    await window.sb.from('users').update({ auth_id: authUser.id }).eq('id', user.id);
-                    user.auth_id = authUser.id;
-                }
+                // 兜底：按手机号找并绑定（RPC，服务端校验）
+                var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: phone });
+                user = q2.data;
             }
             if (!user) throw new Error(T().loginFail);
             return user;

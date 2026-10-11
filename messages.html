@@ -377,9 +377,9 @@ window.openReportDialog = window.openReportDialog || function(reportedUserId, co
                 content_snapshot: contentSnapshot, reason: r.value, description: desc
             }]).select();
             if (ins.error) throw ins.error;
-            var adm = await window.sb.from('users').select('id').eq('phone','17355394710').single();
+            var adm = await window.sb.rpc('get_admin_id');
             if (adm.data) {
-                await window.pushNotification(adm.data.id, {
+                await window.pushNotification(adm.data, {
                     type: 'report', notification_type: 'report',
                     report_id: ins.data[0].id, report_reason: r.value,
                     extra_text: contentSnapshot ? String(contentSnapshot).substring(0,100) : ''
@@ -673,7 +673,7 @@ window.closeReportDialog = window.closeReportDialog || function() {
         // ============================================================
         async function reportMessage(contentId, author, contentSnapshot) {
             try {
-                var userRes = await window.sb.from('users').select('id').eq('nickname', author).single();
+                var userRes = await window.sb.from('public_users').select('id').eq('nickname', author).single();
                 if (userRes.error || !userRes.data) { showToast('无法找到该用户'); return; }
                 openReportDialog(userRes.data.id, 'message', contentId, contentSnapshot);
             } catch (err) {
@@ -985,7 +985,7 @@ window.closeReportDialog = window.closeReportDialog || function() {
                 return;
             }
             currentUser = session;
-            isAdmin = (currentUser.phone === '17355394710');
+            isAdmin = (currentUser.is_admin === true);
 
             renderHeader('留言板', 'messages');
             renderFooter('messages');
@@ -1009,7 +1009,7 @@ window.closeReportDialog = window.closeReportDialog || function() {
                         currentUser.avatar_url !== s.avatar_url ||
                         currentUser.nickname !== s.nickname) {
                         currentUser = s;
-                        isAdmin = (currentUser.phone === '17355394710');
+                        isAdmin = (currentUser.is_admin === true);
                         updateBannedBanner();
                         renderMessages();
                     }

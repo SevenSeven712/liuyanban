@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>斗地主 · 单机调试版</title>
+<style>
+:root{
+  --felt-dark:#0a2e18;--felt:#0f4426;--felt-light:#155c33;
+  --gold:#e8c15a;--gold-soft:#f5d98a;
+  --danger:#e53935;--text:#eaf7ee;--text-muted:#a8cbb5;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:radial-gradient(ellipse at 50% 30%, var(--felt-light) 0%, var(--felt) 45%, var(--felt-dark) 100%);
+  color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+/* 呢绒纹理 */
+body::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.06;
+  background-image:radial-gradient(#fff 1px, transparent 1px);
+  background-size:4px 4px;
+}
+.page-header{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  background:linear-gradient(180deg, rgba(0,0,0,.4), rgba(0,0,0,.15));
+  border-bottom:1px solid rgba(232,193,90,.25);flex-shrink:0;position:relative;z-index:2;
+}
+.page-header .back{background:none;border:none;cursor:pointer;color:var(--gold);padding:4px;display:flex}
+.page-header .back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+.page-header .title{font-weight:800;font-size:1.05em;letter-spacing:.5px;color:var(--gold-soft)}
+.page-header .spacer{flex:1}
+.page-header .newgame{
+  background:linear-gradient(180deg,var(--gold-soft),var(--gold));color:#3e2723;border:none;border-radius:9px;
+  padding:8px 16px;font-weight:800;font-family:inherit;font-size:.8em;cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.page-header .newgame:active{transform:translateY(1px)}
+
+.game-area{flex:1;display:flex;flex-direction:column;padding:14px;gap:10px;overflow-y:auto;min-height:0;position:relative;z-index:1}
+
+/* 顶部两个电脑玩家 */
+.ddz-opponents{display:flex;justify-content:space-between;gap:12px}
+.ddz-opp{
+  flex:1;display:flex;align-items:center;gap:9px;
+  background:linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.18));
+  border-radius:14px;padding:9px 12px;font-size:.78em;font-weight:700;
+  border:2px solid rgba(232,193,90,.18);transition:all .25s;position:relative;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);
+}
+.ddz-opp.turn{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,193,90,.25),0 3px 10px rgba(0,0,0,.3)}
+.ddz-opp.landlord{border-color:rgba(232,193,90,.55)}
+.ddz-opp .avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#3a6b4a,#1e4a2e);color:var(--gold-soft);
+  display:grid;place-items:center;font-size:15px;flex-shrink:0;
+  border:2px solid rgba(232,193,90,.4);
+}
+.ddz-opp.landlord .avatar{background:linear-gradient(135deg,#8a6d1f,#5c470f);color:#fff;border-color:var(--gold)}
+.ddz-opp .info{flex:1;min-width:0}
+.ddz-opp .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1.05em}
+.ddz-opp.landlord .name{color:var(--gold)}
+.ddz-opp .count{
+  background:rgba(232,193,90,.16);border:1px solid rgba(232,193,90,.3);
+  border-radius:99px;padding:1px 9px;font-size:.85em;color:var(--gold-soft);
+}
+.ddz-opp .crown{position:absolute;top:-9px;right:8px;font-size:14px}
+
+/* 底牌 */
+.ddz-bottom{
+  display:flex;gap:5px;justify-content:center;align-items:center;font-size:.72em;
+  background:rgba(0,0,0,.22);border-radius:10px;padding:6px 12px;
+  border:1px solid rgba(232,193,90,.15);align-self:center;
+}
+.ddz-bottom .lbl{margin-right:6px;color:var(--gold-soft);font-weight:700;letter-spacing:1px}
+
+/* 出牌区 */
+.ddz-table{
+  flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:8px;min-height:150px;position:relative;
+}
+.ddz-play-area{
+  display:flex;justify-content:center;align-items:center;gap:4px;flex-wrap:wrap;
+  animation:playIn .28s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes playIn{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}
+.ddz-play-label{
+  font-size:.72em;color:var(--text-muted);width:100%;text-align:center;
+  margin-bottom:6px;letter-spacing:1px;
+}
+.ddz-status{
+  text-align:center;font-size:.9em;font-weight:800;color:var(--gold);
+  padding:8px 18px;background:rgba(0,0,0,.25);border-radius:99px;
+  border:1px solid rgba(232,193,90,.2);letter-spacing:1px;
+}
+
+/* 手牌 */
+.ddz-hand{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:2px;
+  padding:20px 8px 8px;min-height:96px;align-items:flex-end;
+}
+.ddz-card{
+  width:46px;height:66px;border-radius:7px;
+  background:linear-gradient(160deg,#ffffff,#f0f0f0);color:#222;
+  border:1px solid #c8c8c8;
+  box-shadow:0 3px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.9);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:800;cursor:pointer;user-select:none;position:relative;
+  transition:transform .14s cubic-bezier(.34,1.56,.64,1), box-shadow .14s;
+  flex-shrink:0;margin-left:-14px;
+}
+.ddz-card:first-child{margin-left:0}
+.ddz-card:hover{transform:translateY(-4px)}
+.ddz-card .rk{font-size:19px;line-height:1;font-family:'Arial',sans-serif}
+.ddz-card .su{font-size:15px;line-height:1}
+.ddz-card.red{color:#d32f2f}
+.ddz-card.black{color:#1a1a1a}
+.ddz-card.sel{
+  transform:translateY(-18px);
+  box-shadow:0 8px 16px rgba(0,0,0,.45), 0 0 0 2px var(--gold), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.ddz-card.mini{width:32px;height:46px;margin-left:-10px}
+.ddz-card.mini:first-child{margin-left:0}
+.ddz-card.mini .rk{font-size:14px}
+.ddz-card.mini .su{font-size:11px}
+.ddz-card.back{
+  background:linear-gradient(135deg,#1c4a8a,#0d2f66);border-color:#0a2450;
+  color:transparent;
+}
+.ddz-card.back::after{
+  content:'';position:absolute;inset:4px;border-radius:4px;
+  border:1px solid rgba(255,255,255,.25);
+  background:repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.08) 4px, rgba(255,255,255,.08) 8px);
+}
+.ddz-card.back .rk,.ddz-card.back .su{display:none}
+
+/* 操作按钮 */
+.ddz-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:8px 0 4px}
+.ddz-btn{
+  padding:13px 30px;border:none;border-radius:12px;font-weight:800;
+  font-family:inherit;font-size:.92em;cursor:pointer;letter-spacing:1px;
+  background:linear-gradient(180deg,var(--gold-soft),var(--gold));color:#3e2723;
+  box-shadow:0 4px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .12s;
+}
+.ddz-btn:active{transform:translateY(2px);box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.ddz-btn.pass{
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.1));
+  color:var(--text);box-shadow:0 4px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.ddz-btn:disabled{opacity:.4;cursor:default}
+
+/* 结果 */
+.ddz-result{text-align:center;padding:40px 20px;animation:playIn .4s}
+.ddz-result .big{font-size:1.8em;font-weight:900;margin-bottom:14px;letter-spacing:2px}
+.ddz-result .sub{font-size:1em;color:var(--text-muted);margin-bottom:18px}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);
+  background:rgba(0,0,0,.88);color:var(--gold-soft);padding:11px 22px;border-radius:12px;
+  border:1px solid rgba(232,193,90,.3);
+  font-size:.86em;opacity:0;pointer-events:none;transition:all .3s;z-index:999;white-space:nowrap;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 滚动条 */
+.game-area::-webkit-scrollbar{width:6px}
+.game-area::-webkit-scrollbar-thumb{background:rgba(232,193,90,.3);border-radius:3px}
+/* 对家整块（含出牌区） */
+.opp-block{
+  flex:1;display:flex;flex-direction:column;gap:6px;position:relative;
+}
+.opp-head{
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.18));
+  border-radius:12px;padding:8px 10px;border:2px solid rgba(232,193,90,.18);
+  transition:all .25s;box-shadow:0 3px 10px rgba(0,0,0,.3);position:relative;
+}
+.opp-block.turn .opp-head{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,193,90,.25)}
+.opp-block.landlord .opp-head{border-color:rgba(232,193,90,.55)}
+.opp-block .avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,#3a6b4a,#1e4a2e);color:var(--gold-soft);
+  display:grid;place-items:center;font-size:14px;flex-shrink:0;
+  border:2px solid rgba(232,193,90,.4);
+}
+.opp-block.landlord .avatar{background:linear-gradient(135deg,#8a6d1f,#5c470f);color:#fff;border-color:var(--gold)}
+.opp-meta{flex:1;min-width:0}
+.opp-name{font-size:.82em;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opp-block.landlord .opp-name{color:var(--gold)}
+.opp-count{font-size:.72em;color:var(--text-muted)}
+.opp-block .crown{position:absolute;top:-9px;right:8px;font-size:14px}
+.opp-block.turn .avatar{animation:pulseAv .9s infinite}
+@keyframes pulseAv{0%,100%{box-shadow:0 0 0 0 rgba(232,193,90,.5)}50%{box-shadow:0 0 0 6px rgba(232,193,90,0)}}
+
+/* 叫地主气泡 */
+.bubble{
+  align-self:center;font-size:.72em;font-weight:800;padding:4px 12px;border-radius:99px;
+  animation:playIn .3s;white-space:nowrap;
+}
+.bubble.yes{background:linear-gradient(180deg,var(--gold-soft),var(--gold));color:#3e2723}
+.bubble.no{background:rgba(255,255,255,.15);color:var(--text-muted);border:1px solid rgba(255,255,255,.15)}
+
+/* 对家出牌区 */
+.opp-play{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:40px;
+  animation:playIn .28s cubic-bezier(.34,1.56,.64,1);
+}
+.pass-tag{
+  font-size:.72em;color:var(--text-muted);font-weight:800;letter-spacing:1px;
+  padding:6px 14px;background:rgba(0,0,0,.22);border-radius:99px;align-self:center;
+}
+
+/* 中央信息区 */
+.ddz-center{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  min-height:60px;justify-content:center;flex:1;
+}
+
+/* 我的出牌区（手牌上方） */
+.my-play-zone{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:3px;min-height:44px;
+  align-items:center;animation:playIn .28s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* 发牌时手牌飞入 */
+.ddz-card.dealing{animation:dealIn .3s ease}
+@keyframes dealIn{from{opacity:0;transform:translateY(-40px) scale(.5) rotate(-15deg)}to{opacity:1;transform:none}}
+
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <button class="back" onclick="history.back()">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  </button>
+  <span class="title">斗地主 · 单机</span>
+  <div class="spacer"></div>
+  <button class="newgame" onclick="newGame()">重新开局</button>
+</div>
+
+<div class="game-area" id="gameArea"></div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   工具
+============================================================ */
+function $(id){return document.getElementById(id);}
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function showToast(msg){
+  var t=$('toast'); if(!t) return;
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer=setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+/* ============================================================
+   斗地主 —— 牌型核心逻辑
+============================================================ */
+var ddzSuits=['\u2660','\u2665','\u2663','\u2666'];
+function ddzVal(id){return id<52?(Math.floor(id/4))+3:(id===52?16:17);}
+function ddzSuit(id){return id<52?id%4:-1;}
+function ddzNewDeck(){var d=[];for(var i=0;i<54;i++)d.push(i);return d;}
+function ddzShuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function ddzSort(c){return c.slice().sort(function(a,b){return ddzVal(a)-ddzVal(b)||ddzSuit(a)-ddzSuit(b);});}
+function ddzValName(v){return v===16?'小王':v===17?'大王':v===15?'2':v===14?'A':v===13?'K':v===12?'Q':v===11?'J':String(v);}
+function ddzCardHTML(id,opts){
+  opts=opts||{};
+  var v=ddzVal(id);
+  var cls='ddz-card'+(opts.mini?' mini':'')+(opts.sel?' sel':'');
+  if(v>=16){
+    cls+=' red';
+    return '<div class="'+cls+'" data-id="'+id+'"><div class="rk">'+(v===17?'大':'小')+'</div><div class="su">王</div></div>';
+  }
+  var suit=ddzSuit(id);
+  var red=(suit===1||suit===3);
+  cls+=red?' red':' black';
+  return '<div class="'+cls+'" data-id="'+id+'"><div class="rk">'+ddzValName(v)+'</div><div class="su">'+ddzSuits[suit]+'</div></div>';
+}
+function ddzCheckPlane(cnt,keys,n){
+  var trioVals=keys.filter(function(k){return cnt[k]>=3&&k<=14;}).sort(function(a,b){return a-b;});
+  var segs=[],cur=[];
+  for(var i=0;i<trioVals.length;i++){
+    if(!cur.length||trioVals[i]===cur[cur.length-1]+1)cur.push(trioVals[i]);
+    else{if(cur.length>=2)segs.push(cur);cur=[trioVals[i]];}
+  }
+  if(cur.length>=2)segs.push(cur);
+  for(var s=0;s<segs.length;s++){
+    var seg=segs[s];
+    for(var L=seg.length;L>=2;L--){
+      for(var st=0;st+L<=seg.length;st++){
+        var sub=seg.slice(st,st+L);
+        var remain=n-3*L;
+        if(remain===L){
+          var rc=Object.assign({},cnt);sub.forEach(function(v){rc[v]-=3;});
+          var tot=0;Object.keys(rc).forEach(function(k){tot+=rc[k];});
+          if(tot===L)return{type:'plane_single',len:L,value:sub[sub.length-1]};
+        }
+        if(remain===2*L){
+          var rc2=Object.assign({},cnt);sub.forEach(function(v){rc2[v]-=3;});
+          var tot2=0,okp=true;Object.keys(rc2).forEach(function(k){var c=rc2[k];tot2+=c;if(c!==0&&c!==2)okp=false;});
+          if(tot2===2*L&&okp)return{type:'plane_pair',len:L,value:sub[sub.length-1]};
+        }
+      }
+    }
+  }
+  return null;
+}
+function ddzAnalyze(cards){
+  if(!cards||!cards.length)return null;
+  var vals=cards.map(ddzVal).sort(function(a,b){return a-b;});
+  var n=vals.length;
+  var cnt={};vals.forEach(function(v){cnt[v]=(cnt[v]||0)+1;});
+  var keys=Object.keys(cnt).map(Number).sort(function(a,b){return a-b;});
+  var counts=keys.map(function(k){return cnt[k];});
+  var maxCnt=Math.max.apply(null,counts);
+  if(n===2&&vals[0]===16&&vals[1]===17)return{type:'rocket',len:1,value:100};
+  if(n===4&&keys.length===1)return{type:'bomb',len:1,value:keys[0]};
+  if(n===1)return{type:'single',len:1,value:vals[0]};
+  if(n===2&&keys.length===1)return{type:'pair',len:1,value:keys[0]};
+  if(n===3&&keys.length===1)return{type:'trio',len:1,value:keys[0]};
+  if(n===4&&maxCnt===3){var tv=keys.filter(function(k){return cnt[k]===3})[0];return{type:'trio_single',len:1,value:tv};}
+  if(n===5&&maxCnt===3&&keys.length===2){var tv2=keys.filter(function(k){return cnt[k]===3})[0];return{type:'trio_pair',len:1,value:tv2};}
+  if(n>=5&&keys.length===n&&vals[n-1]<=14){
+    var ok=true;for(var i=1;i<n;i++){if(vals[i]!==vals[i-1]+1){ok=false;break;}}
+    if(ok)return{type:'straight',len:n,value:vals[n-1]};
+  }
+  if(n>=6&&n%2===0&&keys.length===n/2&&counts.every(function(c){return c===2;})&&vals[n-1]<=14){
+    var ok2=true;for(var i=1;i<keys.length;i++){if(keys[i]!==keys[i-1]+1){ok2=false;break;}}
+    if(ok2)return{type:'straight_pair',len:keys.length,value:keys[keys.length-1]};
+  }
+  if(n>=6&&n%3===0&&keys.length===n/3&&counts.every(function(c){return c===3;})&&vals[n-1]<=14){
+    var ok3=true;for(var i=1;i<keys.length;i++){if(keys[i]!==keys[i-1]+1){ok3=false;break;}}
+    if(ok3)return{type:'plane',len:keys.length,value:keys[keys.length-1]};
+  }
+  return ddzCheckPlane(cnt,keys,n);
+}
+function ddzCanBeat(play,last){
+  if(!play)return false;
+  if(!last)return true;
+  if(play.type==='rocket')return true;
+  if(last.type==='rocket')return false;
+  if(play.type==='bomb'&&last.type!=='bomb')return true;
+  if(play.type==='bomb'&&last.type==='bomb')return play.value>last.value;
+  if(last.type==='bomb')return false;
+  if(play.type!==last.type)return false;
+  if(play.len!==last.len)return false;
+  return play.value>last.value;
+}
+/* ============================================================
+   游戏状态
+============================================================ */
+var G = null; // 当前牌局
+
+function newGame(){
+  var deck = ddzShuffle(ddzNewDeck());
+  var ids = ['me','ai1','ai2'];
+  var fullHands = {};
+  ids.forEach(function(uid,i){ fullHands[uid] = ddzSort(deck.slice(i*17, i*17+17)); });
+  G = {
+    order: ids,
+    hands: { me:[], ai1:[], ai2:[] },  // 发牌动画期间从空开始
+    fullHands: fullHands,
+    bottom: deck.slice(51, 54),
+    names: { me:'你', ai1:'电脑·左', ai2:'电脑·右' },
+    phase: 'dealing',   // 发牌阶段
+    dealCount: 0,       // 已发张数
+    bidTurn: 0,
+    bidCount: 0,
+    landlord: null,
+    currentTurn: null,
+    lastPlay: null,     // { uid, cards, typeInfo, at: 时间戳 }
+    lastPlays: {},      // 每个玩家最近一次出牌 { uid: {cards,typeInfo,isPass} }
+    bids: {},           // 每个玩家叫地主结果 { uid: true/false/null }
+    passCount: 0,
+    multiplier: 1,
+    winner: null,
+    winnerSide: null,
+    sel: []
+  };
+  render();
+  startDealing();
+}
+
+/* 发牌动画：依次给三家各发一张，共 51 张 */
+var __dealTimer = null;
+function startDealing(){
+  if(__dealTimer) clearInterval(__dealTimer);
+  var order = G.order;
+  __dealTimer = setInterval(function(){
+    if(!G || G.phase!=='dealing'){ clearInterval(__dealTimer); __dealTimer=null; return; }
+    // 每轮给三家各发一张
+    var per = G.dealCount; // 已发轮数 0..16
+    if(per >= 17){
+      clearInterval(__dealTimer); __dealTimer=null;
+      G.phase = 'bid';
+      G.hands = G.fullHands;
+      render();
+      maybeAIAct();
+      return;
+    }
+    order.forEach(function(uid){
+      G.hands[uid] = G.hands[uid].concat([ G.fullHands[uid][per] ]);
+    });
+    G.dealCount++;
+    render();
+  }, 70);
+}
+
+/* ============================================================
+   AI 出牌逻辑
+============================================================ */
+// 从手牌里找所有能压过 last 的牌型（简易：只找同类型最小可压）
+function aiFindPlay(hand, last){
+  var all = ddzGroupByValue(hand);
+  if(!last){
+    // 自由出牌：出最小的单张或对子
+    var sorted = ddzSort(hand);
+    // 优先出最小的单张
+    return [sorted[0]];
+  }
+  var need = last.typeInfo;
+  // 找同类型能压的
+  var cand = aiFindSameType(hand, need);
+  if(cand) return cand;
+  // 找炸弹
+  var bomb = aiFindBomb(hand);
+  if(bomb) return bomb;
+  return null;
+}
+function ddzGroupByValue(hand){
+  var m = {};
+  hand.forEach(function(c){ var v=ddzVal(c); if(!m[v])m[v]=[]; m[v].push(c); });
+  return m;
+}
+function aiFindBomb(hand){
+  var m = ddzGroupByValue(hand);
+  var vals = Object.keys(m).map(Number).sort(function(a,b){return a-b;});
+  for(var i=0;i<vals.length;i++){
+    if(m[vals[i]].length===4) return m[vals[i]].slice(0,4);
+  }
+  // 王炸
+  if(m[16]&&m[17]) return [m[16][0],m[17][0]];
+  return null;
+}
+function aiFindSameType(hand, need){
+  var m = ddzGroupByValue(hand);
+  var vals = Object.keys(m).map(Number).sort(function(a,b){return a-b;});
+  var i;
+  if(need.type==='single'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>need.value) return [m[vals[i]][0]]; }
+  }
+  if(need.type==='pair'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>need.value && m[vals[i]].length>=2) return m[vals[i]].slice(0,2); }
+  }
+  if(need.type==='trio'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>need.value && m[vals[i]].length>=3) return m[vals[i]].slice(0,3); }
+  }
+  if(need.type==='trio_single'){
+    for(i=0;i<vals.length;i++){
+      if(vals[i]>need.value && m[vals[i]].length>=3){
+        var trio=m[vals[i]].slice(0,3);
+        // 带一张最小的单
+        for(var j=0;j<vals.length;j++){ if(vals[j]!==vals[i] && m[vals[j]].length>=1) return trio.concat([m[vals[j]][0]]); }
+      }
+    }
+  }
+  if(need.type==='trio_pair'){
+    for(i=0;i<vals.length;i++){
+      if(vals[i]>need.value && m[vals[i]].length>=3){
+        var trio2=m[vals[i]].slice(0,3);
+        for(var j=0;j<vals.length;j++){ if(vals[j]!==vals[i] && m[vals[j]].length>=2) return trio2.concat(m[vals[j]].slice(0,2)); }
+      }
+    }
+  }
+  if(need.type==='bomb'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>need.value && m[vals[i]].length===4) return m[vals[i]].slice(0,4); }
+    if(m[16]&&m[17]) return [m[16][0],m[17][0]];
+  }
+  if(need.type==='straight'){
+    return aiFindStraight(m, vals, need.value, need.len, 1);
+  }
+  if(need.type==='straight_pair'){
+    return aiFindStraight(m, vals, need.value, need.len, 2);
+  }
+  return null;
+}
+function aiFindStraight(m, vals, minVal, len, per){
+  // 找连续 len 个值，每个至少 per 张，且最大值 > minVal，且<=14
+  var vv = vals.filter(function(v){return v<=14;}).sort(function(a,b){return a-b;});
+  for(var start=vv.length-1; start>=0; start--){
+    var maxV = vv[start];
+    if(maxV<=minVal) continue;
+    // 尝试以 maxV 结尾的连续段
+    var seg=[];
+    for(var k=0;k<len;k++){
+      var need = maxV-k;
+      if(m[need]&&m[need].length>=per) seg.unshift(need);
+      else{ seg=null; break; }
+    }
+    if(seg){
+      var cards=[];
+      seg.forEach(function(v){ cards=cards.concat(m[v].slice(0,per)); });
+      return cards;
+    }
+  }
+  return null;
+}
+
+/* ============================================================
+   AI 行动
+============================================================ */
+function maybeAIAct(){
+  if(!G) return;
+  if(G.phase==='bid'){
+    var cur = G.order[G.bidTurn];
+    if(cur==='me') return; // 等玩家
+    setTimeout(function(){ aiBid(cur); }, 900);
+    return;
+  }
+  if(G.phase==='play'){
+    if(G.currentTurn==='me') return;
+    setTimeout(function(){ aiPlay(G.currentTurn); }, 900);
+  }
+}
+function aiBid(who){
+  if(!G || G.phase!=='bid') return;
+  if(G.order[G.bidTurn]!==who) return;
+  // AI 简单策略：手牌有大牌/炸弹就叫
+  var hand = G.hands[who];
+  var m = ddzGroupByValue(hand);
+  var strong = 0;
+  Object.keys(m).forEach(function(k){ if(m[k].length===4) strong+=2; });
+  if(m[17]||m[16]) strong++;
+  var bigCount = hand.filter(function(c){return ddzVal(c)>=15;}).length;
+  var want = (strong>=1 || bigCount>=2);
+  doBid(who, want);
+}
+function aiPlay(who){
+  if(!G || G.phase!=='play') return;
+  if(G.currentTurn!==who) return;
+  var hand = G.hands[who];
+  var last = (G.lastPlay && G.lastPlay.uid!==who) ? G.lastPlay : null;
+  var play = aiFindPlay(hand, last ? {typeInfo:last.typeInfo} : null);
+  if(!play){
+    // 过
+    doPass(who);
+  }else{
+    doPlay(who, play);
+  }
+}
+
+/* ============================================================
+   核心操作
+============================================================ */
+function doBid(who, want){
+  G.bids = G.bids || {};
+  G.bids[who] = want;
+  if(want){
+    G.landlord = who;
+    G.phase = 'play';
+    G.currentTurn = who;
+    G.hands[who] = ddzSort(G.hands[who].concat(G.bottom));
+    G.lastPlay = null;
+    G.lastPlays = {};
+    G.passCount = 0;
+  }else{
+    G.bidCount++;
+    G.bidTurn++;
+    if(G.bidCount>=3){
+      // 都不叫，重新发牌
+      showToast('三家都不叫，重新发牌');
+      G.bids = {};
+      G.phase = 'dealing';
+      G.dealCount = 0;
+      G.hands = { me:[], ai1:[], ai2:[] };
+      var deck=ddzShuffle(ddzNewDeck());
+      var full={};
+      G.order.forEach(function(uid,i){ full[uid]=ddzSort(deck.slice(i*17,i*17+17)); });
+      G.fullHands=full;
+      G.bottom=deck.slice(51,54);
+      G.bidTurn=0;G.bidCount=0;G.landlord=null;
+      render();
+      startDealing();
+      return;
+    }
+  }
+  render();
+  maybeAIAct();
+}
+function doPlay(who, cards){
+  var type = ddzAnalyze(cards);
+  if(!type) return;
+  G.hands[who] = G.hands[who].filter(function(c){return cards.indexOf(c)<0;});
+  G.lastPlay = { uid:who, cards:ddzSort(cards).slice(), typeInfo:type };
+  G.lastPlays = G.lastPlays || {};
+  // 新一轮（自由出牌）时清空所有人的上一轮显示
+  if(G.newRound){ G.lastPlays = {}; G.newRound = false; }
+  G.lastPlays[who] = { cards: ddzSort(cards).slice(), typeInfo:type };
+  G.passCount = 0;
+  if(type.type==='bomb'||type.type==='rocket') G.multiplier *= 2;
+  var idx = G.order.indexOf(who);
+  G.currentTurn = G.order[(idx+1)%G.order.length];
+  if(G.hands[who].length===0){
+    G.phase='finished';
+    G.winner=who;
+    G.winnerSide=(who===G.landlord)?'landlord':'farmer';
+  }
+  render();
+  maybeAIAct();
+}
+function doPass(who){
+  var idx = G.order.indexOf(who);
+  var next = G.order[(idx+1)%G.order.length];
+  G.currentTurn = next;
+  G.passCount++;
+  G.lastPlays = G.lastPlays || {};
+  G.lastPlays[who] = { pass:true };   // 显示"不要"
+  if(next===G.lastPlay.uid){
+    // 两家都过，出牌权回到 lastPlay.uid，进入新一轮
+    G.lastPlay=null; G.passCount=0;
+    G.newRound = true;
+  }
+  render();
+  maybeAIAct();
+}
+
+/* ============================================================
+   玩家操作
+============================================================ */
+function playerBid(want){
+  if(!G || G.phase!=='bid') return;
+  if(G.order[G.bidTurn]!=='me') return;
+  doBid('me', want);
+}
+function playerPlay(){
+  if(!G || G.phase!=='play' || G.currentTurn!=='me') return;
+  if(!G.sel.length){ showToast('请选择要出的牌'); return; }
+  var type = ddzAnalyze(G.sel);
+  if(!type){ showToast('牌型不合法'); return; }
+  var last = (G.lastPlay && G.lastPlay.uid!=='me') ? {typeInfo:G.lastPlay.typeInfo} : null;
+  if(last && !ddzCanBeat(type,last.typeInfo)){ showToast('打不过上家'); return; }
+  var sel = G.sel.slice();
+  G.sel = [];
+  doPlay('me', sel);
+}
+function playerPass(){
+  if(!G || G.phase!=='play' || G.currentTurn!=='me') return;
+  if(!G.lastPlay || G.lastPlay.uid==='me'){ showToast('你必须出牌'); return; }
+  G.sel = [];
+  doPass('me');
+}
+function toggleSel(id){
+  if(!G) return;
+  var i = G.sel.indexOf(id);
+  if(i>=0) G.sel.splice(i,1); else G.sel.push(id);
+  render();
+}
+window.playerBid=playerBid;window.playerPlay=playerPlay;window.playerPass=playerPass;window.toggleSel=toggleSel;window.newGame=newGame;
+
+/* ============================================================
+   渲染
+============================================================ */
+function render(){
+  var el = $('gameArea');
+  if(!G) return;
+
+  /* ---- 结算 ---- */
+  if(G.phase==='finished'){
+    var msg = G.winnerSide==='landlord' ? '地主获胜' : '农民获胜';
+    var youWin = (G.winner==='me') || (G.winnerSide==='farmer' && G.landlord!=='me');
+    el.innerHTML = '<div class="ddz-result">'
+      + '<div class="big">' + (youWin ? '🎉 你赢了！' : '😵 你输了') + '</div>'
+      + '<div class="sub">' + msg + (G.multiplier>1 ? ' · 倍数 x'+G.multiplier : '') + '</div>'
+      + '<button class="ddz-btn" onclick="newGame()">再来一局</button>'
+      + '</div>';
+    return;
+  }
+
+  var iAmLandlord = (G.landlord==='me');
+
+  /* ---- 顶部对家（ai1 左 / ai2 右）---- */
+  function oppBlock(uid){
+    var isTurn = (G.phase==='bid' && G.order[G.bidTurn]===uid) || (G.phase==='play' && G.currentTurn===uid);
+    var isLL = G.landlord===uid;
+    var cnt = (G.hands[uid]||[]).length;
+    var bid = G.bids ? G.bids[uid] : undefined;
+    var lp = G.lastPlays ? G.lastPlays[uid] : null;
+    var h = '<div class="opp-block'+(isTurn?' turn':'')+(isLL?' landlord':'')+'">';
+    h += '<div class="opp-head">';
+    h += '<div class="avatar">'+(uid==='ai1'?'左':'右')+'</div>';
+    h += '<div class="opp-meta"><div class="opp-name">'+G.names[uid]+(isLL?' · 地主':'')+'</div>';
+    h += '<div class="opp-count">'+(G.phase==='dealing'? cnt : cnt)+' 张</div></div>';
+    if(isLL) h += '<span class="crown">👑</span>';
+    h += '</div>';
+    // 叫地主气泡
+    if(G.phase==='bid' && bid!==undefined && bid!==null){
+      h += '<div class="bubble '+(bid?'yes':'no')+'">'+(bid?'叫地主！':'不叫')+'</div>';
+    }
+    // 该玩家出牌显示在这里
+    if(lp){
+      if(lp.pass){ h += '<div class="opp-play"><span class="pass-tag">不要</span></div>'; }
+      else{
+        h += '<div class="opp-play">'+lp.cards.map(function(c){return ddzCardHTML(c,{mini:true});}).join('')+'</div>';
+      }
+    }
+    h += '</div>';
+    return h;
+  }
+
+  var html = '';
+  html += '<div class="ddz-opponents">' + oppBlock('ai1') + oppBlock('ai2') + '</div>';
+
+  /* ---- 中央信息区（底牌 / 状态）---- */
+  html += '<div class="ddz-center">';
+  if(G.landlord){
+    html += '<div class="ddz-bottom"><span class="lbl">底牌</span>'
+      + G.bottom.map(function(c){return ddzCardHTML(c,{mini:true});}).join('')
+      + '</div>';
+  }
+  if(G.phase==='dealing'){
+    html += '<div class="ddz-status">正在发牌…</div>';
+  }else if(G.phase==='bid'){
+    var curBidName = G.names[G.order[G.bidTurn]];
+    html += '<div class="ddz-status">叫地主 · 轮到 '+curBidName+'</div>';
+  }else if(G.phase==='play'){
+    if(G.currentTurn==='me') html += '<div class="ddz-status">轮到你出牌</div>';
+    else html += '<div class="ddz-status">等待 '+G.names[G.currentTurn]+'…</div>';
+  }
+  html += '</div>';
+
+  /* ---- 我的出牌区（手牌上方）---- */
+  var myLp = G.lastPlays ? G.lastPlays['me'] : null;
+  html += '<div class="my-play-zone">';
+  if(myLp){
+    if(myLp.pass) html += '<span class="pass-tag">不要</span>';
+    else html += myLp.cards.map(function(c){return ddzCardHTML(c,{mini:true});}).join('');
+  }
+  html += '</div>';
+
+  /* ---- 我的手牌 ---- */
+  html += '<div class="ddz-hand" id="ddzHand">'
+    + ddzSort(G.hands['me']||[]).map(function(c){
+        return ddzCardHTML(c, { sel: G.sel.indexOf(c)>=0 });
+      }).join('')
+    + '</div>';
+
+  /* ---- 操作按钮 ---- */
+  if(G.phase==='bid' && G.order[G.bidTurn]==='me'){
+    html += '<div class="ddz-actions">'
+      + '<button class="ddz-btn" onclick="playerBid(true)">叫地主</button>'
+      + '<button class="ddz-btn pass" onclick="playerBid(false)">不叫</button>'
+      + '</div>';
+  }else if(G.phase==='play' && G.currentTurn==='me'){
+    html += '<div class="ddz-actions">'
+      + '<button class="ddz-btn" onclick="playerPlay()">出牌</button>'
+      + (G.lastPlay && G.lastPlay.uid!=='me' ? '<button class="ddz-btn pass" onclick="playerPass()">不要</button>' : '')
+      + '</div>';
+  }
+
+  el.innerHTML = html;
+
+  var handEl = $('ddzHand');
+  if(handEl){
+    handEl.querySelectorAll('.ddz-card').forEach(function(c){
+      c.onclick = function(){ toggleSel(parseInt(this.dataset.id,10)); };
+    });
+  }
+}
+
+/* ============================================================
+   初始化
+============================================================ */
+newGame();
+
+
+</script>

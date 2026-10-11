@@ -204,10 +204,17 @@ function getTargetParam(){
 
 async function loadUser(){
   var t = getTargetParam();
-  var q = window.sb.from('users').select('*');
-  if (t.no) q = q.eq('user_no', t.no);
-  else if (t.id) q = q.eq('id', t.id);
-  else q = q.eq('id', currentUser.id);   // 默认看自己
+  var isViewingSelf = (!t.no && !t.id) || (t.id && t.id === currentUser.id);
+  var q;
+  if (isViewingSelf) {
+    // 看自己：读 users（本人可读）
+    q = window.sb.from('users').select('*').eq('id', currentUser.id);
+  } else {
+    // 看他人：只读 public_users 视图（不含手机号等敏感字段）
+    q = window.sb.from('public_users').select('*');
+    if (t.no) q = q.eq('user_no', t.no);
+    else q = q.eq('id', t.id);
+  }
   var res = await q.single();
   if (res.error || !res.data) { $('pageContent').innerHTML = '<div class="empty">用户不存在</div>'; return false; }
   viewingUser = res.data;

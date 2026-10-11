@@ -1265,9 +1265,9 @@
                 }]).select();
                 if (ins.error) throw ins.error;
 
-                var adminRes = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
+                var adminRes = await window.sb.rpc('get_admin_id');
                 if (adminRes.data) {
-                    await window.pushNotification(adminRes.data.id, {
+                    await window.pushNotification(adminRes.data, {
                         type: 'feedback', notification_type: 'feedback',
                         feedback_id: ins.data[0].id,
                         extra_text: '[' + site.name + '] ' + content.substring(0, 60)

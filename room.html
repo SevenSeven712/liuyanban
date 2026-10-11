@@ -2161,7 +2161,7 @@ function subscribe(){
 /* ============================================================
    房间设置（管理员）
 ============================================================ */
-async function fetchAllUsers(){var r=await window.sb.from('users').select('id, nickname, avatar_url, phone');return r.data||[]}
+async function fetchAllUsers(){var r=await window.sb.from('public_users').select('id, nickname, avatar_url');return r.data||[]}
 async function openRoomEditor(){
   if(!isAdmin||!state.room)return;
   var room=await freshRoom();var users=await fetchAllUsers();

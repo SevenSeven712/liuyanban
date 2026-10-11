@@ -756,7 +756,7 @@ function showChatCtxMenu(x,y,id,author,isSelf,contentText){
 
 async function reportChat(contentId,author,snapshot){
   try{
-    var res=await window.sb.from('users').select('id').eq('nickname',author).single();
+    var res=await window.sb.from('public_users').select('id').eq('nickname',author).single();
     if(res.error||!res.data){showToast('无法找到该用户');return}
     openReportDialog(res.data.id,'chat',contentId,snapshot);
   }catch(e){showToast('举报失败：'+e.message)}

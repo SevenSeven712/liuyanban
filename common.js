@@ -520,9 +520,9 @@ async function submitReport(reporterId, reportedUserId, contentType, contentId, 
     if (res.error) throw res.error;
     var report = res.data[0];
 
-    var adminRes = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
+    var adminRes = await window.sb.rpc('get_admin_id');
     if (adminRes.data) {
-        await pushNotification(adminRes.data.id, {
+        await pushNotification(adminRes.data, {
             type: 'report',
             notification_type: 'report',
             report_id: report.id,

@@ -303,9 +303,9 @@ window.openReportDialog = window.openReportDialog || function(reportedUserId, co
                 content_snapshot: contentSnapshot, reason: r.value, description: desc
             }]).select();
             if (ins.error) throw ins.error;
-            var adm = await window.sb.from('users').select('id').eq('is_admin', true).limit(1).maybeSingle();
+            var adm = await window.sb.rpc('get_admin_id');
             if (adm.data) {
-                await window.pushNotification(adm.data.id, {
+                await window.pushNotification(adm.data, {
                     type: 'report', notification_type: 'report',
                     report_id: ins.data[0].id, report_reason: r.value,
                     extra_text: contentSnapshot ? String(contentSnapshot).substring(0,100) : ''
@@ -457,7 +457,7 @@ async function addComment(postId, author, user_id, content) {
     return commentData;
 }
 async function deletePost(id) { await window.sb.from('posts').delete().eq('id', id); }
-async function fetchAllUsers() { var r = await window.sb.from('users').select('*'); return r.data || []; }
+async function fetchAllUsers() { var r = await window.sb.rpc('admin_list_users'); return r.data || []; }
 async function fetchUserRoles() { var r = await window.sb.from('user_roles').select('*'); return r.data || []; }
 function goUser(uid){ if(uid) location.href = '/liuyanban/user.html?id=' + uid; }
 window.goUser = goUser;
@@ -490,7 +490,7 @@ function showMiniCard(anchor, uid, name, avatar){
   miniCardEl.style.left = left + "px";
   miniCardEl.style.top = top + "px";
   // 加载资料
-  window.sb.from("users").select("nickname,avatar_url,bio,user_no").eq("id", uid).single().then(function(res){
+  window.sb.from("public_users").select("nickname,avatar_url,bio,user_no").eq("id", uid).single().then(function(res){
     if(res.data && miniOpenFor===uid){
       var d = res.data;
       var bioEl = miniCardEl.querySelector(".mc-bio");
@@ -1023,7 +1023,7 @@ window.unbanUserById = async function(userId) {
 };
 window.loginAsUser = async function(userId) {
     try {
-        var res = await window.sb.from('users').select('*').eq('id', userId).single();
+        var res = await window.sb.rpc('admin_get_user', { p_user_id: userId });
         if (res.error) throw res.error;
         if (!res.data) return showToast('用户不存在');
         var user = res.data;
