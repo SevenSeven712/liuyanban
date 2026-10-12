@@ -1,4 +1,35 @@
 // ============================================================
+// 反调试：检测到打开开发者工具 → 清空页面
+// ============================================================
+(function antiDebug() {
+    var killed = false;
+    function kill() {
+        if (killed) return;
+        killed = true;
+        try {
+            document.documentElement.innerHTML =
+              '<body style="margin:0;background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;font-size:14px;">' +
+              '<div style="text-align:center;line-height:1.8;">⚠️ 本页面禁止调试<br>请关闭开发者工具后刷新页面</div></body>';
+        } catch (e) {}
+    }
+    // F12 / Ctrl+Shift+I / J / C
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && ['I','J','C'].indexOf(e.key.toUpperCase()) >= 0)) {
+            e.preventDefault();
+            kill();
+        }
+    }, true);
+    // 右键
+    document.addEventListener('contextmenu', function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        e.preventDefault();
+        kill();
+    }, true);
+})();
+
+// ============================================================
 // 初始化 Supabase 客户端
 // ============================================================
 if (!window.sb) {
