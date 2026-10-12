@@ -4,10 +4,34 @@
     <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>通行证 · Seven戚社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// 反调试：检测到打开开发者工具 → 清空页面
+(function(){
+  var killed = false;
+  function kill(){
+    if (killed) return;
+    killed = true;
+    try {
+      document.documentElement.innerHTML = '<body style="margin:0;background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;font-size:14px;"><div style="text-align:center;line-height:1.8;">⚠️ 本页面禁止调试<br>请关闭开发者工具后刷新页面</div></body>';
+    } catch(e){}
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].indexOf(e.key.toUpperCase()) >= 0)) {
+      e.preventDefault(); kill();
+    }
+  }, true);
+  document.addEventListener('contextmenu', function(e){
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    e.preventDefault(); kill();
+  }, true);
+})();
+</script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         :root {
