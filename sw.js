@@ -2,17 +2,17 @@
 self.addEventListener('install', function (e) { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 
-// fetch handler（Chrome 要求 PWA 安装必须有）
 self.addEventListener('fetch', function (e) {
-  // 网络优先，不做离线缓存，避免影响实时数据
+  // 只处理 GET，其它直接放行
+  if (e.request.method !== 'GET') return;
   e.respondWith(
     fetch(e.request).catch(function () {
-      return caches.match(e.request);
+      // 网络失败时，返回一个合法 Response，避免 TypeError
+      return new Response('', { status: 503, statusText: 'Offline' });
     })
   );
 });
 
-// 点击系统通知 → 打开聊天页
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
   var url = (e.notification.data && e.notification.data.url) || '/liuyanban/chats.html';

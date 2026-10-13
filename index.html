@@ -617,11 +617,9 @@
 
         async function getDeviceRegisterCount(deviceId) {
             try {
-                var res = await window.sb.from('device_registrations')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('device_id', deviceId);
+                var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
                 if (res.error) throw res.error;
-                return res.count || 0;
+                return res.data || 0;
             } catch (e) {
                 console.warn('设备检测失败:', e);
                 return 0;
@@ -927,12 +925,13 @@
                 if (oldUser) {
                     var su = await window.sb.auth.signUp({ email: email, password: password });
                     if (su.error && (su.error.message || '').toLowerCase().indexOf('already') < 0) throw su.error;
-                    var newAuthId = su.data && su.data.user ? su.data.user.id : null;
-                    if (newAuthId) {
-                        await window.sb.rpc('bind_auth_to_phone', { p_phone: phone, p_hash: hashed, p_auth_id: newAuthId });
-                        oldUser.auth_id = newAuthId;
+                    // 先登录建立会话（让 auth.uid() 有值），再绑定
+                    var si = await window.sb.auth.signInWithPassword({ email: email, password: password });
+                    var curUid = si.data && si.data.session ? si.data.session.user.id : null;
+                    if (curUid) {
+                        await window.sb.rpc('bind_auth_to_phone', { p_phone: phone, p_hash: hashed, p_auth_id: curUid });
+                        oldUser.auth_id = curUid;
                     }
-                    await window.sb.auth.signInWithPassword({ email: email, password: password });
                     return oldUser;
                 }
                 throw new Error(T().loginFail);
