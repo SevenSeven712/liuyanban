@@ -547,9 +547,8 @@ async function loadGlobalRoles(){
   }catch(e){ globalRoleMap = {}; }
 }
 function roleTagHTML(userId){
-  var r = globalRoleMap[userId];
-  if(!r) return '';
-  return '<span class="role-tag" style="background:'+escapeHtml(r.role_color||'#2e7d32')+'">'+escapeHtml(r.role_name||'')+'</span>';
+  // 身份标签已停用（不显示"admin"等标签）
+  return '';
 }
 async function banUser(userId, reason, until) { await window.sb.rpc('admin_ban_user', { p_user_id: userId, p_reason: reason, p_until: until }); }
 async function unbanUser(userId) { await window.sb.rpc('admin_unban_user', { p_user_id: userId }); }
