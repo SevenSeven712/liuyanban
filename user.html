@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 用户主页</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -236,7 +236,7 @@ async function loadUser(){
   var q;
   if (isViewingSelf) {
     // 看自己：读 users（本人可读）
-    q = window.sb.from('users').select('*').eq('id', currentUser.id);
+    q = window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('id', currentUser.id);
   } else {
     // 看他人：只读 public_users 视图（不含手机号等敏感字段）
     q = window.sb.from('public_users').select('*');

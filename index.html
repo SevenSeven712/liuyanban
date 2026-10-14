@@ -938,7 +938,7 @@
             }
 
             var authUser = signRes.data.user;
-            var q = await window.sb.from('users').select('*').eq('auth_id', authUser.id).limit(1);
+            var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authUser.id).limit(1);
             var user = q.data && q.data[0];
             if (!user) {
                 var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: phone });
@@ -1062,7 +1062,7 @@
                     var r = await window.sb.auth.getSession();
                     var authSession = r.data && r.data.session;
                     if (authSession && authSession.user) {
-                        var q = await window.sb.from('users').select('*').eq('auth_id', authSession.user.id).limit(1);
+                        var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authSession.user.id).limit(1);
                         var u = q.data && q.data[0];
                         if (u) {
                             localStorage.setItem('sq_user_session', JSON.stringify(u));

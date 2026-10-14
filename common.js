@@ -173,7 +173,7 @@ async function syncSessionFromAuth() {
             return null;
         }
         var authId = session.user.id;
-        var q = await window.sb.from('users').select('*').eq('auth_id', authId).limit(1);
+        var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authId).limit(1);
         var user = q.data && q.data[0];
         if (user) {
             localStorage.setItem('sq_user_session', JSON.stringify(user));
