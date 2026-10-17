@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>活动 · Seven戚</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -162,7 +162,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
       if (d && d.ok) {
         dailyClaimed = true;
         showToast('恭喜获得 ' + d.amount + ' 小七币！');
-        var u = await window.sb.from('users').select('coins').eq('id', currentUser.id).single();
+        var u = await window.sb.rpc('get_my_profile');
         if (u.data) { currentUser.coins = u.data.coins; setSessionUser(currentUser); }
         renderActivity();
       } else if (d && d.already) {

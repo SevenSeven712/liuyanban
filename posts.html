@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 帖子广场</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 :root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,0.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--danger-bg:#ffebee;--danger-text:#c62828;--official-blue:#2b6cff;--success:#66bb6a;--success-bg:#e8f5e9;--warning:#ffa726;--warning-bg:#fff3e0}
@@ -286,7 +287,7 @@ window.openReportDialog = window.openReportDialog || function(reportedUserId, co
         '<label class="report-reason-option"><input type="radio" name="reportReason" value="其他"> 其他</label>' +
         '</div></div>' +
         '<div class="report-field"><label>补充说明（选填）</label><textarea id="reportDescription" placeholder="请描述具体情况..." maxlength="500"></textarea></div>' +
-        '<div class="report-field"><label>被举报内容预览</label><div class="report-preview">' + (contentSnapshot ? String(contentSnapshot).replace(/</g,'&lt;') : '(无内容)') + '</div></div>' +
+        '<div class="report-field"><label>被举报内容预览</label><div class="report-preview">' + (contentSnapshot ? escapeHtml(String(contentSnapshot)) : '(无内容)') + '</div></div>' +
         '</div>' +
         '<div class="report-footer"><button class="report-cancel" onclick="closeReportDialog()">取消</button>' +
         '<button class="report-submit" id="reportSubmitBtn">提交举报</button></div>' +
@@ -599,8 +600,16 @@ window.setCategory = setCategory;
 
 function renderPostContent(post) {
     var html = '';
-    if (post.content && post.content.includes('<')) html = post.content;
-    else html = '<div style="white-space:pre-wrap;">' + escapeHtml(post.content || '') + '</div>';
+    if (post.content && post.content.includes('<')) {
+        // 富文本：白名单净化，防存储型 XSS（DOMPurify 默认禁用 script/on* 事件/javascript: 协议）
+        if (window.DOMPurify) {
+            html = DOMPurify.sanitize(post.content, { ADD_ATTR: ['target'] });
+        } else {
+            html = '<div style="white-space:pre-wrap;">' + escapeHtml(post.content || '') + '</div>';
+        }
+    } else {
+        html = '<div style="white-space:pre-wrap;">' + escapeHtml(post.content || '') + '</div>';
+    }
     if (post.image_url && !html.includes('<img')) html += '<img src="' + escapeHtml(post.image_url) + '" style="max-width:100%;border-radius:8px;margin-top:6px;" />';
     return html;
 }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>我的资产 · Seven戚</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -84,7 +84,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 
   async function loadBalance(){
     try {
-      var r = await window.sb.from('users').select('coins').eq('id', currentUser.id).single();
+      var r = await window.sb.rpc('get_my_profile');
       var c = (r.data && r.data.coins) || 0;
       document.getElementById('balanceNum').innerHTML = c + '<small>币</small>';
       // 同步本地缓存

@@ -236,14 +236,14 @@ async function loadUser(){
   var q;
   if (isViewingSelf) {
     // 看自己：读 users（本人可读）
-    q = window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('id', currentUser.id);
+    q = window.sb.rpc('get_my_profile');
   } else {
     // 看他人：只读 public_users 视图（不含手机号等敏感字段）
     q = window.sb.from('public_users').select('*');
     if (t.no) q = q.eq('user_no', t.no);
     else q = q.eq('id', t.id);
   }
-  var res = await q.single();
+  var res = await q;
   if (res.error || !res.data) { $('pageContent').innerHTML = '<div class="empty">用户不存在</div>'; return false; }
   viewingUser = res.data;
   isSelf = (viewingUser.id === currentUser.id);

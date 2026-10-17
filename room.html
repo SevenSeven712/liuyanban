@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>房间 · Seven戚</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2062,7 +2062,7 @@ async function grabRedPacket(packetId){
     var d = res.data;
     if(d && d.ok){
       showToast('手气不错，抢到 ' + d.amount + ' 币！');
-      try{ var u = await window.sb.from('users').select('coins').eq('id', currentUser.id).single(); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
+      try{ var u = await window.sb.rpc('get_my_profile'); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
       await loadRedPackets();
     } else {
       showToast((d && d.message) || '领取失败');

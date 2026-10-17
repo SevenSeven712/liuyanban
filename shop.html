@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>皮肤商店 · Seven戚</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -151,9 +151,10 @@ async function init(){
   }
   // 刷新余额（防止本地缓存旧值）
   try{
-    var uq = await window.sb.from('users').select('coins, bubble_skin').eq('id', currentUser.id).limit(1);
-    coinBalance = (uq.data && uq.data[0] && uq.data[0].coins) || 0;
-    currentSkin = (uq.data && uq.data[0] && typeof uq.data[0].bubble_skin === 'number') ? uq.data[0].bubble_skin : 0;
+    var uq = await window.sb.rpc('get_my_profile');
+    var ud = uq.data || {};
+    coinBalance = ud.coins || 0;
+    currentSkin = (typeof ud.bubble_skin === 'number') ? ud.bubble_skin : 0;
   }catch(e){ coinBalance = currentUser.coins || 0; }
   document.getElementById('coinNum').textContent = coinBalance;
 

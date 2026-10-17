@@ -628,11 +628,11 @@
 
         async function recordDeviceRegistration(deviceId, userId, phone) {
             try {
-                await window.sb.from('device_registrations').insert([{
-                    device_id: deviceId,
-                    user_id: userId,
-                    phone: phone
-                }]);
+                await window.sb.rpc('record_device_registration', {
+                    p_device_id: deviceId,
+                    p_user_id: userId,
+                    p_phone: phone
+                });
             } catch (e) {
                 console.warn('设备记录写入失败:', e);
             }
@@ -900,14 +900,15 @@
             var authId = signRes.data && signRes.data.user ? signRes.data.user.id : null;
             // 2. 写业务表
             var avatar = generateDefaultAvatar(nickname);
-            var res = await window.sb.from('users')
-                .insert([{ phone: phone, nickname: nickname, avatar_url: avatar, user_no: genUserNo(), auth_id: authId }])
-                .select();
+            var res = await window.sb.rpc('create_user_profile', {
+                p_phone: phone, p_nickname: nickname, p_avatar: avatar,
+                p_user_no: genUserNo(), p_auth_id: authId
+            });
             if (res.error) {
-                if (res.error.code === '23505') throw new Error(T().phoneExists);
+                if (res.error.code === '23505' || ((res.error.message || '').toLowerCase().indexOf('duplicate') >= 0)) throw new Error(T().phoneExists);
                 throw res.error;
             }
-            return res.data && res.data[0];
+            return res.data;
         }
 
         async function loginUser(phone, password) {
@@ -938,8 +939,8 @@
             }
 
             var authUser = signRes.data.user;
-            var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authUser.id).limit(1);
-            var user = q.data && q.data[0];
+            var q = await window.sb.rpc('get_my_profile');
+            var user = q.data || null;
             if (!user) {
                 var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: phone });
                 user = q2.data;
@@ -1062,8 +1063,8 @@
                     var r = await window.sb.auth.getSession();
                     var authSession = r.data && r.data.session;
                     if (authSession && authSession.user) {
-                        var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authSession.user.id).limit(1);
-                        var u = q.data && q.data[0];
+                        var q = await window.sb.rpc('get_my_profile');
+                        var u = q.data || null;
                         if (u) {
                             localStorage.setItem('sq_user_session', JSON.stringify(u));
                             window.location.href = '/liuyanban/posts.html';

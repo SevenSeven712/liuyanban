@@ -172,9 +172,8 @@ async function syncSessionFromAuth() {
             }
             return null;
         }
-        var authId = session.user.id;
-        var q = await window.sb.from('users').select('id, phone, nickname, avatar_url, bio, user_no, gender, birthday, is_admin, coins, bubble_skin, created_at, banned_until, banned_reason, last_chat_read_at, last_daily_bonus, auth_id').eq('auth_id', authId).limit(1);
-        var user = q.data && q.data[0];
+        var q = await window.sb.rpc('get_my_profile');
+        var user = q.data || null;
         if (user) {
             localStorage.setItem('sq_user_session', JSON.stringify(user));
             return user;

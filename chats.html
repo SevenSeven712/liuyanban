@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 聊天群</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -385,15 +385,14 @@ var isAdmin=!!(currentUser&&currentUser.is_admin===true);
 async function syncMySkin(){
   if(!currentUser||!currentUser.id)return;
   try{
-    var r=await window.sb.from('users').select('bubble_skin').eq('id',currentUser.id).limit(1);
-    if(r.data&&r.data[0]&&typeof r.data[0].bubble_skin==='number'){
+    var r=await window.sb.rpc('get_my_profile');
+    if(r.data&&typeof r.data.bubble_skin==='number'){
       currentUser.bubble_skin=r.data[0].bubble_skin;
       setSessionUser(currentUser);
     }
   }catch(e){}
 }
-var isAuthorMode=false,AUTHOR_PASSWORD="7592";
-async function sha256(msg){var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0')}).join('')}
+var isAuthorMode=false;
 
 /* ============================================================
    头部
@@ -419,18 +418,15 @@ async function sha256(msg){var buf=await crypto.subtle.digest('SHA-256',new Text
     document.getElementById('onlineOverlay').classList.add('open');
     renderOnlineUsers();
   };
-  // 三击 logo → 作者模式
+  // 三击 logo → 作者模式（仅数据库 is_admin 可进入，前端不再硬编码密码）
   var cnt=0,timer=null;
   document.getElementById('brandBtn').addEventListener('click',async function(){
     cnt++;clearTimeout(timer);timer=setTimeout(function(){cnt=0},800);
     if(cnt===3){
       cnt=0;
       if(!isAuthorMode){
-        var p=prompt('请输入作者密码：');
-        if(p===null)return;
-        var h1=await sha256(p),h2=await sha256(AUTHOR_PASSWORD);
-        if(h1===h2){isAuthorMode=true;showToast('作者模式已激活')}
-        else showToast('密码错误');
+        if(!(currentUser&&currentUser.is_admin===true)){showToast('无权进入作者模式');return;}
+        isAuthorMode=true;showToast('作者模式已激活');
       }else{isAuthorMode=false;showToast('已退出作者模式')}
     }
   });
@@ -841,7 +837,7 @@ async function grabChatRedPacket(packetId){
     var d = res.data;
     if(d && d.ok){
       showToast('手气不错，抢到 ' + d.amount + ' 币！');
-      try{ var u = await window.sb.from('users').select('coins').eq('id', currentUser.id).single(); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
+      try{ var u = await window.sb.rpc('get_my_profile'); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
       await loadChatRedPackets();
     } else {
       showToast((d && d.message) || '领取失败');

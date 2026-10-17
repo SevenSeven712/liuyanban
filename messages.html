@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="manifest" href="/liuyanban/manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon-192.png" />
+    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 留言板</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -360,7 +360,7 @@ window.openReportDialog = window.openReportDialog || function(reportedUserId, co
         '<label class="report-reason-option"><input type="radio" name="reportReason" value="其他"> 其他</label>' +
         '</div></div>' +
         '<div class="report-field"><label>补充说明（选填）</label><textarea id="reportDescription" placeholder="请描述具体情况..." maxlength="500"></textarea></div>' +
-        '<div class="report-field"><label>被举报内容预览</label><div class="report-preview">' + (contentSnapshot ? String(contentSnapshot).replace(/</g,'&lt;') : '(无内容)') + '</div></div>' +
+        '<div class="report-field"><label>被举报内容预览</label><div class="report-preview">' + (contentSnapshot ? escapeHtml(String(contentSnapshot)) : '(无内容)') + '</div></div>' +
         '</div>' +
         '<div class="report-footer"><button class="report-cancel" onclick="closeReportDialog()">取消</button>' +
         '<button class="report-submit" id="reportSubmitBtn">提交举报</button></div>' +
@@ -455,14 +455,9 @@ window.closeReportDialog = window.closeReportDialog || function() {
         // ============================================================
         // 作者模式
         // ============================================================
+        // 作者模式：不再使用前端硬编码密码（任何人读源码即可获取）。
+        // 改为仅数据库 is_admin 用户可通过三击 logo 进入。
         var isAuthorMode = false;
-        var AUTHOR_PASSWORD = "7592";
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
 
         // ============================================================
         // 会话与权限
@@ -633,9 +628,8 @@ window.closeReportDialog = window.closeReportDialog || function() {
                 // 举报按钮
                 let reportBtn = '';
                 if (currentUser && m.name !== currentUser.nickname) {
-                    var snapshotSafe = escapeHtml(m.text || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    var nameSafe = escapeHtml(m.name || '').replace(/'/g, "\\'");
-                    reportBtn = '<button class="report-btn" onclick="event.stopPropagation();reportMessage(\'' + m.id + '\',\'' + nameSafe + '\',\'' + snapshotSafe + '\')" title="举报">' +
+                    // 用 data-* 传值，避免把用户内容拼进 onclick（属性解析会把实体还原成引号，造成 XSS）
+                    reportBtn = '<button class="report-btn" data-id="' + escapeHtml(String(m.id)) + '" data-name="' + escapeHtml(m.name || '') + '" data-snapshot="' + escapeHtml(m.text || '') + '" title="举报">' +
                         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
                         '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>' +
                         '<line x1="4" y1="22" x2="4" y2="15"/>' +
@@ -669,6 +663,12 @@ window.closeReportDialog = window.closeReportDialog || function() {
             }
             container.innerHTML = html;
             container.scrollTop = 0;
+            container.querySelectorAll('.report-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    reportMessage(this.dataset.id, this.dataset.name, this.dataset.snapshot);
+                });
+            });
         }
 
         // ============================================================
@@ -956,18 +956,12 @@ window.closeReportDialog = window.closeReportDialog || function() {
                 if (brandClickCount === 3) {
                     brandClickCount = 0;
                     if (!isAuthorMode) {
-                        var pwd = prompt('请输入作者密码：');
-                        if (pwd === null) return;
-                        var hash = await sha256(pwd);
-                        var correctHash = await sha256(AUTHOR_PASSWORD);
-                        if (hash === correctHash) {
-                            isAuthorMode = true;
-                            document.getElementById('msgAuthorOptions').classList.add('active');
-                            showToast('作者模式已激活');
-                            renderMessages();
-                        } else {
-                            showToast('密码错误');
-                        }
+                        // 仅数据库 is_admin 用户可进入作者模式（前端不再硬编码密码）
+                        if (!(currentUser && currentUser.is_admin === true)) { showToast('无权进入作者模式'); return; }
+                        isAuthorMode = true;
+                        document.getElementById('msgAuthorOptions').classList.add('active');
+                        showToast('作者模式已激活');
+                        renderMessages();
                     } else {
                         isAuthorMode = false;
                         document.getElementById('msgAuthorOptions').classList.remove('active');
