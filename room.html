@@ -154,6 +154,8 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
 .gomoku-board{display:grid;grid-template-columns:repeat(15,1fr);width:min(78vw,320px);aspect-ratio:1;background:#dcb35c;border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .gmk-cell{position:relative;display:flex;align-items:center;justify-content:center;border:.5px solid rgba(90,60,20,.45);cursor:pointer}
 .gmk-cell:active{background:rgba(255,255,255,.25)}
+.gmk-cell.gmk-last{box-shadow:inset 0 0 0 2px #e53935;background:rgba(229,57,53,.14)}
+.gmk-cell.gmk-prev{box-shadow:inset 0 0 0 2px rgba(33,150,243,.55);background:rgba(33,150,243,.08)}
 .gmk-cell.gmk-sel{background:rgba(255,213,79,.45);box-shadow:inset 0 0 0 2px #f0b429}
 .gmk-sel-mark{position:absolute;width:40%;height:40%;border-radius:50%;background:rgba(240,180,41,.6);animation:gmkPulse .9s infinite}
 @keyframes gmkPulse{0%,100%{opacity:.5;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
@@ -990,7 +992,7 @@ async function startGame(gameId){
   try{await updateGame(newGame);showToast('已创建「'+g.name+'」，等待玩家加入')}catch(e){showToast('启动失败：'+e.message)}
 }
 function initGameState(type){
-  if(type==='gomoku')return{board:emptyBoard(),turn:'black',winner:null};
+  if(type==='gomoku')return{board:emptyBoard(),turn:'black',winner:null,lastMove:null,prevMove:null};
   if(type==='draw')return{order:[],drawer_index:0,word:'',strokes:[],correct:[],messages:[],scores:{},round_started_at:0,round_end:false};
   if(type==='spy')return{words:{},spy_ids:[],phase:'describe',descriptions:[],votes:{},eliminated:[],round:1};
   if(type==='werewolf')return{roles:{},phase:'choose',alive:[],night_action:null,day:1,votes:{},mode:0};
@@ -1011,7 +1013,7 @@ async function leaveGame(){
   if(!players.length){await updateGame(null)}
   else{
     var ns=Object.assign({},game,{players:players});
-    if(game.type==='gomoku')ns.state=Object.assign({},game.state,{board:emptyBoard(),turn:'black',winner:null});
+    if(game.type==='gomoku')ns.state=Object.assign({},game.state,{board:emptyBoard(),turn:'black',winner:null,lastMove:null,prevMove:null});
     if(game.type==='draw'){ns.state=Object.assign({},game.state,{order:(game.state.order||[]).filter(function(id){return id!==currentUser.id}),strokes:[],correct:[]})}
     if(game.type==='doudizhu')ns.state=Object.assign({},game.state,{phase:'finished',aborted:true,winner:null});
     await updateGame(ns);
@@ -1045,7 +1047,7 @@ async function beginGame(){
   if(players.length<g.min){showToast('至少需要 '+g.min+' 人');return}
   var st=Object.assign({},game.state);
   if(game.type==='gomoku'){
-    st=Object.assign({},st,{board:emptyBoard(),turn:'black',winner:null});
+    st=Object.assign({},st,{board:emptyBoard(),turn:'black',winner:null,lastMove:null,prevMove:null});
   }
   else if(game.type==='draw'){
     var ids=players.slice().sort(function(a,b){return a.seat-b.seat}).map(function(p){return p.user_id});
@@ -1339,7 +1341,10 @@ function renderGomoku(game,el){
     var v=(board[rr]&&board[rr][cc])||null;
     var cls=v==='b'?'black':(v==='w'?'white':'');
     var isSel=sel&&sel.r===rr&&sel.c===cc;
-    html+='<div class="gmk-cell'+(isSel?' gmk-sel':'')+'" data-r="'+rr+'" data-c="'+cc+'">'+(v?'<span class="gmk-stone '+cls+'"></span>':'')+(isSel&&!v?'<span class="gmk-sel-mark"></span>':'')+'</div>';
+    var isLast=st.lastMove&&st.lastMove.r===rr&&st.lastMove.c===cc;
+    var isPrev=st.prevMove&&st.prevMove.r===rr&&st.prevMove.c===cc;
+    var hiCls=isSel?' gmk-sel':(isLast?' gmk-last':(isPrev?' gmk-prev':''));
+    html+='<div class="gmk-cell'+hiCls+'" data-r="'+rr+'" data-c="'+cc+'">'+(v?'<span class="gmk-stone '+cls+'"></span>':'')+(isSel&&!v?'<span class="gmk-sel-mark"></span>':'')+'</div>';
   }
   html+='</div>';
   if(sel)html+='<button class="gomoku-place-btn" onclick="confirmPlaceStone()">下这里</button>';
@@ -1377,7 +1382,9 @@ async function doPlaceStone(r,c,myColor){
   if(curColor!==myColor||st.turn!==myColor)return;
   var board=st.board.map(function(row){return row.slice()});var stone=myColor==='black'?'b':'w';board[r][c]=stone;
   var won=checkWinGmk(board,r,c,stone);
-  var ns={board:board,turn:myColor==='black'?'white':'black',winner:won?myColor:null};
+  var ns={board:board,turn:myColor==='black'?'white':'black',winner:won?myColor:null,
+    prevMove:st.lastMove||null,
+    lastMove:{r:r,c:c,color:stone}};
   try{await updateGame(Object.assign({},game,{status:won?'finished':'playing',state:ns}))}catch(e){showToast('落子失败：'+e.message)}
 }
 function checkWinGmk(board,r,c,color){var dirs=[[0,1],[1,0],[1,1],[1,-1]];for(var d=0;d<dirs.length;d++){var dr=dirs[d][0],dc=dirs[d][1],cnt=1;for(var s=-1;s<=1;s+=2){var rr=r+dr*s,cc=c+dc*s;while(rr>=0&&rr<15&&cc>=0&&cc<15&&board[rr][cc]===color){cnt++;rr+=dr*s;cc+=dc*s}}if(cnt>=5)return true}return false}
@@ -2322,7 +2329,7 @@ window.addEventListener('beforeunload',function(){
           if(!ps.length)window.sb.from('rooms').update({current_game:null}).eq('id',state.room.id);
           else{
             var ng=Object.assign({},game,{players:ps});
-            if(game.type==='gomoku')ng.state=Object.assign({},game.state,{board:emptyBoard(),turn:'black',winner:null});
+            if(game.type==='gomoku')ng.state=Object.assign({},game.state,{board:emptyBoard(),turn:'black',winner:null,lastMove:null,prevMove:null});
             window.sb.from('rooms').update({current_game:ng}).eq('id',state.room.id);
           }
         }
