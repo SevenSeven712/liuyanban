@@ -1906,7 +1906,20 @@ window.ddzPass=ddzPass;
    房间消息
 ============================================================ */
 async function loadMessages(){
-  try{var res=await window.sb.from('room_messages').select('*').eq('room_id',state.room.id).order('created_at',{ascending:true}).limit(200);if(res.error)throw res.error;state.messages=res.data||[];if(state.messages.length)state.lastMsgId=state.messages[state.messages.length-1].id}catch(e){state.messages=[]}
+  if(!state.room)return;
+  var rid=state.room.id;
+  // 取最近 200 条：按时间倒序取，再反转成正序显示
+  // （旧写法 ascending:true 取的是"最早的 200 条"，消息累计超过 200 条后
+  //   新消息就永远进不了列表，表现为"刷新后刚发的消息消失"）
+  var res=await window.sb.from('room_messages').select('*').eq('room_id',rid).order('created_at',{ascending:false}).limit(200);
+  if(res.error){
+    console.error('[loadMessages] 加载失败：', res.error);
+    showToast('消息加载失败：'+(res.error.message||res.error));
+    state.messages=[];
+  }else{
+    state.messages=(res.data||[]).slice().reverse();
+    if(state.messages.length)state.lastMsgId=state.messages[state.messages.length-1].id;
+  }
   renderMessages();
 }
 function renderMessages(){
