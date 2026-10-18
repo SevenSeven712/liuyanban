@@ -959,12 +959,24 @@ document.getElementById('rpDetailBackdrop').onclick=closeRpDetailDrawer;
 document.getElementById('rpDetailClose').onclick=closeRpDetailDrawer;
 document.getElementById('drawerBackdrop').onclick=closeGameDrawer;
 
+// 深度比较（忽略键顺序）：Supabase 的 current_game 是 jsonb，
+// PostgreSQL 存 jsonb 时键顺序会被重排，不能直接 JSON.stringify 比较
+function gameDeepEqual(a,b){
+  if(a===b)return true;
+  if(typeof a!=='object'||a===null||typeof b!=='object'||b===null)return false;
+  var ka=Object.keys(a).sort(),kb=Object.keys(b).sort();
+  if(ka.length!==kb.length)return false;
+  for(var i=0;i<ka.length;i++){
+    if(ka[i]!==kb[i]||!gameDeepEqual(a[ka[i]],b[kb[i]]))return false;
+  }
+  return true;
+}
 async function updateGame(patch){
   var res=await window.sb.from('rooms').update({current_game:patch}).eq('id',state.room.id).select().single();
   if(res.error)throw res.error;
   // 兜底：若写入被 RLS/触发器静默回滚，明确报错，避免"提示成功但画面无游戏"
-  var want=JSON.stringify(patch), got=JSON.stringify(res.data?res.data.current_game:null);
-  if(want!==got)throw new Error('游戏状态未写入数据库（权限或触发器拦截）');
+  if(!gameDeepEqual(patch,res.data?res.data.current_game:null))
+    throw new Error('游戏状态未写入数据库（权限或触发器拦截）');
   state.room=res.data;renderMic();renderGame();
 }
 
