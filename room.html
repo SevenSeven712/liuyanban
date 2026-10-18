@@ -814,7 +814,7 @@ async function toggleMuteUser(uid){
       arr2.sort(function(a,b){return (a.joined_at||'').localeCompare(b.joined_at||'')});
       renderMemberList(arr2);
     }
-  }catch(e){showToast('操作失败：'+e.message)}
+  }catch(e){console.error('[禁言]',e)}
 }
 window.toggleMuteUser=toggleMuteUser;
 document.getElementById('memberBtn').onclick=function(){document.getElementById('memberBackdrop').classList.add('open');document.getElementById('memberDrawer').classList.add('open')};
@@ -851,11 +851,11 @@ function renderMic(){
   }
   h+='</div>';el.innerHTML=h;
 }
-async function requestMic(){if(isUserBanned()){showToast('账号已被封禁');return}try{var r=await freshRoom();var speaking=r.mic_speaking||[],requests=r.mic_requests||[];if(requests.some(function(x){return x.user_id===currentUser.id}))return;if(speaking.some(function(x){return x.user_id===currentUser.id}))return;var me={user_id:currentUser.id,nickname:currentUser.nickname,avatar_url:currentUser.avatar_url||''};if(r.mic_mode!=='host'&&speaking.length<4){speaking.push(me);await patchRoom({mic_speaking:speaking});showToast('已上麦')}else{requests.push(me);await patchRoom({mic_requests:requests});showToast(r.mic_mode==='host'?'已申请，等待管理员同意':'已加入排队')}}catch(e){showToast('操作失败：'+e.message)}}
-async function cancelMic(){try{var r=await freshRoom();var requests=(r.mic_requests||[]).filter(function(x){return x.user_id!==currentUser.id});await patchRoom({mic_requests:requests});showToast('已取消排队')}catch(e){showToast(e.message)}}
-async function removeFromMic(userId){try{var r=await freshRoom();var speaking=(r.mic_speaking||[]).filter(function(m){return m.user_id!==userId});var requests=r.mic_requests||[];if(r.mic_mode!=='host'&&requests.length&&speaking.length<4)speaking.push(requests.shift());await patchRoom({mic_speaking:speaking,mic_requests:requests});if(userId===currentUser.id)showToast('已下麦')}catch(e){showToast(e.message)}}
-async function approveMic(userId){try{var r=await freshRoom();var requests=r.mic_requests||[];var idx=-1;for(var i=0;i<requests.length;i++){if(requests[i].user_id===userId){idx=i;break}}if(idx<0)return;var m=requests.splice(idx,1)[0];var speaking=r.mic_speaking||[];if(speaking.length>=4){showToast('麦位已满');return}speaking.push(m);await patchRoom({mic_speaking:speaking,mic_requests:requests});showToast('已同意连麦')}catch(e){showToast(e.message)}}
-async function rejectMic(userId){try{var r=await freshRoom();var requests=(r.mic_requests||[]).filter(function(x){return x.user_id!==userId});await patchRoom({mic_requests:requests});showToast('已拒绝')}catch(e){showToast(e.message)}}
+async function requestMic(){if(isUserBanned()){showToast('账号已被封禁');return}try{var r=await freshRoom();var speaking=r.mic_speaking||[],requests=r.mic_requests||[];if(requests.some(function(x){return x.user_id===currentUser.id}))return;if(speaking.some(function(x){return x.user_id===currentUser.id}))return;var me={user_id:currentUser.id,nickname:currentUser.nickname,avatar_url:currentUser.avatar_url||''};if(r.mic_mode!=='host'&&speaking.length<4){speaking.push(me);await patchRoom({mic_speaking:speaking});showToast('已上麦')}else{requests.push(me);await patchRoom({mic_requests:requests});showToast(r.mic_mode==='host'?'已申请，等待管理员同意':'已加入排队')}}catch(e){console.error('[连麦申请]',e)}}
+async function cancelMic(){try{var r=await freshRoom();var requests=(r.mic_requests||[]).filter(function(x){return x.user_id!==currentUser.id});await patchRoom({mic_requests:requests});showToast('已取消排队')}catch(e){console.error('[取消排队]',e)}}
+async function removeFromMic(userId){try{var r=await freshRoom();var speaking=(r.mic_speaking||[]).filter(function(m){return m.user_id!==userId});var requests=r.mic_requests||[];if(r.mic_mode!=='host'&&requests.length&&speaking.length<4)speaking.push(requests.shift());await patchRoom({mic_speaking:speaking,mic_requests:requests});if(userId===currentUser.id)showToast('已下麦')}catch(e){console.error('[下麦]',e)}}
+async function approveMic(userId){try{var r=await freshRoom();var requests=r.mic_requests||[];var idx=-1;for(var i=0;i<requests.length;i++){if(requests[i].user_id===userId){idx=i;break}}if(idx<0)return;var m=requests.splice(idx,1)[0];var speaking=r.mic_speaking||[];if(speaking.length>=4){showToast('麦位已满');return}speaking.push(m);await patchRoom({mic_speaking:speaking,mic_requests:requests});showToast('已同意连麦')}catch(e){console.error('[同意连麦]',e)}}
+async function rejectMic(userId){try{var r=await freshRoom();var requests=(r.mic_requests||[]).filter(function(x){return x.user_id!==userId});await patchRoom({mic_requests:requests});showToast('已拒绝')}catch(e){console.error('[拒绝连麦]',e)}}
 window.requestMic=requestMic;window.cancelMic=cancelMic;window.removeFromMic=removeFromMic;window.approveMic=approveMic;window.rejectMic=rejectMic;
 
 /* ============================================================
@@ -965,7 +965,7 @@ async function startGame(gameId){
     players:[{user_id:currentUser.id,nickname:currentUser.nickname,avatar_url:currentUser.avatar_url||'',seat:0}],
     state:initGameState(gameId)
   };
-  try{await updateGame(newGame);showToast('已创建「'+g.name+'」，等待玩家加入')}catch(e){showToast('启动失败：'+e.message)}
+  try{await updateGame(newGame);showToast('已创建「'+g.name+'」，等待玩家加入')}catch(e){console.error('[启动游戏]',e)}
 }
 function initGameState(type){
   if(type==='gomoku')return{board:emptyBoard(),turn:'black',winner:null,lastMove:null,prevMove:null};
@@ -1006,7 +1006,7 @@ async function joinGame(){
   if(players.length>=g.max){showToast('人数已满（'+g.max+'人）');return}
   players=players.concat([{user_id:currentUser.id,nickname:currentUser.nickname,avatar_url:currentUser.avatar_url||'',seat:players.length}]);
   var ng=Object.assign({},game,{players:players});
-  try{await updateGame(ng);state.spectating=false;showToast('已加入，等待房主开始')}catch(e){showToast('加入失败：'+e.message)}
+  try{await updateGame(ng);state.spectating=false;showToast('已加入，等待房主开始')}catch(e){console.error('[加入游戏]',e)}
 }
 window.joinGame=joinGame;
 
@@ -1048,7 +1048,7 @@ async function beginGame(){
     st=Object.assign({},st,{phase:'bid',order:dzIds,hands:dzHands,bottom:dzDeck.slice(51,54),bids:{},bidTurn:0,bidCount:0,maxBid:0,maxBidder:null,landlord:null,currentTurn:null,lastPlay:null,passCount:0,winner:null,winnerSide:null,multiplier:1,bombCount:0});
   }
   var ng=Object.assign({},game,{status:'playing',state:st});
-  try{await updateGame(ng);showToast('游戏开始！')}catch(e){showToast('开始失败：'+e.message)}
+  try{await updateGame(ng);showToast('游戏开始！')}catch(e){console.error('[开始游戏]',e)}
 }
 window.beginGame=beginGame;
 
@@ -1361,7 +1361,7 @@ async function doPlaceStone(r,c,myColor){
   var ns={board:board,turn:myColor==='black'?'white':'black',winner:won?myColor:null,
     prevMove:st.lastMove||null,
     lastMove:{r:r,c:c,color:stone}};
-  try{await updateGame(Object.assign({},game,{status:won?'finished':'playing',state:ns}))}catch(e){showToast('落子失败：'+e.message)}
+  try{await updateGame(Object.assign({},game,{status:won?'finished':'playing',state:ns}))}catch(e){console.error('[落子]',e)}
 }
 function checkWinGmk(board,r,c,color){var dirs=[[0,1],[1,0],[1,1],[1,-1]];for(var d=0;d<dirs.length;d++){var dr=dirs[d][0],dc=dirs[d][1],cnt=1;for(var s=-1;s<=1;s+=2){var rr=r+dr*s,cc=c+dc*s;while(rr>=0&&rr<15&&cc>=0&&cc<15&&board[rr][cc]===color){cnt++;rr+=dr*s;cc+=dc*s}}if(cnt>=5)return true}return false}
 
@@ -1470,7 +1470,7 @@ async function submitDrawGuess(){
     ns.scores=scores;
     ns.messages.push({text:currentUser.nickname+' 猜对了！',correct:true});
   }
-  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){showToast('提交失败：'+e.message)}
+  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[猜测提交]',e)}
 }
 window.submitDrawGuess=submitDrawGuess;
 
@@ -1831,7 +1831,7 @@ async function ddzBid(want){
       showToast('三家都不叫，重新发牌');
     }
   }
-  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){showToast('操作失败：'+e.message)}
+  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[叫地主]',e)}
 }
 window.ddzBid=ddzBid;
 async function ddzPlay(){
@@ -1863,7 +1863,7 @@ async function ddzPlay(){
     ns.phase='finished';ns.winner=currentUser.id;
     ns.winnerSide=(currentUser.id===st.landlord)?'landlord':'farmer';
   }
-  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){showToast('出牌失败：'+e.message)}
+  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[出牌]',e)}
 }
 window.ddzPlay=ddzPlay;
 async function ddzPass(){
@@ -1879,7 +1879,7 @@ async function ddzPass(){
   ns.lastPlays=Object.assign({},st.lastPlays||{});
   ns.lastPlays[currentUser.id]={pass:true};
   if(nextUid===st.lastPlay.uid){ns.lastPlay=null;ns.passCount=0;ns.newRound=true;}
-  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){showToast('操作失败：'+e.message)}
+  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[不要]',e)}
 }
 window.ddzPass=ddzPass;
 
