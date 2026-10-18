@@ -244,8 +244,10 @@ async function loadUser(){
     else q = q.eq('id', t.id);
   }
   var res = await q;
-  if (res.error || !res.data) { $('pageContent').innerHTML = '<div class="empty">用户不存在</div>'; return false; }
-  viewingUser = res.data;
+  if (res.error) { $('pageContent').innerHTML = '<div class="empty">用户不存在</div>'; return false; }
+  var row = Array.isArray(res.data) ? res.data[0] : res.data;
+  if (!row) { $('pageContent').innerHTML = '<div class="empty">用户不存在</div>'; return false; }
+  viewingUser = row;
   isSelf = (viewingUser.id === currentUser.id);
   return true;
 }
