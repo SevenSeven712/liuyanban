@@ -717,6 +717,8 @@ window.showAvatarPrompt = showAvatarPrompt;
         if (window.location.pathname.indexOf('profile.html') >= 0) return;
         if (user.avatar_url && user.avatar_url.indexOf('http') === 0) return;
         if (sessionStorage.getItem('sq_avatar_prompt_shown') === '1') return;
+        // 老用户（有手机号且未设UID）优先弹出 UID 提醒，跳过头像弹窗
+        if (user.phone && !user.custom_uid) return;
         showAvatarPrompt();
     }
     if (document.readyState === 'loading') {

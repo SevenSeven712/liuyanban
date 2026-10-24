@@ -85,12 +85,18 @@
             errEl.textContent = '';
 
             try {
+                // 1. 先修改 Supabase Auth 的登录账号（手机号@sq.local -> UID@sq.local）
+                var authRes = await window.sb.auth.updateUser({ email: uid + '@sq.local' });
+                if (authRes.error) throw authRes.error;
+
+                // 2. 再更新数据库，并把 phone 永久置空
                 var res = await window.sb.rpc('set_custom_uid', { p_uid: uid });
                 if (res.error) throw res.error;
                 if (!res.data.ok) throw new Error(res.data.message);
 
-                // 更新本地缓存
+                // 3. 更新本地缓存，手机号置空
                 user.custom_uid = uid;
+                user.phone = null;
                 setSessionUser(user);
                 
                 showToast('设置成功！即将返回个人中心');

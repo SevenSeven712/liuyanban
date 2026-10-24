@@ -915,12 +915,8 @@
             try { await window.sb.auth.signOut(); } catch (e) {}
 
             var email = '';
-            if (/^\d{11}$/.test(account)) {
+            if (/^\d{11}$/.test(account) || /^[a-zA-Z0-9]{5,10}$/.test(account)) {
                 email = account + '@sq.local';
-            } else if (/^[a-zA-Z0-9]{5,10}$/.test(account)) {
-                var res = await window.sb.rpc('get_login_email_by_uid', { p_uid: account });
-                if (!res.data) throw new Error(T().loginFail);
-                email = res.data + '@sq.local';
             } else {
                 throw new Error(T().badPhone);
             }
