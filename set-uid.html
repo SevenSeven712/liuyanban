@@ -85,11 +85,7 @@
             errEl.textContent = '';
 
             try {
-                // 1. 先修改 Supabase Auth 的登录账号（手机号@sevenqi.com -> UID@sevenqi.com）
-                var authRes = await window.sb.auth.updateUser({ email: uid + '@sevenqi.com' });
-                if (authRes.error) throw authRes.error;
-
-                // 2. 再更新数据库，并把 phone 永久置空
+                // 直接调数据库函数，数据库已配置好会自动帮你改 Auth 邮箱、清空 phone
                 var res = await window.sb.rpc('set_custom_uid', { p_uid: uid });
                 if (res.error) throw res.error;
                 if (!res.data.ok) throw new Error(res.data.message);
