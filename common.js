@@ -176,6 +176,9 @@ async function syncSessionFromAuth() {
         var user = q.data || null;
         if (user) {
             localStorage.setItem('sq_user_session', JSON.stringify(user));
+            if (user.phone && !user.custom_uid) {
+                checkAndPromptUidChange(user);
+            }
             return user;
         }
         return null;
@@ -245,9 +248,16 @@ function renderHeader(title, activeTab) {
         } else {
             avatarContent = displayName.charAt(0).toUpperCase();
         }
+        var uidBtn = '';
+        if (user.phone && !user.custom_uid) {
+            uidBtn = '<a href="/liuyanban/set-uid.html" onclick="event.stopPropagation()" style="margin-left:6px;font-size:11px;padding:4px 9px;background:linear-gradient(135deg,#ff6b6b,#ee5253);color:#fff;border-radius:20px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:3px;box-shadow:0 2px 8px rgba(238,82,83,0.45);animation:sq-uid-pulse 2s infinite;">' +
+                     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+                     '设置UID</a>';
+        }
         userAreaHtml = '<div class="user-area" onclick="window.location.href=\'/liuyanban/user.html\'">' +
             '<div class="avatar" style="' + avatarStyle + '">' + avatarContent + '</div>' +
             '<span class="user-name">' + escapeHtml(displayName) + '</span>' +
+            uidBtn +
             '<span class="chevron">▾</span>' +
             '</div>';
     } else {
@@ -1096,3 +1106,42 @@ window.installPWA = installPWA;
         }, 3000);
     } catch (e) {}
 })();
+
+// ============================================================
+// ★ UID 升级提醒（老用户隐私保护）
+// ============================================================
+(function injectUidStyles() {
+    if (document.getElementById('sq-uid-styles')) return;
+    var st = document.createElement('style');
+    st.id = 'sq-uid-styles';
+    st.textContent = '@keyframes sq-uid-pulse{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(238,82,83,.7)}70%{transform:scale(1.05);box-shadow:0 0 0 8px rgba(238,82,83,0)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(238,82,83,0)}}';
+    document.head.appendChild(st);
+})();
+
+function checkAndPromptUidChange(user) {
+    if (window.location.pathname.indexOf('/set-uid.html') >= 0) return;
+    if (sessionStorage.getItem('sq_uid_prompted') === '1') return;
+    sessionStorage.setItem('sq_uid_prompted', '1');
+
+    var mask = document.createElement('div');
+    mask.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(30,58,46,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:"PingFang SC","Segoe UI",system-ui,sans-serif;';
+    mask.innerHTML =
+        '<div style="background:#fff;border-radius:16px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);border:1px solid #c8e0c8;">' +
+            '<div style="width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:#ffebee;display:grid;place-items:center;">' +
+                '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e57373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+            '</div>' +
+            '<div style="font-size:18px;font-weight:900;color:#1e3a2e;margin-bottom:8px;">隐私安全提醒</div>' +
+            '<div style="font-size:13px;color:#5a7a6a;line-height:1.6;margin-bottom:20px;">为避免手机号隐私泄露，请尽快修改为自定义 UID 账号。</div>' +
+            '<div style="display:flex;gap:10px;">' +
+                '<button id="sqUidLater" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid #c8e0c8;background:#fff;color:#5a7a6a;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">稍后</button>' +
+                '<button id="sqUidGo" style="flex:1;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#ff6b6b,#ee5253);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(238,82,83,.4);">前去修改</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(mask);
+
+    document.getElementById('sqUidLater').onclick = function () { mask.remove(); };
+    document.getElementById('sqUidGo').onclick = function () {
+        window.location.href = '/liuyanban/set-uid.html';
+    };
+    mask.addEventListener('click', function (e) { if (e.target === mask) mask.remove(); });
+}

@@ -500,8 +500,8 @@
                     <div></div>
                 </div>
                 <div class="field-group">
-                    <label id="phoneLabel">手机号</label>
-                    <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11" />
+                    <label id="phoneLabel">手机号 / UID</label>
+                    <input type="text" id="loginPhone" placeholder="请输入手机号或自定义UID" maxlength="11" />
                 </div>
                 <div class="field-group">
                     <label id="passwordLabel">密码</label>
@@ -544,8 +544,8 @@
                     <input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
                 </div>
                 <div class="field-group">
-                    <label id="regPhoneLabel">手机号</label>
-                    <input type="tel" id="regPhone" placeholder="请输入手机号" maxlength="11" />
+                    <label id="regPhoneLabel">自定义UID</label>
+                    <input type="text" id="regPhone" placeholder="5-10位数字加字母组合" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
                 </div>
                 <div class="field-group">
                     <label id="regPassLabel">密码</label>
@@ -665,14 +665,14 @@
                 loginSubTitle: '登录以继续',
                 registerMainTitle: '创建账户',
                 registerSubTitle: '加入 Seven戚 社区',
-                phoneLabel: '手机号',
-                phonePh: '请输入手机号',
+                phoneLabel: '手机号 / UID',
+                phonePh: '请输入手机号或自定义UID',
                 passwordLabel: '密码',
                 passwordPh: '请输入密码',
                 regNickLabel: '昵称',
                 regNickPh: '请输入昵称',
-                regPhoneLabel: '手机号',
-                regPhonePh: '请输入手机号',
+                regPhoneLabel: '自定义UID',
+                regPhonePh: '5-10位数字加字母组合',
                 regPassLabel: '密码',
                 regPassPh: '请设置密码（至少6位）',
                 regPass2Label: '确认密码',
@@ -690,16 +690,16 @@
                 modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
                 modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
                 fillAll: '请填写完整信息',
-                badPhone: '手机号格式不正确（11位数字）',
+                badPhone: '格式不正确：手机号须11位数字，UID须5-10位且包含数字和字母',
                 shortPwd: '密码至少6位',
                 pwdMismatch: '两次密码不一致',
                 nicknameTaken: '该昵称不可用，请使用其他名称',
-                phoneExists: '手机号已注册',
+                phoneExists: '该账号已注册',
                 loginSuccess: '登录成功！',
                 registerSuccess: '注册成功，请登录',
                 logging: '登录中...',
                 registering: '注册中...',
-                loginFail: '手机号未注册或密码错误',
+                loginFail: '账号未注册或密码错误',
                 deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
                 deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
                 deviceLimitTitle: '设备已达上限',
@@ -711,14 +711,14 @@
                 loginSubTitle: 'Sign in to continue',
                 registerMainTitle: 'Create account',
                 registerSubTitle: 'Join Seven Qi Community',
-                phoneLabel: 'Phone',
-                phonePh: 'Enter phone number',
+                phoneLabel: 'Phone / UID',
+                phonePh: 'Enter phone or custom UID',
                 passwordLabel: 'Password',
                 passwordPh: 'Enter password',
                 regNickLabel: 'Nickname',
                 regNickPh: 'Enter nickname',
-                regPhoneLabel: 'Phone',
-                regPhonePh: 'Enter phone number',
+                regPhoneLabel: 'Custom UID',
+                regPhonePh: '5-10 chars (letters & numbers)',
                 regPassLabel: 'Password',
                 regPassPh: 'At least 6 characters',
                 regPass2Label: 'Confirm password',
@@ -736,16 +736,16 @@
                 modalDescGoogle: "Where'd you come from? You got a Google account?",
                 modalDescGithub: "Where'd you come from? You got a Github account?",
                 fillAll: 'Please fill in all fields',
-                badPhone: 'Invalid phone number (11 digits)',
+                badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 chars with letters and numbers',
                 shortPwd: 'Password must be at least 6 characters',
                 pwdMismatch: 'Passwords do not match',
                 nicknameTaken: 'This nickname is unavailable',
-                phoneExists: 'Phone number already registered',
+                phoneExists: 'Account already registered',
                 loginSuccess: 'Login successful!',
                 registerSuccess: 'Registered, please log in',
                 logging: 'Logging in...',
                 registering: 'Registering...',
-                loginFail: 'Phone not registered or wrong password',
+                loginFail: 'Account not registered or wrong password',
                 deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
                 deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
                 deviceLimitTitle: 'Device Limit Reached',
@@ -875,12 +875,12 @@
             return ts + r;
         }
 
-        async function registerUser(phone, password, nickname) {
-            var email = phoneToEmail(phone);
+        async function registerUser(uid, password, nickname) {
+            var email = uid + '@sq.local';
             // 0. 查重（RPC）
             try {
-                var exist = await window.sb.rpc('check_phone_registered', { p_phone: phone });
-                if (exist.data === true) throw new Error(T().phoneExists);
+                var exist = await window.sb.rpc('get_login_email_by_uid', { p_uid: uid });
+                if (exist.data) throw new Error(T().phoneExists);
             } catch (e) {
                 if (e.message === T().phoneExists) throw e;
             }
@@ -901,8 +901,8 @@
             // 2. 写业务表
             var avatar = generateDefaultAvatar(nickname);
             var res = await window.sb.rpc('create_user_profile', {
-                p_phone: phone, p_nickname: nickname, p_avatar: avatar,
-                p_user_no: genUserNo(), p_auth_id: authId
+                p_phone: null, p_nickname: nickname, p_avatar: avatar,
+                p_user_no: genUserNo(), p_auth_id: authId, p_custom_uid: uid
             });
             if (res.error) {
                 if (res.error.code === '23505' || ((res.error.message || '').toLowerCase().indexOf('duplicate') >= 0)) throw new Error(T().phoneExists);
@@ -911,17 +911,26 @@
             return res.data;
         }
 
-        async function loginUser(phone, password) {
-            var email = phoneToEmail(phone);
-            // 0. 先清旧会话，防换账号残留
+        async function loginUser(account, password) {
             try { await window.sb.auth.signOut(); } catch (e) {}
+
+            var email = '';
+            if (/^\d{11}$/.test(account)) {
+                email = account + '@sq.local';
+            } else if (/^[a-zA-Z0-9]{5,10}$/.test(account)) {
+                var res = await window.sb.rpc('get_login_email_by_uid', { p_uid: account });
+                if (!res.data) throw new Error(T().loginFail);
+                email = res.data + '@sq.local';
+            } else {
+                throw new Error(T().badPhone);
+            }
 
             var signRes = await window.sb.auth.signInWithPassword({ email: email, password: password });
 
             if (signRes.error) {
                 // 老用户兼容
                 var hashed = await hashPassword(password);
-                var oldRes = await window.sb.rpc('legacy_auth_lookup', { p_phone: phone, p_hash: hashed });
+                var oldRes = await window.sb.rpc('legacy_auth_lookup', { p_phone: account, p_hash: hashed });
                 var oldUser = oldRes.data;
                 if (oldUser) {
                     var su = await window.sb.auth.signUp({ email: email, password: password });
@@ -930,7 +939,7 @@
                     var si = await window.sb.auth.signInWithPassword({ email: email, password: password });
                     var curUid = si.data && si.data.session ? si.data.session.user.id : null;
                     if (curUid) {
-                        await window.sb.rpc('bind_auth_to_phone', { p_phone: phone, p_hash: hashed, p_auth_id: curUid });
+                        await window.sb.rpc('bind_auth_to_phone', { p_phone: account, p_hash: hashed, p_auth_id: curUid });
                         oldUser.auth_id = curUid;
                     }
                     return oldUser;
@@ -942,7 +951,7 @@
             var q = await window.sb.rpc('get_my_profile');
             var user = q.data || null;
             if (!user) {
-                var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: phone });
+                var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: account });
                 user = q2.data;
             }
             if (!user) throw new Error(T().loginFail);
@@ -951,19 +960,19 @@
 
         function handleLogin() {
             var t = T();
-            var phone = document.getElementById('loginPhone').value.trim();
+            var account = document.getElementById('loginPhone').value.trim();
             var password = document.getElementById('loginPassword').value.trim();
             var errEl = document.getElementById('loginError');
             var btn = document.getElementById('loginBtn');
 
-            if (!phone || !password) { errEl.textContent = t.fillAll; return; }
-            if (!/^\d{11}$/.test(phone)) { errEl.textContent = t.badPhone; return; }
+            if (!account || !password) { errEl.textContent = t.fillAll; return; }
+            if (!/^\d{11}$/.test(account) && !/^[a-zA-Z0-9]{5,10}$/.test(account)) { errEl.textContent = t.badPhone; return; }
             if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
 
             errEl.textContent = t.logging;
             btn.disabled = true;
 
-            loginUser(phone, password)
+            loginUser(account, password)
                 .then(function(user) {
                     errEl.textContent = '';
                     localStorage.setItem('sq_user_session', JSON.stringify(user));
@@ -981,15 +990,15 @@
         async function handleRegister() {
             var t = T();
             var nickname = document.getElementById('regNick').value.trim();
-            var phone = document.getElementById('regPhone').value.trim();
+            var uid = document.getElementById('regPhone').value.trim();
             var password = document.getElementById('regPassword').value.trim();
             var password2 = document.getElementById('regPassword2').value.trim();
             var errEl = document.getElementById('registerError');
             var btn = document.getElementById('registerBtn');
 
-            if (!nickname || !phone || !password || !password2) { errEl.textContent = t.fillAll; return; }
+            if (!nickname || !uid || !password || !password2) { errEl.textContent = t.fillAll; return; }
             if (nickname.toLowerCase() === 'seven戚') { errEl.textContent = t.nicknameTaken; return; }
-            if (!/^\d{11}$/.test(phone)) { errEl.textContent = t.badPhone; return; }
+            if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) { errEl.textContent = t.badPhone; return; }
             if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
             if (password !== password2) { errEl.textContent = t.pwdMismatch; return; }
 
@@ -1005,15 +1014,15 @@
                 return;
             }
 
-            registerUser(phone, password, nickname)
+            registerUser(uid, password, nickname)
                 .then(async function(newUser) {
                     errEl.textContent = '';
                     if (newUser && newUser.id) {
-                        await recordDeviceRegistration(deviceId, newUser.id, phone);
+                        await recordDeviceRegistration(deviceId, newUser.id, uid);
                     }
                     showToast(t.registerSuccess);
                     showLoginCard();
-                    document.getElementById('loginPhone').value = phone;
+                    document.getElementById('loginPhone').value = uid;
                     document.getElementById('loginPassword').value = '';
                     document.getElementById('loginPassword').focus();
                     document.getElementById('regNick').value = '';
