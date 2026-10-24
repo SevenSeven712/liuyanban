@@ -1,119 +1,113 @@
-<path>set-uid.html</path>
-<type>file</type>
-<content>
-1: <!DOCTYPE html>
-2: <html lang="zh">
-3: <head>
-4:     <meta charset="UTF-8" />
-5:     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-6:     <title>设置专属UID</title>
-7:     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-8:     <style>
-9:         * { margin: 0; padding: 0; box-sizing: border-box; }
-10:         body {
-11:             font-family: "PingFang SC", "Segoe UI", system-ui, sans-serif;
-12:             background: #f5faf5; color: #1e3a2e;
-13:             display: flex; align-items: center; justify-content: center;
-14:             min-height: 100vh; padding: 20px;
-15:             background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%);
-16:         }
-17:         .card {
-18:             width: 100%; max-width: 400px;
-19:             background: #fff; border-radius: 16px; padding: 30px 24px;
-20:             box-shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
-21:             border: 1px solid #c8e0c8;
-22:         }
-23:         h2 { text-align: center; color: #2e7d32; margin-bottom: 8px; font-size: 22px; }
-24:         .desc { text-align: center; color: #5a7a6a; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
-25:         .warning-box {
-26:             background: #fff3e0; border: 1px solid #ffcc80; color: #e65100;
-27:             padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px;
-28:             line-height: 1.5; display: flex; gap: 8px; align-items: flex-start;
-29:         }
-30:         .warning-box svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; stroke: #e65100; }
-31:         .field { margin-bottom: 16px; }
-32:         .field label { display: block; font-size: 13px; font-weight: 600; color: #5a7a6a; margin-bottom: 6px; }
-33:         .field input {
-34:             width: 100%; padding: 12px; border: 2px solid #c8e0c8; border-radius: 10px;
-35:             font-size: 16px; font-weight: bold; outline: none; transition: all 0.3s;
-36:             background: #eaf3ea; color: #1e3a2e;
-37:         }
-38:         .field input:focus { border-color: #2e7d32; box-shadow: 0 0 0 4px rgba(46,125,50,.25); }
-39:         .btn {
-40:             width: 100%; padding: 14px; border-radius: 10px; border: none;
-41:             background: #2e7d32; color: #fff; font-size: 16px; font-weight: bold;
-42:             cursor: pointer; transition: all 0.2s; margin-top: 10px;
-43:         }
-44:         .btn:hover:not(:disabled) { background: #4caf50; transform: translateY(-1px); }
-45:         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-46:         .error { color: #c62828; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
-47:     </style>
-48: </head>
-49: <body>
-50:     <div class="card">
-51:         <h2>设置专属 UID</h2>
-52:         <p class="desc">系统已完成安全升级，请将您的手机号替换为专属 UID。</p>
-53:         
-54:         <div class="warning-box">
-55:             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-56:             <div>为了保护您的隐私，避免手机号泄露。<br><b>UID 仅能设置一次，请谨慎填写！</b></div>
-57:         </div>
-58: 
-59:         <div class="field">
-60:             <label>自定义 UID（5~10位数字加字母组合）</label>
-61:             <input type="text" id="uidInput" placeholder="例如: seven888" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
-62:         </div>
-63:         <button class="btn" id="submitBtn" onclick="handleSubmit()">确认修改</button>
-64:         <div class="error" id="errMsg"></div>
-65:     </div>
-66: 
-67:     <script src="/liuyanban/common.js"></script>
-68:     <script>
-69:         var user = getSessionUser();
-70:         if (!user || !user.id) window.location.href = '/liuyanban/index.html';
-71:         if (user.custom_uid) window.location.href = '/liuyanban/user.html';
-72: 
-73:         async function handleSubmit() {
-74:             var uid = document.getElementById('uidInput').value.trim();
-75:             var errEl = document.getElementById('errMsg');
-76:             var btn = document.getElementById('submitBtn');
-77: 
-78:             if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) {
-79:                 errEl.textContent = '必须为5-10位数字加字母组合，且包含两者';
-80:                 return;
-81:             }
-82: 
-83:             btn.disabled = true;
-84:             btn.textContent = '设置中...';
-85:             errEl.textContent = '';
-86: 
-87:             try {
-88:                 // 1. 先修改 Supabase Auth 的登录账号（手机号@sevenqi.com -> UID@sevenqi.com）
-89:                 var authRes = await window.sb.auth.updateUser({ email: uid + '@sevenqi.com' });
-90:                 if (authRes.error) throw authRes.error;
-91: 
-92:                 // 2. 再更新数据库，并把 phone 永久置空
-93:                 var res = await window.sb.rpc('set_custom_uid', { p_uid: uid });
-94:                 if (res.error) throw res.error;
-95:                 if (!res.data.ok) throw new Error(res.data.message);
-96: 
-97:                 // 3. 更新本地缓存，手机号置空
-98:                 user.custom_uid = uid;
-99:                 user.phone = null;
-100:                 setSessionUser(user);
-101:                 
-102:                 showToast('设置成功！即将返回个人中心');
-103:                 setTimeout(function() { window.location.href = '/liuyanban/user.html'; }, 1500);
-104: 
-105:             } catch (e) {
-106:                 errEl.textContent = e.message || '网络异常，请重试';
-107:                 btn.disabled = false;
-108:                 btn.textContent = '确认修改';
-109:             }
-110:         }
-111:     </script>
-112: </body>
-113: </html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>设置专属UID</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC", "Segoe UI", system-ui, sans-serif;
+            background: #f5faf5; color: #1e3a2e;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+            background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%);
+        }
+        .card {
+            width: 100%; max-width: 400px;
+            background: #fff; border-radius: 16px; padding: 30px 24px;
+            box-shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+            border: 1px solid #c8e0c8;
+        }
+        h2 { text-align: center; color: #2e7d32; margin-bottom: 8px; font-size: 22px; }
+        .desc { text-align: center; color: #5a7a6a; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+        .warning-box {
+            background: #fff3e0; border: 1px solid #ffcc80; color: #e65100;
+            padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px;
+            line-height: 1.5; display: flex; gap: 8px; align-items: flex-start;
+        }
+        .warning-box svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; stroke: #e65100; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #5a7a6a; margin-bottom: 6px; }
+        .field input {
+            width: 100%; padding: 12px; border: 2px solid #c8e0c8; border-radius: 10px;
+            font-size: 16px; font-weight: bold; outline: none; transition: all 0.3s;
+            background: #eaf3ea; color: #1e3a2e;
+        }
+        .field input:focus { border-color: #2e7d32; box-shadow: 0 0 0 4px rgba(46,125,50,.25); }
+        .btn {
+            width: 100%; padding: 14px; border-radius: 10px; border: none;
+            background: #2e7d32; color: #fff; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; margin-top: 10px;
+        }
+        .btn:hover:not(:disabled) { background: #4caf50; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .error { color: #c62828; font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>设置专属 UID</h2>
+        <p class="desc">系统已完成安全升级，请将您的手机号替换为专属 UID。</p>
+        
+        <div class="warning-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div>为了保护您的隐私，避免手机号泄露。<br><b>UID 仅能设置一次，请谨慎填写！</b></div>
+        </div>
 
-(End of file - total 113 lines)
-</content>
+        <div class="field">
+            <label>自定义 UID（5~10位数字加字母组合）</label>
+            <input type="text" id="uidInput" placeholder="例如: seven888" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
+        </div>
+        <button class="btn" id="submitBtn" onclick="handleSubmit()">确认修改</button>
+        <div class="error" id="errMsg"></div>
+    </div>
+
+    <script src="/liuyanban/common.js"></script>
+    <script>
+        var user = getSessionUser();
+        if (!user || !user.id) window.location.href = '/liuyanban/index.html';
+        if (user.custom_uid) window.location.href = '/liuyanban/user.html';
+
+        async function handleSubmit() {
+            var uid = document.getElementById('uidInput').value.trim();
+            var errEl = document.getElementById('errMsg');
+            var btn = document.getElementById('submitBtn');
+
+            if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) {
+                errEl.textContent = '必须为5-10位数字加字母组合，且包含两者';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '设置中...';
+            errEl.textContent = '';
+
+            try {
+                // 1. 先修改 Supabase Auth 的登录账号（手机号@sevenqi.com -> UID@sevenqi.com）
+                var authRes = await window.sb.auth.updateUser({ email: uid + '@sevenqi.com' });
+                if (authRes.error) throw authRes.error;
+
+                // 2. 再更新数据库，并把 phone 永久置空
+                var res = await window.sb.rpc('set_custom_uid', { p_uid: uid });
+                if (res.error) throw res.error;
+                if (!res.data.ok) throw new Error(res.data.message);
+
+                // 3. 更新本地缓存，手机号置空
+                user.custom_uid = uid;
+                user.phone = null;
+                setSessionUser(user);
+                
+                showToast('设置成功！即将返回个人中心');
+                setTimeout(function() { window.location.href = '/liuyanban/user.html'; }, 1500);
+
+            } catch (e) {
+                errEl.textContent = e.message || '网络异常，请重试';
+                btn.disabled = false;
+                btn.textContent = '确认修改';
+            }
+        }
+    </script>
+</body>
+</html>

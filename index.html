@@ -1,1104 +1,1098 @@
-<path>index.html</path>
-<type>file</type>
-<content>
-1: <!DOCTYPE html>
-2: <html lang="zh">
-3: <head>
-4:     <meta charset="UTF-8" />
-5:     <link rel="manifest" href="/liuyanban/manifest.json" />
-6:     <meta name="theme-color" content="#2e7d32" />
-7:     <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
-8:     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-9:     <title>通行证 · Seven戚社区</title>
-10:     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-11: 
-12:     <style>
-13:         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-14:         :root {
-15:             --bg: #f5faf5;
-16:             --bg-card: #ffffff;
-17:             --bg-input: #eaf3ea;
-18:             --border: #c8e0c8;
-19:             --text: #1e3a2e;
-20:             --text-muted: #5a7a6a;
-21:             --text-light: #8aaa9a;
-22:             --primary: #2e7d32;
-23:             --primary-light: #4caf50;
-24:             --primary-glow: rgba(46, 125, 50, 0.25);
-25:             --primary-bg: #e8f5e9;
-26:             --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
-27:             --danger: #e57373;
-28:             --danger-bg: #ffebee;
-29:             --radius: 16px;
-30:             --radius-sm: 10px;
-31:             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-32:         }
-33:         html, body {
-34:             height: 100%;
-35:             font-family: var(--font);
-36:             background: var(--bg);
-37:             background-image:
-38:                 radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
-39:                 radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
-40:             color: var(--text);
-41:             display: flex;
-42:             align-items: center;
-43:             justify-content: center;
-44:             padding: 20px;
-45:             overflow: hidden;
-46:         }
-47:         .login-card {
-48:             width: 23em;
-49:             max-width: 92vw;
-50:             max-height: 92vh;
-51:             overflow-y: auto;
-52:             background: var(--bg-card);
-53:             border-radius: var(--radius);
-54:             padding: 2.2em 2em;
-55:             position: relative;
-56:             border: 1px solid var(--border);
-57:             box-shadow: var(--shadow);
-58:             -webkit-overflow-scrolling: touch;
-59:         }
-60:         .login-card::-webkit-scrollbar { width: 4px; }
-61:         .login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-62:         .login-card::after {
-63:             content: "";
-64:             position: absolute;
-65:             inset: 0;
-66:             border-radius: var(--radius);
-67:             background-image:
-68:                 linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
-69:                 linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
-70:             background-size: 2em 2em;
-71:             opacity: 0.6;
-72:             pointer-events: none;
-73:             z-index: 0;
-74:         }
-75:         .login-card::before {
-76:             content: "";
-77:             position: absolute;
-78:             inset: 0;
-79:             border-radius: var(--radius);
-80:             background: linear-gradient(115deg,
-81:                     transparent 0%, transparent 40%,
-82:                     rgba(46, 125, 50, 0.03) 45%,
-83:                     rgba(46, 125, 50, 0.10) 50%,
-84:                     rgba(46, 125, 50, 0.03) 55%,
-85:                     transparent 60%, transparent 100%);
-86:             pointer-events: none;
-87:             z-index: 1;
-88:             animation: sweep 6s ease-in-out infinite;
-89:         }
-90:         @keyframes sweep {
-91:             0%, 100% { background-position: 100% 100%; }
-92:             50% { background-position: 0% 0%; }
-93:         }
-94:         .login-card > * { position: relative; z-index: 2; }
-95: 
-96:         .login-header {
-97:             display: flex;
-98:             justify-content: space-between;
-99:             align-items: center;
-100:             margin-bottom: 1.5em;
-101:         }
-102:         .login-logo {
-103:             font-weight: 900;
-104:             font-size: 1.35em;
-105:             color: var(--text);
-106:             letter-spacing: -0.02em;
-107:             display: flex;
-108:             align-items: center;
-109:             gap: 0.35em;
-110:         }
-111:         .login-logo span { color: var(--primary); }
-112:         .login-logo svg {
-113:             width: 1.3em;
-114:             height: 1.3em;
-115:             stroke: var(--primary);
-116:             fill: none;
-117:             stroke-width: 2;
-118:             stroke-linecap: round;
-119:             stroke-linejoin: round;
-120:             filter: drop-shadow(0 0 4px var(--primary-glow));
-121:         }
-122:         .lang-switch { display: flex; gap: 0.3em; }
-123:         .lang-btn {
-124:             background: transparent;
-125:             border: 1.5px solid var(--border);
-126:             color: var(--text-muted);
-127:             padding: 0.2em 0.7em;
-128:             border-radius: 99px;
-129:             font-size: 0.65em;
-130:             font-weight: 700;
-131:             cursor: pointer;
-132:             transition: all 0.2s;
-133:             font-family: inherit;
-134:         }
-135:         .lang-btn.active {
-136:             background: var(--primary);
-137:             border-color: var(--primary);
-138:             color: #fff;
-139:             box-shadow: 0 0 20px var(--primary-glow);
-140:         }
-141:         .lang-btn:hover { filter: brightness(1.05); }
-142: 
-143:         .login-title {
-144:             font-size: 1.4em;
-145:             font-weight: 700;
-146:             color: var(--text);
-147:             text-align: center;
-148:             margin-bottom: 1em;
-149:         }
-150:         .login-title span {
-151:             display: block;
-152:             font-weight: 400;
-153:             color: var(--text-muted);
-154:             font-size: 0.55em;
-155:             margin-top: 0.2em;
-156:         }
-157:         .login-form {
-158:             display: flex;
-159:             flex-direction: column;
-160:             gap: 0.9em;
-161:         }
-162:         .field-group {
-163:             display: flex;
-164:             flex-direction: column;
-165:             gap: 0.35em;
-166:         }
-167:         .field-group label {
-168:             font-size: 0.7em;
-169:             font-weight: 600;
-170:             color: var(--text-muted);
-171:             text-transform: uppercase;
-172:             letter-spacing: 0.06em;
-173:         }
-174:         .field-group input {
-175:             width: 100%;
-176:             padding: 0.8em 1em;
-177:             border-radius: var(--radius-sm);
-178:             border: 2px solid var(--border);
-179:             background: var(--bg-input);
-180:             color: var(--text);
-181:             font-size: 0.95em;
-182:             font-weight: 600;
-183:             outline: none;
-184:             transition: border-color 0.3s, box-shadow 0.3s;
-185:             font-family: inherit;
-186:         }
-187:         .field-group input:focus {
-188:             border-color: var(--primary);
-189:             box-shadow: 0 0 0 4px var(--primary-glow);
-190:         }
-191:         .field-group input::placeholder { color: var(--text-light); }
-192: 
-193:         .oauth-row { display: flex; gap: 0.6em; }
-194:         .oauth-btn {
-195:             flex: 1;
-196:             display: flex;
-197:             justify-content: center;
-198:             align-items: center;
-199:             gap: 0.5em;
-200:             padding: 0.7em;
-201:             border-radius: var(--radius-sm);
-202:             border: 2px solid var(--border);
-203:             background: var(--bg-input);
-204:             color: var(--text);
-205:             font-size: 0.85em;
-206:             font-weight: 600;
-207:             cursor: pointer;
-208:             position: relative;
-209:             overflow: hidden;
-210:             transition: all 250ms;
-211:             font-family: inherit;
-212:         }
-213:         .oauth-btn::before {
-214:             content: "";
-215:             position: absolute;
-216:             top: 0; left: 0;
-217:             height: 100%; width: 0;
-218:             background: var(--primary);
-219:             z-index: 0;
-220:             transition: width 250ms;
-221:         }
-222:         .oauth-btn:hover { color: #fff; border-color: var(--primary); }
-223:         .oauth-btn:hover::before { width: 100%; }
-224:         .oauth-btn > * { position: relative; z-index: 1; }
-225:         .oauth-btn .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
-226: 
-227:         .separator {
-228:             display: flex;
-229:             align-items: center;
-230:             gap: 0.6em;
-231:             color: var(--text-muted);
-232:             font-size: 0.75em;
-233:             margin: 0.2em 0;
-234:         }
-235:         .separator div {
-236:             flex: 1;
-237:             height: 1px;
-238:             background: var(--border);
-239:         }
-240:         .login-continue {
-241:             width: 100%;
-242:             padding: 0.85em;
-243:             border-radius: var(--radius-sm);
-244:             border: 2px solid var(--primary);
-245:             background: var(--primary);
-246:             color: #fff;
-247:             font-weight: 700;
-248:             font-size: 0.95em;
-249:             cursor: pointer;
-250:             transition: all 0.3s;
-251:             display: flex;
-252:             align-items: center;
-253:             justify-content: center;
-254:             gap: 0.5em;
-255:             font-family: inherit;
-256:             margin-top: 0.3em;
-257:         }
-258:         .login-continue:hover {
-259:             background: var(--primary-light);
-260:             border-color: var(--primary-light);
-261:             box-shadow: 0 0 30px var(--primary-glow);
-262:             transform: translateY(-1px);
-263:         }
-264:         .login-continue:disabled {
-265:             opacity: 0.5;
-266:             pointer-events: none;
-267:         }
-268:         .login-continue .icon {
-269:             width: 1.2em;
-270:             height: 1.2em;
-271:             stroke: currentColor;
-272:             stroke-width: 2.5;
-273:             fill: none;
-274:         }
-275:         .login-footer {
-276:             text-align: center;
-277:             margin-top: 1.1em;
-278:             font-size: 0.82em;
-279:             color: var(--text-muted);
-280:         }
-281:         .login-footer .switch-link {
-282:             color: var(--primary);
-283:             font-weight: 700;
-284:             cursor: pointer;
-285:             border: none;
-286:             background: none;
-287:             font-family: inherit;
-288:             font-size: inherit;
-289:             padding: 0 4px;
-290:             text-decoration: underline;
-291:             text-underline-offset: 3px;
-292:         }
-293:         .login-footer .switch-link:hover { color: var(--primary-light); }
-294: 
-295:         .login-error {
-296:             color: #c62828;
-297:             font-size: 0.78em;
-298:             text-align: center;
-299:             min-height: 1.5em;
-300:             margin-top: 0.2em;
-301:         }
-302: 
-303:         /* 设备检测提示条 */
-304:         .device-hint {
-305:             display: flex;
-306:             align-items: flex-start;
-307:             gap: 8px;
-308:             padding: 10px 12px;
-309:             border-radius: var(--radius-sm);
-310:             background: var(--primary-bg);
-311:             border: 1px solid var(--border);
-312:             font-size: 0.75em;
-313:             color: var(--text-muted);
-314:             line-height: 1.5;
-315:         }
-316:         .device-hint svg {
-317:             width: 16px;
-318:             height: 16px;
-319:             flex-shrink: 0;
-320:             stroke: var(--primary);
-321:             fill: none;
-322:             stroke-width: 2;
-323:             stroke-linecap: round;
-324:             stroke-linejoin: round;
-325:             margin-top: 2px;
-326:         }
-327:         .device-hint.warn {
-328:             background: var(--danger-bg);
-329:             border-color: #ffcdd2;
-330:             color: #c62828;
-331:         }
-332:         .device-hint.warn svg { stroke: #c62828; }
-333: 
-334:         .auth-card { display: none; }
-335:         .auth-card.active { display: block; animation: fadeIn 0.35s ease; }
-336:         @keyframes fadeIn {
-337:             from { opacity: 0; transform: translateY(8px); }
-338:             to { opacity: 1; transform: translateY(0); }
-339:         }
-340: 
-341:         #toast {
-342:             position: fixed;
-343:             bottom: 40px;
-344:             left: 50%;
-345:             transform: translateX(-50%) translateY(80px);
-346:             background: var(--text);
-347:             color: #fff;
-348:             padding: 0.7em 1.6em;
-349:             border-radius: 2em;
-350:             font-weight: 600;
-351:             font-size: 0.85em;
-352:             opacity: 0;
-353:             transition: all 0.4s ease;
-354:             z-index: 300;
-355:             pointer-events: none;
-356:             white-space: nowrap;
-357:             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-358:             display: flex;
-359:             align-items: center;
-360:             gap: 6px;
-361:         }
-362:         #toast svg { width: 16px; height: 16px; flex-shrink: 0; }
-363:         #toast.show {
-364:             opacity: 1;
-365:             transform: translateX(-50%) translateY(0);
-366:         }
-367: 
-368:         .modal-overlay {
-369:             position: fixed;
-370:             inset: 0;
-371:             z-index: 1000;
-372:             background: rgba(30, 58, 46, 0.35);
-373:             backdrop-filter: blur(6px);
-374:             -webkit-backdrop-filter: blur(6px);
-375:             display: none;
-376:             align-items: center;
-377:             justify-content: center;
-378:             padding: 20px;
-379:             opacity: 0;
-380:             transition: opacity 0.3s ease;
-381:         }
-382:         .modal-overlay.active { display: flex; opacity: 1; }
-383:         .modal-box {
-384:             background: var(--bg-card);
-385:             border-radius: var(--radius);
-386:             max-width: 400px;
-387:             width: 100%;
-388:             padding: 2em;
-389:             box-shadow: var(--shadow);
-390:             border: 1px solid var(--border);
-391:             text-align: center;
-392:             transform: scale(0.9);
-393:             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-394:         }
-395:         .modal-overlay.active .modal-box { transform: scale(1); }
-396:         .modal-box .modal-icon {
-397:             width: 64px;
-398:             height: 64px;
-399:             margin: 0 auto 0.4em;
-400:             border-radius: 50%;
-401:             background: var(--primary-bg);
-402:             display: grid;
-403:             place-items: center;
-404:             color: var(--primary);
-405:         }
-406:         .modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
-407:         .modal-box .modal-icon svg {
-408:             width: 32px;
-409:             height: 32px;
-410:             stroke: currentColor;
-411:             fill: none;
-412:             stroke-width: 2;
-413:             stroke-linecap: round;
-414:             stroke-linejoin: round;
-415:         }
-416:         .modal-box .modal-title {
-417:             font-size: 1.25em;
-418:             font-weight: 900;
-419:             color: var(--text);
-420:             margin-bottom: 0.4em;
-421:         }
-422:         .modal-box .modal-body {
-423:             font-size: 0.95em;
-424:             color: var(--text-muted);
-425:             line-height: 1.6;
-426:             margin-bottom: 1.4em;
-427:             white-space: pre-line;
-428:         }
-429:         .modal-box .modal-actions {
-430:             display: flex;
-431:             justify-content: center;
-432:         }
-433:         .modal-box .modal-actions .btn-primary {
-434:             padding: 0.6em 2em;
-435:             border-radius: var(--radius-sm);
-436:             border: none;
-437:             background: var(--primary);
-438:             color: #fff;
-439:             font-weight: 700;
-440:             font-size: 0.95em;
-441:             cursor: pointer;
-442:             font-family: inherit;
-443:             transition: background 0.2s, box-shadow 0.2s;
-444:         }
-445:         .modal-box .modal-actions .btn-primary:hover {
-446:             background: var(--primary-light);
-447:             box-shadow: 0 0 25px var(--primary-glow);
-448:         }
-449: 
-450:         @media (max-width: 480px) {
-451:             .login-card { padding: 1.6em 1.4em; }
-452:             .oauth-row { flex-direction: column; }
-453:         }
-454:     </style>
-455: </head>
-456: <body>
-457: 
-458:     <div class="login-card">
-459:         <div class="login-header">
-460:             <div class="login-logo">
-461:                 <svg viewBox="0 0 24 24">
-462:                     <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-463:                     <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-464:                 </svg>
-465:                 <span>Seven</span>戚
-466:             </div>
-467:             <div class="lang-switch">
-468:                 <button class="lang-btn active" data-lang="zh">中文</button>
-469:                 <button class="lang-btn" data-lang="en">EN</button>
-470:             </div>
-471:         </div>
-472: 
-473:         <!-- ===== 登录卡片 ===== -->
-474:         <div id="loginCard" class="auth-card active">
-475:             <div class="login-title">
-476:                 <span id="loginMainTitle">欢迎回来</span>
-477:                 <span id="loginSubTitle">登录以继续</span>
-478:             </div>
-479:             <div class="login-form">
-480:                 <div class="oauth-row">
-481:                     <button class="oauth-btn" id="googleBtn">
-482:                         <svg class="icon" viewBox="0 0 24 24">
-483:                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-484:                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-485:                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-486:                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-487:                         </svg>
-488:                         <span id="googleText">Google</span>
-489:                     </button>
-490:                     <button class="oauth-btn" id="githubBtn">
-491:                         <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-492:                             <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-493:                         </svg>
-494:                         <span id="githubText">Github</span>
-495:                     </button>
-496:                 </div>
-497:                 <div class="separator">
-498:                     <div></div>
-499:                     <span id="orText">或</span>
-500:                     <div></div>
-501:                 </div>
-502:                 <div class="field-group">
-503:                     <label id="phoneLabel">手机号 / UID</label>
-504:                     <input type="text" id="loginPhone" placeholder="请输入手机号或自定义UID" maxlength="11" />
-505:                 </div>
-506:                 <div class="field-group">
-507:                     <label id="passwordLabel">密码</label>
-508:                     <input type="password" id="loginPassword" placeholder="请输入密码" />
-509:                 </div>
-510:                 <button class="login-continue" id="loginBtn">
-511:                     <span id="loginBtnText">登录</span>
-512:                     <svg class="icon" viewBox="0 0 24 24">
-513:                         <path d="m6 17 5-5-5-5"/>
-514:                         <path d="m13 17 5-5-5-5"/>
-515:                     </svg>
-516:                 </button>
-517:                 <div class="login-error" id="loginError"></div>
-518:             </div>
-519:             <div class="login-footer">
-520:                 <span id="noAccountText">没有账号？</span>
-521:                 <button class="switch-link" id="toRegisterBtn">去注册</button>
-522:             </div>
-523:         </div>
-524: 
-525:         <!-- ===== 注册卡片 ===== -->
-526:         <div id="registerCard" class="auth-card">
-527:             <div class="login-title">
-528:                 <span id="registerMainTitle">创建账户</span>
-529:                 <span id="registerSubTitle">加入 Seven戚 社区</span>
-530:             </div>
-531: 
-532:             <!-- 设备检测提示 -->
-533:             <div class="device-hint" id="deviceHint" style="margin-bottom:0.9em;">
-534:                 <svg viewBox="0 0 24 24">
-535:                     <rect x="5" y="2" width="14" height="20" rx="2"/>
-536:                     <line x1="12" y1="18" x2="12.01" y2="18"/>
-537:                 </svg>
-538:                 <span id="deviceHintText">正在检测本设备…</span>
-539:             </div>
-540: 
-541:             <div class="login-form">
-542:                 <div class="field-group">
-543:                     <label id="regNickLabel">昵称</label>
-544:                     <input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
-545:                 </div>
-546:                 <div class="field-group">
-547:                     <label id="regPhoneLabel">自定义UID</label>
-548:                     <input type="text" id="regPhone" placeholder="5-10位数字加字母组合" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
-549:                 </div>
-550:                 <div class="field-group">
-551:                     <label id="regPassLabel">密码</label>
-552:                     <input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
-553:                 </div>
-554:                 <div class="field-group">
-555:                     <label id="regPass2Label">确认密码</label>
-556:                     <input type="password" id="regPassword2" placeholder="请再次输入密码" />
-557:                 </div>
-558:                 <button class="login-continue" id="registerBtn">
-559:                     <span id="registerBtnText">注册</span>
-560:                     <svg class="icon" viewBox="0 0 24 24">
-561:                         <path d="m6 17 5-5-5-5"/>
-562:                         <path d="m13 17 5-5-5-5"/>
-563:                     </svg>
-564:                 </button>
-565:                 <div class="login-error" id="registerError"></div>
-566:             </div>
-567:             <div class="login-footer">
-568:                 <span id="hasAccountText">已有账号？</span>
-569:                 <button class="switch-link" id="toLoginBtn">去登录</button>
-570:             </div>
-571:         </div>
-572:     </div>
-573: 
-574:     <div id="toast"></div>
-575: 
-576:     <!-- ===== 通用提示弹窗 ===== -->
-577:     <div class="modal-overlay" id="uiModal">
-578:         <div class="modal-box">
-579:             <div class="modal-icon" id="uiModalIconWrap">
-580:                 <svg id="uiModalIcon" viewBox="0 0 24 24">
-581:                     <path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/>
-582:                 </svg>
-583:             </div>
-584:             <div class="modal-title" id="uiModalTitle">提示</div>
-585:             <div class="modal-body" id="uiModalBody">内容</div>
-586:             <div class="modal-actions">
-587:                 <button class="btn-primary" id="uiModalBtn">知道了</button>
-588:             </div>
-589:         </div>
-590:     </div>
-591: 
-592:     <script>
-593:         // ============================================================
-594:         // Supabase 配置
-595:         // ============================================================
-596:         var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
-597:         var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
-598:         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-599: 
-600:         // ============================================================
-601:         // 设备 ID 相关
-602:         // ============================================================
-603:         var MAX_ACCOUNTS_PER_DEVICE = 2;
-604: 
-605:         function getDeviceId() {
-606:             var id = localStorage.getItem('sq_device_id');
-607:             if (!id) {
-608:                 if (window.crypto && crypto.randomUUID) {
-609:                     id = 'dev_' + crypto.randomUUID();
-610:                 } else {
-611:                     id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-612:                 }
-613:                 localStorage.setItem('sq_device_id', id);
-614:             }
-615:             return id;
-616:         }
-617: 
-618:         async function getDeviceRegisterCount(deviceId) {
-619:             try {
-620:                 var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
-621:                 if (res.error) throw res.error;
-622:                 return res.data || 0;
-623:             } catch (e) {
-624:                 console.warn('设备检测失败:', e);
-625:                 return 0;
-626:             }
-627:         }
-628: 
-629:         async function recordDeviceRegistration(deviceId, userId, phone) {
-630:             try {
-631:                 await window.sb.rpc('record_device_registration', {
-632:                     p_device_id: deviceId,
-633:                     p_user_id: userId,
-634:                     p_phone: phone
-635:                 });
-636:             } catch (e) {
-637:                 console.warn('设备记录写入失败:', e);
-638:             }
-639:         }
-640: 
-641:         async function refreshDeviceHint() {
-642:             var hintEl = document.getElementById('deviceHint');
-643:             var textEl = document.getElementById('deviceHintText');
-644:             var t = T();
-645:             var deviceId = getDeviceId();
-646:             var count = await getDeviceRegisterCount(deviceId);
-647:             var remain = MAX_ACCOUNTS_PER_DEVICE - count;
-648: 
-649:             if (remain <= 0) {
-650:                 hintEl.classList.add('warn');
-651:                 textEl.textContent = t.deviceLimitReached.replace('{n}', MAX_ACCOUNTS_PER_DEVICE);
-652:                 document.getElementById('registerBtn').disabled = true;
-653:             } else {
-654:                 hintEl.classList.remove('warn');
-655:                 textEl.textContent = t.deviceHintLeft.replace('{n}', remain).replace('{total}', MAX_ACCOUNTS_PER_DEVICE);
-656:             }
-657:         }
-658: 
-659:         // ============================================================
-660:         // 多语言
-661:         // ============================================================
-662:         var LANGS = {
-663:             zh: {
-664:                 loginMainTitle: '欢迎回来',
-665:                 loginSubTitle: '登录以继续',
-666:                 registerMainTitle: '创建账户',
-667:                 registerSubTitle: '加入 Seven戚 社区',
-668:                 phoneLabel: '手机号 / UID',
-669:                 phonePh: '请输入手机号或自定义UID',
-670:                 passwordLabel: '密码',
-671:                 passwordPh: '请输入密码',
-672:                 regNickLabel: '昵称',
-673:                 regNickPh: '请输入昵称',
-674:                 regPhoneLabel: '自定义UID',
-675:                 regPhonePh: '5-10位数字加字母组合',
-676:                 regPassLabel: '密码',
-677:                 regPassPh: '请设置密码（至少6位）',
-678:                 regPass2Label: '确认密码',
-679:                 regPass2Ph: '请再次输入密码',
-680:                 loginBtnText: '登录',
-681:                 registerBtnText: '注册',
-682:                 orText: '或',
-683:                 noAccountText: '没有账号？',
-684:                 toRegisterBtn: '去注册',
-685:                 hasAccountText: '已有账号？',
-686:                 toLoginBtn: '去登录',
-687:                 googleText: 'Google',
-688:                 githubText: 'Github',
-689:                 modalTitle: '无法登录',
-690:                 modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
-691:                 modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
-692:                 fillAll: '请填写完整信息',
-693:                 badPhone: '格式不正确：手机号须11位数字，UID须5-10位且包含数字和字母',
-694:                 shortPwd: '密码至少6位',
-695:                 pwdMismatch: '两次密码不一致',
-696:                 nicknameTaken: '该昵称不可用，请使用其他名称',
-697:                 phoneExists: '该账号已注册',
-698:                 loginSuccess: '登录成功！',
-699:                 registerSuccess: '注册成功，请登录',
-700:                 logging: '登录中...',
-701:                 registering: '注册中...',
-702:                 loginFail: '账号未注册或密码错误',
-703:                 deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
-704:                 deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
-705:                 deviceLimitTitle: '设备已达上限',
-706:                 deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。',
-707:                 netError: '网络异常，请检查网络后重试'
-708:             },
-709:             en: {
-710:                 loginMainTitle: 'Welcome back',
-711:                 loginSubTitle: 'Sign in to continue',
-712:                 registerMainTitle: 'Create account',
-713:                 registerSubTitle: 'Join Seven Qi Community',
-714:                 phoneLabel: 'Phone / UID',
-715:                 phonePh: 'Enter phone or custom UID',
-716:                 passwordLabel: 'Password',
-717:                 passwordPh: 'Enter password',
-718:                 regNickLabel: 'Nickname',
-719:                 regNickPh: 'Enter nickname',
-720:                 regPhoneLabel: 'Custom UID',
-721:                 regPhonePh: '5-10 chars (letters & numbers)',
-722:                 regPassLabel: 'Password',
-723:                 regPassPh: 'At least 6 characters',
-724:                 regPass2Label: 'Confirm password',
-725:                 regPass2Ph: 'Re-enter password',
-726:                 loginBtnText: 'Login',
-727:                 registerBtnText: 'Register',
-728:                 orText: 'OR',
-729:                 noAccountText: "Don't have an account?",
-730:                 toRegisterBtn: 'Sign up',
-731:                 hasAccountText: 'Already have an account?',
-732:                 toLoginBtn: 'Log in',
-733:                 googleText: 'Google',
-734:                 githubText: 'Github',
-735:                 modalTitle: 'Login Unavailable',
-736:                 modalDescGoogle: "Where'd you come from? You got a Google account?",
-737:                 modalDescGithub: "Where'd you come from? You got a Github account?",
-738:                 fillAll: 'Please fill in all fields',
-739:                 badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 chars with letters and numbers',
-740:                 shortPwd: 'Password must be at least 6 characters',
-741:                 pwdMismatch: 'Passwords do not match',
-742:                 nicknameTaken: 'This nickname is unavailable',
-743:                 phoneExists: 'Account already registered',
-744:                 loginSuccess: 'Login successful!',
-745:                 registerSuccess: 'Registered, please log in',
-746:                 logging: 'Logging in...',
-747:                 registering: 'Registering...',
-748:                 loginFail: 'Account not registered or wrong password',
-749:                 deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
-750:                 deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
-751:                 deviceLimitTitle: 'Device Limit Reached',
-752:                 deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.',
-753:                 netError: 'Network error, please check your connection and try again'
-754:             }
-755:         };
-756:         var currentLang = 'zh';
-757:         function T() { return LANGS[currentLang]; }
-758: 
-759:         function applyLang(lang) {
-760:             currentLang = lang;
-761:             var t = T();
-762:             document.documentElement.lang = lang;
-763: 
-764:             document.querySelectorAll('.lang-btn').forEach(function(b) {
-765:                 b.classList.toggle('active', b.dataset.lang === lang);
-766:             });
-767: 
-768:             document.getElementById('loginMainTitle').textContent = t.loginMainTitle;
-769:             document.getElementById('loginSubTitle').textContent = t.loginSubTitle;
-770:             document.getElementById('phoneLabel').textContent = t.phoneLabel;
-771:             document.getElementById('passwordLabel').textContent = t.passwordLabel;
-772:             document.getElementById('loginPhone').placeholder = t.phonePh;
-773:             document.getElementById('loginPassword').placeholder = t.passwordPh;
-774:             document.getElementById('loginBtnText').textContent = t.loginBtnText;
-775:             document.getElementById('orText').textContent = t.orText;
-776:             document.getElementById('noAccountText').textContent = t.noAccountText;
-777:             document.getElementById('toRegisterBtn').textContent = t.toRegisterBtn;
-778:             document.getElementById('googleText').textContent = t.googleText;
-779:             document.getElementById('githubText').textContent = t.githubText;
-780: 
-781:             document.getElementById('registerMainTitle').textContent = t.registerMainTitle;
-782:             document.getElementById('registerSubTitle').textContent = t.registerSubTitle;
-783:             document.getElementById('regNickLabel').textContent = t.regNickLabel;
-784:             document.getElementById('regPhoneLabel').textContent = t.regPhoneLabel;
-785:             document.getElementById('regPassLabel').textContent = t.regPassLabel;
-786:             document.getElementById('regPass2Label').textContent = t.regPass2Label;
-787:             document.getElementById('regNick').placeholder = t.regNickPh;
-788:             document.getElementById('regPhone').placeholder = t.regPhonePh;
-789:             document.getElementById('regPassword').placeholder = t.regPassPh;
-790:             document.getElementById('regPassword2').placeholder = t.regPass2Ph;
-791:             document.getElementById('registerBtnText').textContent = t.registerBtnText;
-792:             document.getElementById('hasAccountText').textContent = t.hasAccountText;
-793:             document.getElementById('toLoginBtn').textContent = t.toLoginBtn;
-794: 
-795:             if (document.getElementById('registerCard').classList.contains('active')) {
-796:                 refreshDeviceHint();
-797:             }
-798:         }
-799: 
-800:         // ============================================================
-801:         // 工具
-802:         // ============================================================
-803:         function showToast(msg) {
-804:             var toast = document.getElementById('toast');
-805:             toast.textContent = msg;
-806:             toast.classList.add('show');
-807:             clearTimeout(window.toastTimer);
-808:             window.toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
-809:         }
-810: 
-811:         function showModal(title, body, isWarn) {
-812:             document.getElementById('uiModalTitle').textContent = title;
-813:             document.getElementById('uiModalBody').textContent = body;
-814:             var iconWrap = document.getElementById('uiModalIconWrap');
-815:             if (isWarn) iconWrap.classList.add('warn');
-816:             else iconWrap.classList.remove('warn');
-817:             document.getElementById('uiModal').classList.add('active');
-818:         }
-819:         document.getElementById('uiModalBtn').onclick = function() {
-820:             document.getElementById('uiModal').classList.remove('active');
-821:         };
-822:         document.getElementById('uiModal').addEventListener('click', function(e) {
-823:             if (e.target === this) this.classList.remove('active');
-824:         });
-825: 
-826:         function phoneToEmail(phone) { return phone + '@sevenqi.com'; }
-827: 
-828:         async function hashPassword(password) {
-829:             var encoder = new TextEncoder();
-830:             var data = encoder.encode(password);
-831:             var hashBuffer = await crypto.subtle.digest('SHA-256', data);
-832:             var hashArray = Array.from(new Uint8Array(hashBuffer));
-833:             return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-834:         }
-835: 
-836:         function generateDefaultAvatar(nickname) {
-837:             var colors = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8", "#2e7d32", "#e67e22"];
-838:             var color = colors[Math.floor(Math.random() * colors.length)];
-839:             var initial = nickname.charAt(0).toUpperCase();
-840:             var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
-841:                 '<rect width="100" height="100" fill="' + color + '" rx="50"/>' +
-842:                 '<text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">' + initial + '</text></svg>';
-843:             return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-844:         }
-845: 
-846:         // ============================================================
-847:         // 卡片切换
-848:         // ============================================================
-849:         function showLoginCard() {
-850:             document.getElementById('loginCard').classList.add('active');
-851:             document.getElementById('registerCard').classList.remove('active');
-852:             document.getElementById('loginError').textContent = '';
-853:             document.getElementById('registerError').textContent = '';
-854:         }
-855:         function showRegisterCard() {
-856:             document.getElementById('registerCard').classList.add('active');
-857:             document.getElementById('loginCard').classList.remove('active');
-858:             document.getElementById('loginError').textContent = '';
-859:             document.getElementById('registerError').textContent = '';
-860:             refreshDeviceHint();
-861:         }
-862:         document.getElementById('toRegisterBtn').onclick = showRegisterCard;
-863:         document.getElementById('toLoginBtn').onclick = showLoginCard;
-864: 
-865:         // ============================================================
-866:         // 登录/注册
-867:         // ============================================================
-868:         function genUserNo() {
-869:             var d = new Date();
-870:             var p = function(n){ return (n<10?'0':'')+n; };
-871:             var ts = '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
-872:             var letters = 'abcdefghijklmnopqrstuvwxyz';
-873:             var r = '';
-874:             for (var i=0;i<3;i++) r += letters.charAt(Math.floor(Math.random()*26));
-875:             return ts + r;
-876:         }
-877: 
-878:         async function registerUser(uid, password, nickname) {
-879:             var email = uid + '@sevenqi.com';
-880:             // 0. 查重（RPC）
-881:             try {
-882:                 var exist = await window.sb.rpc('get_login_email_by_uid', { p_uid: uid });
-883:                 if (exist.data) throw new Error(T().phoneExists);
-884:             } catch (e) {
-885:                 if (e.message === T().phoneExists) throw e;
-886:             }
-887:             // 1. Auth 注册
-888:             var signRes;
-889:             try {
-890:                 signRes = await window.sb.auth.signUp({ email: email, password: password });
-891:             } catch (netErr) {
-892:                 throw new Error(T().netError);
-893:             }
-894:             if (signRes.error) {
-895:                 var emsg = ((signRes.error.message || '') + ' ' + (signRes.error.error_description || '')).toLowerCase();
-896:                 if (emsg.indexOf('already') >= 0 || emsg.indexOf('registered') >= 0 || signRes.error.status === 422)
-897:                     throw new Error(T().phoneExists);
-898:                 throw new Error(signRes.error.message || T().netError);
-899:             }
-900:             var authId = signRes.data && signRes.data.user ? signRes.data.user.id : null;
-901:             // 2. 写业务表
-902:             var avatar = generateDefaultAvatar(nickname);
-903:             var res = await window.sb.rpc('create_user_profile', {
-904:                 p_phone: null, p_nickname: nickname, p_avatar: avatar,
-905:                 p_user_no: genUserNo(), p_auth_id: authId, p_custom_uid: uid
-906:             });
-907:             if (res.error) {
-908:                 if (res.error.code === '23505' || ((res.error.message || '').toLowerCase().indexOf('duplicate') >= 0)) throw new Error(T().phoneExists);
-909:                 throw res.error;
-910:             }
-911:             return res.data;
-912:         }
-913: 
-914:         async function loginUser(account, password) {
-915:             try { await window.sb.auth.signOut(); } catch (e) {}
-916: 
-917:             var email = '';
-918:             if (/^\d{11}$/.test(account) || /^[a-zA-Z0-9]{5,10}$/.test(account)) {
-919:                 email = account + '@sevenqi.com';
-920:             } else {
-921:                 throw new Error(T().badPhone);
-922:             }
-923: 
-924:             var signRes = await window.sb.auth.signInWithPassword({ email: email, password: password });
-925: 
-926:             if (signRes.error) {
-927:                 // 老用户兼容
-928:                 var hashed = await hashPassword(password);
-929:                 var oldRes = await window.sb.rpc('legacy_auth_lookup', { p_phone: account, p_hash: hashed });
-930:                 var oldUser = oldRes.data;
-931:                 if (oldUser) {
-932:                     var su = await window.sb.auth.signUp({ email: email, password: password });
-933:                     if (su.error && (su.error.message || '').toLowerCase().indexOf('already') < 0) throw su.error;
-934:                     // 先登录建立会话（让 auth.uid() 有值），再绑定
-935:                     var si = await window.sb.auth.signInWithPassword({ email: email, password: password });
-936:                     var curUid = si.data && si.data.session ? si.data.session.user.id : null;
-937:                     if (curUid) {
-938:                         await window.sb.rpc('bind_auth_to_phone', { p_phone: account, p_hash: hashed, p_auth_id: curUid });
-939:                         oldUser.auth_id = curUid;
-940:                     }
-941:                     return oldUser;
-942:                 }
-943:                 throw new Error(T().loginFail);
-944:             }
-945: 
-946:             var authUser = signRes.data.user;
-947:             var q = await window.sb.rpc('get_my_profile');
-948:             var user = q.data || null;
-949:             if (!user) {
-950:                 var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: account });
-951:                 user = q2.data;
-952:             }
-953:             if (!user) throw new Error(T().loginFail);
-954:             return user;
-955:         }
-956: 
-957:         function handleLogin() {
-958:             var t = T();
-959:             var account = document.getElementById('loginPhone').value.trim();
-960:             var password = document.getElementById('loginPassword').value.trim();
-961:             var errEl = document.getElementById('loginError');
-962:             var btn = document.getElementById('loginBtn');
-963: 
-964:             if (!account || !password) { errEl.textContent = t.fillAll; return; }
-965:             if (!/^\d{11}$/.test(account) && !/^[a-zA-Z0-9]{5,10}$/.test(account)) { errEl.textContent = t.badPhone; return; }
-966:             if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
-967: 
-968:             errEl.textContent = t.logging;
-969:             btn.disabled = true;
-970: 
-971:             loginUser(account, password)
-972:                 .then(function(user) {
-973:                     errEl.textContent = '';
-974:                     localStorage.setItem('sq_user_session', JSON.stringify(user));
-975:                     showToast(t.loginSuccess);
-976:                     setTimeout(function() {
-977:                         window.location.href = '/liuyanban/posts.html';
-978:                     }, 400);
-979:                 })
-980:                 .catch(function(err) {
-981:                     errEl.textContent = err.message || t.loginFail;
-982:                     btn.disabled = false;
-983:                 });
-984:         }
-985: 
-986:         async function handleRegister() {
-987:             var t = T();
-988:             var nickname = document.getElementById('regNick').value.trim();
-989:             var uid = document.getElementById('regPhone').value.trim();
-990:             var password = document.getElementById('regPassword').value.trim();
-991:             var password2 = document.getElementById('regPassword2').value.trim();
-992:             var errEl = document.getElementById('registerError');
-993:             var btn = document.getElementById('registerBtn');
-994: 
-995:             if (!nickname || !uid || !password || !password2) { errEl.textContent = t.fillAll; return; }
-996:             if (nickname.toLowerCase() === 'seven戚') { errEl.textContent = t.nicknameTaken; return; }
-997:             if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) { errEl.textContent = t.badPhone; return; }
-998:             if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
-999:             if (password !== password2) { errEl.textContent = t.pwdMismatch; return; }
-1000: 
-1001:             var deviceId = getDeviceId();
-1002:             btn.disabled = true;
-1003:             errEl.textContent = t.registering;
-1004: 
-1005:             var count = await getDeviceRegisterCount(deviceId);
-1006:             if (count >= MAX_ACCOUNTS_PER_DEVICE) {
-1007:                 errEl.textContent = '';
-1008:                 btn.disabled = false;
-1009:                 showModal(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), true);
-1010:                 return;
-1011:             }
-1012: 
-1013:             registerUser(uid, password, nickname)
-1014:                 .then(async function(newUser) {
-1015:                     errEl.textContent = '';
-1016:                     if (newUser && newUser.id) {
-1017:                         await recordDeviceRegistration(deviceId, newUser.id, uid);
-1018:                     }
-1019:                     showToast(t.registerSuccess);
-1020:                     showLoginCard();
-1021:                     document.getElementById('loginPhone').value = uid;
-1022:                     document.getElementById('loginPassword').value = '';
-1023:                     document.getElementById('loginPassword').focus();
-1024:                     document.getElementById('regNick').value = '';
-1025:                     document.getElementById('regPhone').value = '';
-1026:                     document.getElementById('regPassword').value = '';
-1027:                     document.getElementById('regPassword2').value = '';
-1028:                     btn.disabled = false;
-1029:                 })
-1030:                 .catch(function(err) {
-1031:                     errEl.textContent = err.message || '注册失败';
-1032:                     btn.disabled = false;
-1033:                 });
-1034:         }
-1035: 
-1036:         document.getElementById('loginBtn').onclick = handleLogin;
-1037:         document.getElementById('registerBtn').onclick = handleRegister;
-1038: 
-1039:         // 第三方登录
-1040:         document.getElementById('googleBtn').onclick = function(e) {
-1041:             e.preventDefault();
-1042:             showModal(T().modalTitle, T().modalDescGoogle);
-1043:         };
-1044:         document.getElementById('githubBtn').onclick = function(e) {
-1045:             e.preventDefault();
-1046:             showModal(T().modalTitle, T().modalDescGithub);
-1047:         };
-1048: 
-1049:         // 语言切换
-1050:         document.querySelectorAll('.lang-btn').forEach(function(btn) {
-1051:             btn.onclick = function() { applyLang(this.dataset.lang); };
-1052:         });
-1053: 
-1054:         // 回车提交
-1055:         document.querySelectorAll('input').forEach(function(inp) {
-1056:             inp.addEventListener('keydown', function(e) {
-1057:                 if (e.key === 'Enter') {
-1058:                     if (document.getElementById('loginCard').classList.contains('active')) handleLogin();
-1059:                     else handleRegister();
-1060:                 }
-1061:             });
-1062:         });
-1063: 
-1064:         // 已登录自动跳转
-1065:         (async function checkSession() {
-1066:             try {
-1067:                 if (window.sb) {
-1068:                     var r = await window.sb.auth.getSession();
-1069:                     var authSession = r.data && r.data.session;
-1070:                     if (authSession && authSession.user) {
-1071:                         var q = await window.sb.rpc('get_my_profile');
-1072:                         var u = q.data || null;
-1073:                         if (u) {
-1074:                             localStorage.setItem('sq_user_session', JSON.stringify(u));
-1075:                             window.location.href = '/liuyanban/posts.html';
-1076:                             return;
-1077:                         }
-1078:                     }
-1079:                 }
-1080:             } catch (e) {}
-1081:             var session = localStorage.getItem('sq_user_session');
-1082:             if (session) {
-1083:                 try {
-1084:                     var user = JSON.parse(session);
-1085:                     if (user && user.id) {
-1086:                         window.location.href = '/liuyanban/posts.html';
-1087:                         return;
-1088:                     }
-1089:                 } catch (e) {}
-1090:             }
-1091:             applyLang('zh');
-1092:             showLoginCard();
-1093:         })();
-1094: 
-1095:         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-1096:     </script>
-1097: </body>
-1098: </html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<link rel="manifest" href="/liuyanban/manifest.json" />
+<meta name="theme-color" content="#2e7d32" />
+<link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>通行证 · Seven戚社区</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-(End of file - total 1098 lines)
-</content>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+:root {
+--bg: #f5faf5;
+--bg-card: #ffffff;
+--bg-input: #eaf3ea;
+--border: #c8e0c8;
+--text: #1e3a2e;
+--text-muted: #5a7a6a;
+--text-light: #8aaa9a;
+--primary: #2e7d32;
+--primary-light: #4caf50;
+--primary-glow: rgba(46, 125, 50, 0.25);
+--primary-bg: #e8f5e9;
+--shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+--danger: #e57373;
+--danger-bg: #ffebee;
+--radius: 16px;
+--radius-sm: 10px;
+--font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+}
+html, body {
+height: 100%;
+font-family: var(--font);
+background: var(--bg);
+background-image:
+radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
+radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
+color: var(--text);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+overflow: hidden;
+}
+.login-card {
+width: 23em;
+max-width: 92vw;
+max-height: 92vh;
+overflow-y: auto;
+background: var(--bg-card);
+border-radius: var(--radius);
+padding: 2.2em 2em;
+position: relative;
+border: 1px solid var(--border);
+box-shadow: var(--shadow);
+-webkit-overflow-scrolling: touch;
+}
+.login-card::-webkit-scrollbar { width: 4px; }
+.login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+.login-card::after {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: var(--radius);
+background-image:
+linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
+linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
+background-size: 2em 2em;
+opacity: 0.6;
+pointer-events: none;
+z-index: 0;
+}
+.login-card::before {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: var(--radius);
+background: linear-gradient(115deg,
+transparent 0%, transparent 40%,
+rgba(46, 125, 50, 0.03) 45%,
+rgba(46, 125, 50, 0.10) 50%,
+rgba(46, 125, 50, 0.03) 55%,
+transparent 60%, transparent 100%);
+pointer-events: none;
+z-index: 1;
+animation: sweep 6s ease-in-out infinite;
+}
+@keyframes sweep {
+0%, 100% { background-position: 100% 100%; }
+50% { background-position: 0% 0%; }
+}
+.login-card > * { position: relative; z-index: 2; }
+
+.login-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1.5em;
+}
+.login-logo {
+font-weight: 900;
+font-size: 1.35em;
+color: var(--text);
+letter-spacing: -0.02em;
+display: flex;
+align-items: center;
+gap: 0.35em;
+}
+.login-logo span { color: var(--primary); }
+.login-logo svg {
+width: 1.3em;
+height: 1.3em;
+stroke: var(--primary);
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+.lang-switch { display: flex; gap: 0.3em; }
+.lang-btn {
+background: transparent;
+border: 1.5px solid var(--border);
+color: var(--text-muted);
+padding: 0.2em 0.7em;
+border-radius: 99px;
+font-size: 0.65em;
+font-weight: 700;
+cursor: pointer;
+transition: all 0.2s;
+font-family: inherit;
+}
+.lang-btn.active {
+background: var(--primary);
+border-color: var(--primary);
+color: #fff;
+box-shadow: 0 0 20px var(--primary-glow);
+}
+.lang-btn:hover { filter: brightness(1.05); }
+
+.login-title {
+font-size: 1.4em;
+font-weight: 700;
+color: var(--text);
+text-align: center;
+margin-bottom: 1em;
+}
+.login-title span {
+display: block;
+font-weight: 400;
+color: var(--text-muted);
+font-size: 0.55em;
+margin-top: 0.2em;
+}
+.login-form {
+display: flex;
+flex-direction: column;
+gap: 0.9em;
+}
+.field-group {
+display: flex;
+flex-direction: column;
+gap: 0.35em;
+}
+.field-group label {
+font-size: 0.7em;
+font-weight: 600;
+color: var(--text-muted);
+text-transform: uppercase;
+letter-spacing: 0.06em;
+}
+.field-group input {
+width: 100%;
+padding: 0.8em 1em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: var(--bg-input);
+color: var(--text);
+font-size: 0.95em;
+font-weight: 600;
+outline: none;
+transition: border-color 0.3s, box-shadow 0.3s;
+font-family: inherit;
+}
+.field-group input:focus {
+border-color: var(--primary);
+box-shadow: 0 0 0 4px var(--primary-glow);
+}
+.field-group input::placeholder { color: var(--text-light); }
+
+.oauth-row { display: flex; gap: 0.6em; }
+.oauth-btn {
+flex: 1;
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 0.5em;
+padding: 0.7em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: var(--bg-input);
+color: var(--text);
+font-size: 0.85em;
+font-weight: 600;
+cursor: pointer;
+position: relative;
+overflow: hidden;
+transition: all 250ms;
+font-family: inherit;
+}
+.oauth-btn::before {
+content: "";
+position: absolute;
+top: 0; left: 0;
+height: 100%; width: 0;
+background: var(--primary);
+z-index: 0;
+transition: width 250ms;
+}
+.oauth-btn:hover { color: #fff; border-color: var(--primary); }
+.oauth-btn:hover::before { width: 100%; }
+.oauth-btn > * { position: relative; z-index: 1; }
+.oauth-btn .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
+
+.separator {
+display: flex;
+align-items: center;
+gap: 0.6em;
+color: var(--text-muted);
+font-size: 0.75em;
+margin: 0.2em 0;
+}
+.separator div {
+flex: 1;
+height: 1px;
+background: var(--border);
+}
+.login-continue {
+width: 100%;
+padding: 0.85em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--primary);
+background: var(--primary);
+color: #fff;
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+transition: all 0.3s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.5em;
+font-family: inherit;
+margin-top: 0.3em;
+}
+.login-continue:hover {
+background: var(--primary-light);
+border-color: var(--primary-light);
+box-shadow: 0 0 30px var(--primary-glow);
+transform: translateY(-1px);
+}
+.login-continue:disabled {
+opacity: 0.5;
+pointer-events: none;
+}
+.login-continue .icon {
+width: 1.2em;
+height: 1.2em;
+stroke: currentColor;
+stroke-width: 2.5;
+fill: none;
+}
+.login-footer {
+text-align: center;
+margin-top: 1.1em;
+font-size: 0.82em;
+color: var(--text-muted);
+}
+.login-footer .switch-link {
+color: var(--primary);
+font-weight: 700;
+cursor: pointer;
+border: none;
+background: none;
+font-family: inherit;
+font-size: inherit;
+padding: 0 4px;
+text-decoration: underline;
+text-underline-offset: 3px;
+}
+.login-footer .switch-link:hover { color: var(--primary-light); }
+
+.login-error {
+color: #c62828;
+font-size: 0.78em;
+text-align: center;
+min-height: 1.5em;
+margin-top: 0.2em;
+}
+
+/* 设备检测提示条 */
+.device-hint {
+display: flex;
+align-items: flex-start;
+gap: 8px;
+padding: 10px 12px;
+border-radius: var(--radius-sm);
+background: var(--primary-bg);
+border: 1px solid var(--border);
+font-size: 0.75em;
+color: var(--text-muted);
+line-height: 1.5;
+}
+.device-hint svg {
+width: 16px;
+height: 16px;
+flex-shrink: 0;
+stroke: var(--primary);
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+margin-top: 2px;
+}
+.device-hint.warn {
+background: var(--danger-bg);
+border-color: #ffcdd2;
+color: #c62828;
+}
+.device-hint.warn svg { stroke: #c62828; }
+
+.auth-card { display: none; }
+.auth-card.active { display: block; animation: fadeIn 0.35s ease; }
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(8px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+#toast {
+position: fixed;
+bottom: 40px;
+left: 50%;
+transform: translateX(-50%) translateY(80px);
+background: var(--text);
+color: #fff;
+padding: 0.7em 1.6em;
+border-radius: 2em;
+font-weight: 600;
+font-size: 0.85em;
+opacity: 0;
+transition: all 0.4s ease;
+z-index: 300;
+pointer-events: none;
+white-space: nowrap;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+#toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+#toast.show {
+opacity: 1;
+transform: translateX(-50%) translateY(0);
+}
+
+.modal-overlay {
+position: fixed;
+inset: 0;
+z-index: 1000;
+background: rgba(30, 58, 46, 0.35);
+backdrop-filter: blur(6px);
+-webkit-backdrop-filter: blur(6px);
+display: none;
+align-items: center;
+justify-content: center;
+padding: 20px;
+opacity: 0;
+transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+.modal-box {
+background: var(--bg-card);
+border-radius: var(--radius);
+max-width: 400px;
+width: 100%;
+padding: 2em;
+box-shadow: var(--shadow);
+border: 1px solid var(--border);
+text-align: center;
+transform: scale(0.9);
+transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.active .modal-box { transform: scale(1); }
+.modal-box .modal-icon {
+width: 64px;
+height: 64px;
+margin: 0 auto 0.4em;
+border-radius: 50%;
+background: var(--primary-bg);
+display: grid;
+place-items: center;
+color: var(--primary);
+}
+.modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
+.modal-box .modal-icon svg {
+width: 32px;
+height: 32px;
+stroke: currentColor;
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+}
+.modal-box .modal-title {
+font-size: 1.25em;
+font-weight: 900;
+color: var(--text);
+margin-bottom: 0.4em;
+}
+.modal-box .modal-body {
+font-size: 0.95em;
+color: var(--text-muted);
+line-height: 1.6;
+margin-bottom: 1.4em;
+white-space: pre-line;
+}
+.modal-box .modal-actions {
+display: flex;
+justify-content: center;
+}
+.modal-box .modal-actions .btn-primary {
+padding: 0.6em 2em;
+border-radius: var(--radius-sm);
+border: none;
+background: var(--primary);
+color: #fff;
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+font-family: inherit;
+transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-box .modal-actions .btn-primary:hover {
+background: var(--primary-light);
+box-shadow: 0 0 25px var(--primary-glow);
+}
+
+@media (max-width: 480px) {
+.login-card { padding: 1.6em 1.4em; }
+.oauth-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+<div class="login-header">
+<div class="login-logo">
+<svg viewBox="0 0 24 24">
+<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+<path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+</svg>
+<span>Seven</span>戚
+</div>
+<div class="lang-switch">
+<button class="lang-btn active" data-lang="zh">中文</button>
+<button class="lang-btn" data-lang="en">EN</button>
+</div>
+</div>
+
+<!-- ===== 登录卡片 ===== -->
+<div id="loginCard" class="auth-card active">
+<div class="login-title">
+<span id="loginMainTitle">欢迎回来</span>
+<span id="loginSubTitle">登录以继续</span>
+</div>
+<div class="login-form">
+<div class="oauth-row">
+<button class="oauth-btn" id="googleBtn">
+<svg class="icon" viewBox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+</svg>
+<span id="googleText">Google</span>
+</button>
+<button class="oauth-btn" id="githubBtn">
+<svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+</svg>
+<span id="githubText">Github</span>
+</button>
+</div>
+<div class="separator">
+<div></div>
+<span id="orText">或</span>
+<div></div>
+</div>
+<div class="field-group">
+<label id="phoneLabel">手机号 / UID</label>
+<input type="text" id="loginPhone" placeholder="请输入手机号或自定义UID" maxlength="11" />
+</div>
+<div class="field-group">
+<label id="passwordLabel">密码</label>
+<input type="password" id="loginPassword" placeholder="请输入密码" />
+</div>
+<button class="login-continue" id="loginBtn">
+<span id="loginBtnText">登录</span>
+<svg class="icon" viewBox="0 0 24 24">
+<path d="m6 17 5-5-5-5"/>
+<path d="m13 17 5-5-5-5"/>
+</svg>
+</button>
+<div class="login-error" id="loginError"></div>
+</div>
+<div class="login-footer">
+<span id="noAccountText">没有账号？</span>
+<button class="switch-link" id="toRegisterBtn">去注册</button>
+</div>
+</div>
+
+<!-- ===== 注册卡片 ===== -->
+<div id="registerCard" class="auth-card">
+<div class="login-title">
+<span id="registerMainTitle">创建账户</span>
+<span id="registerSubTitle">加入 Seven戚 社区</span>
+</div>
+
+<!-- 设备检测提示 -->
+<div class="device-hint" id="deviceHint" style="margin-bottom:0.9em;">
+<svg viewBox="0 0 24 24">
+<rect x="5" y="2" width="14" height="20" rx="2"/>
+<line x1="12" y1="18" x2="12.01" y2="18"/>
+</svg>
+<span id="deviceHintText">正在检测本设备…</span>
+</div>
+
+<div class="login-form">
+<div class="field-group">
+<label id="regNickLabel">昵称</label>
+<input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
+</div>
+<div class="field-group">
+<label id="regPhoneLabel">自定义UID</label>
+<input type="text" id="regPhone" placeholder="5-10位数字加字母组合" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
+</div>
+<div class="field-group">
+<label id="regPassLabel">密码</label>
+<input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
+</div>
+<div class="field-group">
+<label id="regPass2Label">确认密码</label>
+<input type="password" id="regPassword2" placeholder="请再次输入密码" />
+</div>
+<button class="login-continue" id="registerBtn">
+<span id="registerBtnText">注册</span>
+<svg class="icon" viewBox="0 0 24 24">
+<path d="m6 17 5-5-5-5"/>
+<path d="m13 17 5-5-5-5"/>
+</svg>
+</button>
+<div class="login-error" id="registerError"></div>
+</div>
+<div class="login-footer">
+<span id="hasAccountText">已有账号？</span>
+<button class="switch-link" id="toLoginBtn">去登录</button>
+</div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== 通用提示弹窗 ===== -->
+<div class="modal-overlay" id="uiModal">
+<div class="modal-box">
+<div class="modal-icon" id="uiModalIconWrap">
+<svg id="uiModalIcon" viewBox="0 0 24 24">
+<path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/>
+</svg>
+</div>
+<div class="modal-title" id="uiModalTitle">提示</div>
+<div class="modal-body" id="uiModalBody">内容</div>
+<div class="modal-actions">
+<button class="btn-primary" id="uiModalBtn">知道了</button>
+</div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// Supabase 配置
+// ============================================================
+var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
+window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// 设备 ID 相关
+// ============================================================
+var MAX_ACCOUNTS_PER_DEVICE = 2;
+
+function getDeviceId() {
+var id = localStorage.getItem('sq_device_id');
+if (!id) {
+if (window.crypto && crypto.randomUUID) {
+id = 'dev_' + crypto.randomUUID();
+} else {
+id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+}
+localStorage.setItem('sq_device_id', id);
+}
+return id;
+}
+
+async function getDeviceRegisterCount(deviceId) {
+try {
+var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
+if (res.error) throw res.error;
+return res.data || 0;
+} catch (e) {
+console.warn('设备检测失败:', e);
+return 0;
+}
+}
+
+async function recordDeviceRegistration(deviceId, userId, phone) {
+try {
+await window.sb.rpc('record_device_registration', {
+p_device_id: deviceId,
+p_user_id: userId,
+p_phone: phone
+});
+} catch (e) {
+console.warn('设备记录写入失败:', e);
+}
+}
+
+async function refreshDeviceHint() {
+var hintEl = document.getElementById('deviceHint');
+var textEl = document.getElementById('deviceHintText');
+var t = T();
+var deviceId = getDeviceId();
+var count = await getDeviceRegisterCount(deviceId);
+var remain = MAX_ACCOUNTS_PER_DEVICE - count;
+
+if (remain <= 0) {
+hintEl.classList.add('warn');
+textEl.textContent = t.deviceLimitReached.replace('{n}', MAX_ACCOUNTS_PER_DEVICE);
+document.getElementById('registerBtn').disabled = true;
+} else {
+hintEl.classList.remove('warn');
+textEl.textContent = t.deviceHintLeft.replace('{n}', remain).replace('{total}', MAX_ACCOUNTS_PER_DEVICE);
+}
+}
+
+// ============================================================
+// 多语言
+// ============================================================
+var LANGS = {
+zh: {
+loginMainTitle: '欢迎回来',
+loginSubTitle: '登录以继续',
+registerMainTitle: '创建账户',
+registerSubTitle: '加入 Seven戚 社区',
+phoneLabel: '手机号 / UID',
+phonePh: '请输入手机号或自定义UID',
+passwordLabel: '密码',
+passwordPh: '请输入密码',
+regNickLabel: '昵称',
+regNickPh: '请输入昵称',
+regPhoneLabel: '自定义UID',
+regPhonePh: '5-10位数字加字母组合',
+regPassLabel: '密码',
+regPassPh: '请设置密码（至少6位）',
+regPass2Label: '确认密码',
+regPass2Ph: '请再次输入密码',
+loginBtnText: '登录',
+registerBtnText: '注册',
+orText: '或',
+noAccountText: '没有账号？',
+toRegisterBtn: '去注册',
+hasAccountText: '已有账号？',
+toLoginBtn: '去登录',
+googleText: 'Google',
+githubText: 'Github',
+modalTitle: '无法登录',
+modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
+modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
+fillAll: '请填写完整信息',
+badPhone: '格式不正确：手机号须11位数字，UID须5-10位且包含数字和字母',
+shortPwd: '密码至少6位',
+pwdMismatch: '两次密码不一致',
+nicknameTaken: '该昵称不可用，请使用其他名称',
+phoneExists: '该账号已注册',
+loginSuccess: '登录成功！',
+registerSuccess: '注册成功，请登录',
+logging: '登录中...',
+registering: '注册中...',
+loginFail: '账号未注册或密码错误',
+deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
+deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
+deviceLimitTitle: '设备已达上限',
+deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。',
+netError: '网络异常，请检查网络后重试'
+},
+en: {
+loginMainTitle: 'Welcome back',
+loginSubTitle: 'Sign in to continue',
+registerMainTitle: 'Create account',
+registerSubTitle: 'Join Seven Qi Community',
+phoneLabel: 'Phone / UID',
+phonePh: 'Enter phone or custom UID',
+passwordLabel: 'Password',
+passwordPh: 'Enter password',
+regNickLabel: 'Nickname',
+regNickPh: 'Enter nickname',
+regPhoneLabel: 'Custom UID',
+regPhonePh: '5-10 chars (letters & numbers)',
+regPassLabel: 'Password',
+regPassPh: 'At least 6 characters',
+regPass2Label: 'Confirm password',
+regPass2Ph: 'Re-enter password',
+loginBtnText: 'Login',
+registerBtnText: 'Register',
+orText: 'OR',
+noAccountText: "Don't have an account?",
+toRegisterBtn: 'Sign up',
+hasAccountText: 'Already have an account?',
+toLoginBtn: 'Log in',
+googleText: 'Google',
+githubText: 'Github',
+modalTitle: 'Login Unavailable',
+modalDescGoogle: "Where'd you come from? You got a Google account?",
+modalDescGithub: "Where'd you come from? You got a Github account?",
+fillAll: 'Please fill in all fields',
+badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 chars with letters and numbers',
+shortPwd: 'Password must be at least 6 characters',
+pwdMismatch: 'Passwords do not match',
+nicknameTaken: 'This nickname is unavailable',
+phoneExists: 'Account already registered',
+loginSuccess: 'Login successful!',
+registerSuccess: 'Registered, please log in',
+logging: 'Logging in...',
+registering: 'Registering...',
+loginFail: 'Account not registered or wrong password',
+deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
+deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
+deviceLimitTitle: 'Device Limit Reached',
+deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.',
+netError: 'Network error, please check your connection and try again'
+}
+};
+var currentLang = 'zh';
+function T() { return LANGS[currentLang]; }
+
+function applyLang(lang) {
+currentLang = lang;
+var t = T();
+document.documentElement.lang = lang;
+
+document.querySelectorAll('.lang-btn').forEach(function(b) {
+b.classList.toggle('active', b.dataset.lang === lang);
+});
+
+document.getElementById('loginMainTitle').textContent = t.loginMainTitle;
+document.getElementById('loginSubTitle').textContent = t.loginSubTitle;
+document.getElementById('phoneLabel').textContent = t.phoneLabel;
+document.getElementById('passwordLabel').textContent = t.passwordLabel;
+document.getElementById('loginPhone').placeholder = t.phonePh;
+document.getElementById('loginPassword').placeholder = t.passwordPh;
+document.getElementById('loginBtnText').textContent = t.loginBtnText;
+document.getElementById('orText').textContent = t.orText;
+document.getElementById('noAccountText').textContent = t.noAccountText;
+document.getElementById('toRegisterBtn').textContent = t.toRegisterBtn;
+document.getElementById('googleText').textContent = t.googleText;
+document.getElementById('githubText').textContent = t.githubText;
+
+document.getElementById('registerMainTitle').textContent = t.registerMainTitle;
+document.getElementById('registerSubTitle').textContent = t.registerSubTitle;
+document.getElementById('regNickLabel').textContent = t.regNickLabel;
+document.getElementById('regPhoneLabel').textContent = t.regPhoneLabel;
+document.getElementById('regPassLabel').textContent = t.regPassLabel;
+document.getElementById('regPass2Label').textContent = t.regPass2Label;
+document.getElementById('regNick').placeholder = t.regNickPh;
+document.getElementById('regPhone').placeholder = t.regPhonePh;
+document.getElementById('regPassword').placeholder = t.regPassPh;
+document.getElementById('regPassword2').placeholder = t.regPass2Ph;
+document.getElementById('registerBtnText').textContent = t.registerBtnText;
+document.getElementById('hasAccountText').textContent = t.hasAccountText;
+document.getElementById('toLoginBtn').textContent = t.toLoginBtn;
+
+if (document.getElementById('registerCard').classList.contains('active')) {
+refreshDeviceHint();
+}
+}
+
+// ============================================================
+// 工具
+// ============================================================
+function showToast(msg) {
+var toast = document.getElementById('toast');
+toast.textContent = msg;
+toast.classList.add('show');
+clearTimeout(window.toastTimer);
+window.toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+
+function showModal(title, body, isWarn) {
+document.getElementById('uiModalTitle').textContent = title;
+document.getElementById('uiModalBody').textContent = body;
+var iconWrap = document.getElementById('uiModalIconWrap');
+if (isWarn) iconWrap.classList.add('warn');
+else iconWrap.classList.remove('warn');
+document.getElementById('uiModal').classList.add('active');
+}
+document.getElementById('uiModalBtn').onclick = function() {
+document.getElementById('uiModal').classList.remove('active');
+};
+document.getElementById('uiModal').addEventListener('click', function(e) {
+if (e.target === this) this.classList.remove('active');
+});
+
+function phoneToEmail(phone) { return phone + '@sevenqi.com'; }
+
+async function hashPassword(password) {
+var encoder = new TextEncoder();
+var data = encoder.encode(password);
+var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+var hashArray = Array.from(new Uint8Array(hashBuffer));
+return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function generateDefaultAvatar(nickname) {
+var colors = ["#6ee7b7", "#fbbf24", "#f87171", "#a78bfa", "#f472b6", "#38bdf8", "#2e7d32", "#e67e22"];
+var color = colors[Math.floor(Math.random() * colors.length)];
+var initial = nickname.charAt(0).toUpperCase();
+var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+'<rect width="100" height="100" fill="' + color + '" rx="50"/>' +
+'<text x="50" y="58" font-size="40" text-anchor="middle" fill="white" font-family="sans-serif">' + initial + '</text></svg>';
+return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// ============================================================
+// 卡片切换
+// ============================================================
+function showLoginCard() {
+document.getElementById('loginCard').classList.add('active');
+document.getElementById('registerCard').classList.remove('active');
+document.getElementById('loginError').textContent = '';
+document.getElementById('registerError').textContent = '';
+}
+function showRegisterCard() {
+document.getElementById('registerCard').classList.add('active');
+document.getElementById('loginCard').classList.remove('active');
+document.getElementById('loginError').textContent = '';
+document.getElementById('registerError').textContent = '';
+refreshDeviceHint();
+}
+document.getElementById('toRegisterBtn').onclick = showRegisterCard;
+document.getElementById('toLoginBtn').onclick = showLoginCard;
+
+// ============================================================
+// 登录/注册
+// ============================================================
+function genUserNo() {
+var d = new Date();
+var p = function(n){ return (n<10?'0':'')+n; };
+var ts = '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+var letters = 'abcdefghijklmnopqrstuvwxyz';
+var r = '';
+for (var i=0;i<3;i++) r += letters.charAt(Math.floor(Math.random()*26));
+return ts + r;
+}
+
+async function registerUser(uid, password, nickname) {
+var email = uid + '@sevenqi.com';
+// 0. 查重（RPC）
+try {
+var exist = await window.sb.rpc('get_login_email_by_uid', { p_uid: uid });
+if (exist.data) throw new Error(T().phoneExists);
+} catch (e) {
+if (e.message === T().phoneExists) throw e;
+}
+// 1. Auth 注册
+var signRes;
+try {
+signRes = await window.sb.auth.signUp({ email: email, password: password });
+} catch (netErr) {
+throw new Error(T().netError);
+}
+if (signRes.error) {
+var emsg = ((signRes.error.message || '') + ' ' + (signRes.error.error_description || '')).toLowerCase();
+if (emsg.indexOf('already') >= 0 || emsg.indexOf('registered') >= 0 || signRes.error.status === 422)
+throw new Error(T().phoneExists);
+throw new Error(signRes.error.message || T().netError);
+}
+var authId = signRes.data && signRes.data.user ? signRes.data.user.id : null;
+// 2. 写业务表
+var avatar = generateDefaultAvatar(nickname);
+var res = await window.sb.rpc('create_user_profile', {
+p_phone: null, p_nickname: nickname, p_avatar: avatar,
+p_user_no: genUserNo(), p_auth_id: authId, p_custom_uid: uid
+});
+if (res.error) {
+if (res.error.code === '23505' || ((res.error.message || '').toLowerCase().indexOf('duplicate') >= 0)) throw new Error(T().phoneExists);
+throw res.error;
+}
+return res.data;
+}
+
+async function loginUser(account, password) {
+try { await window.sb.auth.signOut(); } catch (e) {}
+
+var email = '';
+if (/^\d{11}$/.test(account) || /^[a-zA-Z0-9]{5,10}$/.test(account)) {
+email = account + '@sevenqi.com';
+} else {
+throw new Error(T().badPhone);
+}
+
+var signRes = await window.sb.auth.signInWithPassword({ email: email, password: password });
+
+if (signRes.error) {
+// 老用户兼容
+var hashed = await hashPassword(password);
+var oldRes = await window.sb.rpc('legacy_auth_lookup', { p_phone: account, p_hash: hashed });
+var oldUser = oldRes.data;
+if (oldUser) {
+var su = await window.sb.auth.signUp({ email: email, password: password });
+if (su.error && (su.error.message || '').toLowerCase().indexOf('already') < 0) throw su.error;
+// 先登录建立会话（让 auth.uid() 有值），再绑定
+var si = await window.sb.auth.signInWithPassword({ email: email, password: password });
+var curUid = si.data && si.data.session ? si.data.session.user.id : null;
+if (curUid) {
+await window.sb.rpc('bind_auth_to_phone', { p_phone: account, p_hash: hashed, p_auth_id: curUid });
+oldUser.auth_id = curUid;
+}
+return oldUser;
+}
+throw new Error(T().loginFail);
+}
+
+var authUser = signRes.data.user;
+var q = await window.sb.rpc('get_my_profile');
+var user = q.data || null;
+if (!user) {
+var q2 = await window.sb.rpc('claim_user_by_phone', { p_phone: account });
+user = q2.data;
+}
+if (!user) throw new Error(T().loginFail);
+return user;
+}
+
+function handleLogin() {
+var t = T();
+var account = document.getElementById('loginPhone').value.trim();
+var password = document.getElementById('loginPassword').value.trim();
+var errEl = document.getElementById('loginError');
+var btn = document.getElementById('loginBtn');
+
+if (!account || !password) { errEl.textContent = t.fillAll; return; }
+if (!/^\d{11}$/.test(account) && !/^[a-zA-Z0-9]{5,10}$/.test(account)) { errEl.textContent = t.badPhone; return; }
+if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
+
+errEl.textContent = t.logging;
+btn.disabled = true;
+
+loginUser(account, password)
+.then(function(user) {
+errEl.textContent = '';
+localStorage.setItem('sq_user_session', JSON.stringify(user));
+showToast(t.loginSuccess);
+setTimeout(function() {
+window.location.href = '/liuyanban/posts.html';
+}, 400);
+})
+.catch(function(err) {
+errEl.textContent = err.message || t.loginFail;
+btn.disabled = false;
+});
+}
+
+async function handleRegister() {
+var t = T();
+var nickname = document.getElementById('regNick').value.trim();
+var uid = document.getElementById('regPhone').value.trim();
+var password = document.getElementById('regPassword').value.trim();
+var password2 = document.getElementById('regPassword2').value.trim();
+var errEl = document.getElementById('registerError');
+var btn = document.getElementById('registerBtn');
+
+if (!nickname || !uid || !password || !password2) { errEl.textContent = t.fillAll; return; }
+if (nickname.toLowerCase() === 'seven戚') { errEl.textContent = t.nicknameTaken; return; }
+if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) { errEl.textContent = t.badPhone; return; }
+if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
+if (password !== password2) { errEl.textContent = t.pwdMismatch; return; }
+
+var deviceId = getDeviceId();
+btn.disabled = true;
+errEl.textContent = t.registering;
+
+var count = await getDeviceRegisterCount(deviceId);
+if (count >= MAX_ACCOUNTS_PER_DEVICE) {
+errEl.textContent = '';
+btn.disabled = false;
+showModal(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), true);
+return;
+}
+
+registerUser(uid, password, nickname)
+.then(async function(newUser) {
+errEl.textContent = '';
+if (newUser && newUser.id) {
+await recordDeviceRegistration(deviceId, newUser.id, uid);
+}
+showToast(t.registerSuccess);
+showLoginCard();
+document.getElementById('loginPhone').value = uid;
+document.getElementById('loginPassword').value = '';
+document.getElementById('loginPassword').focus();
+document.getElementById('regNick').value = '';
+document.getElementById('regPhone').value = '';
+document.getElementById('regPassword').value = '';
+document.getElementById('regPassword2').value = '';
+btn.disabled = false;
+})
+.catch(function(err) {
+errEl.textContent = err.message || '注册失败';
+btn.disabled = false;
+});
+}
+
+document.getElementById('loginBtn').onclick = handleLogin;
+document.getElementById('registerBtn').onclick = handleRegister;
+
+// 第三方登录
+document.getElementById('googleBtn').onclick = function(e) {
+e.preventDefault();
+showModal(T().modalTitle, T().modalDescGoogle);
+};
+document.getElementById('githubBtn').onclick = function(e) {
+e.preventDefault();
+showModal(T().modalTitle, T().modalDescGithub);
+};
+
+// 语言切换
+document.querySelectorAll('.lang-btn').forEach(function(btn) {
+btn.onclick = function() { applyLang(this.dataset.lang); };
+});
+
+// 回车提交
+document.querySelectorAll('input').forEach(function(inp) {
+inp.addEventListener('keydown', function(e) {
+if (e.key === 'Enter') {
+if (document.getElementById('loginCard').classList.contains('active')) handleLogin();
+else handleRegister();
+}
+});
+});
+
+// 已登录自动跳转
+(async function checkSession() {
+try {
+if (window.sb) {
+var r = await window.sb.auth.getSession();
+var authSession = r.data && r.data.session;
+if (authSession && authSession.user) {
+var q = await window.sb.rpc('get_my_profile');
+var u = q.data || null;
+if (u) {
+localStorage.setItem('sq_user_session', JSON.stringify(u));
+window.location.href = '/liuyanban/posts.html';
+return;
+}
+}
+}
+} catch (e) {}
+var session = localStorage.getItem('sq_user_session');
+if (session) {
+try {
+var user = JSON.parse(session);
+if (user && user.id) {
+window.location.href = '/liuyanban/posts.html';
+return;
+}
+} catch (e) {}
+}
+applyLang('zh');
+showLoginCard();
+})();
+
+document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+</script>
+</body>
+</html>
