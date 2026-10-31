@@ -434,9 +434,11 @@ async function fetchPosts() {
     return res.data || [];
 }
 async function fetchComments(postId) {
-    var res = await window.sb.from('post_comments').select('*, users!post_comments_user_id_fkey (id, nickname, avatar_url)').eq('post_id', postId).order('created_at', { ascending: true });
+    var res = await window.sb.from('post_comments').select('*, users!post_comments_user_id_fkey (id, nickname, avatar_url), reply_to:users!post_comments_reply_to_user_id_fkey (id, nickname)').eq('post_id', postId).order('created_at', { ascending: true });
     if (res.error) throw res.error;
-    return res.data || [];
+    var list = res.data || [];
+    list.forEach(function(c){ c.reply_to_name = c.reply_to ? c.reply_to.nickname : ''; });
+    return list;
 }
 async function fetchAllCommentCounts() {
     var res = await window.sb.from('post_comments').select('post_id');
@@ -445,19 +447,33 @@ async function fetchAllCommentCounts() {
         (res.data || []).forEach(function(c) { commentCountMap[c.post_id] = (commentCountMap[c.post_id] || 0) + 1; });
     }
 }
-async function addComment(postId, author, user_id, content) {
-    const { data: commentData, error: commentError } = await window.sb.from('post_comments').insert([{ post_id: postId, author: author, user_id: user_id, content: content }]).select('id');
+async function addComment(postId, author, user_id, content, parentId, replyToUserId, replyToName) {
+    var row = { post_id: postId, author: author, user_id: user_id, content: content };
+    if (parentId) row.parent_id = parentId;
+    if (replyToUserId) row.reply_to_user_id = replyToUserId;
+    const { data: commentData, error: commentError } = await window.sb.from('post_comments').insert([row]).select('id');
     if (commentError) throw commentError;
     const commentId = commentData[0].id;
     const { data: postData } = await window.sb.from('posts').select('user_id').eq('id', postId).single();
-    if (postData && postData.user_id !== user_id) {
+    var notified = {};
+    // 通知帖子作者（顶层评论 or 回复时也通知作者，但不重复通知同一个人）
+    if (postData && postData.user_id && postData.user_id !== user_id) {
         await window.sb.from('notifications').insert([{
             user_id: postData.user_id, type: 'comment', notification_type: 'comment',
             source_id: commentId, post_id: postId, comment_author_id: user_id,
-            comment_content: content, extra_text: content, is_read: false
+            comment_content: content, extra_text: (replyToName ? '回复 @' + replyToName + '：' : '') + content, is_read: false
         }]);
-        if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+        notified[postData.user_id] = true;
     }
+    // 通知被回复者（若不是自己、且没在上面通知过）
+    if (replyToUserId && replyToUserId !== user_id && !notified[replyToUserId]) {
+        await window.sb.from('notifications').insert([{
+            user_id: replyToUserId, type: 'comment', notification_type: 'comment',
+            source_id: commentId, post_id: postId, comment_author_id: user_id,
+            comment_content: content, extra_text: author + ' 回复了你：' + content, is_read: false
+        }]);
+    }
+    if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
     return commentData;
 }
 async function deletePost(id) { await window.sb.from('posts').delete().eq('id', id); }
@@ -734,6 +750,14 @@ var detailContent = document.getElementById('detailContent');
 var detailCommentInput = document.getElementById('detailCommentInput');
 var detailSendCommentBtn = document.getElementById('detailSendCommentBtn');
 var currentDetailPostId = null;
+var replyingTo = null; // { id, userId, name }
+
+window.startReply = function(commentId, userId, name) {
+    replyingTo = { id: commentId, userId: userId, name: name };
+    detailCommentInput.placeholder = '回复 @' + name + '：';
+    detailCommentInput.value = '';
+    detailCommentInput.focus();
+};
 
 async function openPostDetail(id) {
     currentDetailPostId = id;
@@ -774,10 +798,12 @@ async function renderDetail(id) {
             var cu = c.users || null;
             var cn = cu ? cu.nickname : c.author;
             var ca = cu ? (cu.avatar_url || getUserAvatar(cu)) : getUserAvatar({ nickname: c.author });
+            var replyName = c.reply_to_name || '';
+            var txt = (replyName ? '<span style="color:var(--primary);">回复 @' + escapeHtml(replyName) + '：</span>' : '') + escapeHtml(c.content);
             return '<div class="comment-item" data-comment-id="' + c.id + '" id="comment-' + c.id + '">' +
                 '<div class="avatar" style="' + (ca && ca.startsWith('http') ? 'background-image:url(' + ca + ');background-size:cover;background-position:center;' : '') + '">' + (ca && !ca.startsWith('http') ? cn.charAt(0).toUpperCase() : '') + '</div>' +
-                '<div class="body"><div class="meta"><span class="name" style="cursor:pointer;" onclick="goUser(\'' + c.user_id + '\')">' + escapeHtml(cn) + '</span>' + (c.is_official ? '<span class="official-tag">官方</span>' : '') + roleTagHTML(c.user_id) + '<span class="time">' + new Date(c.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }) + '</span></div>' +
-                '<div class="txt">' + escapeHtml(c.content) + '</div></div></div>';
+                '<div class="body"><div class="meta"><span class="name" style="cursor:pointer;" onclick="goUser(\'' + c.user_id + '\')">' + escapeHtml(cn) + '</span>' + (c.is_official ? '<span class="official-tag">官方</span>' : '') + roleTagHTML(c.user_id) + '<span class="time">' + new Date(c.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }) + '</span><span class="reply-link" style="margin-left:auto;font-size:.72em;color:var(--primary);cursor:pointer;" onclick="startReply(\'' + c.id + '\',\'' + c.user_id + '\',\'' + escapeHtml(cn).replace(/'/g, "\\'") + '\')">回复</span></div>' +
+                '<div class="txt">' + txt + '</div></div></div>';
         }).join('') :
         '<div style="color:var(--text-muted);padding:12px 0;">暂无评论</div>';
 
@@ -823,8 +849,13 @@ detailSendCommentBtn.onclick = async function() {
     if (!currentUser) return showToast('请先登录');
     var content = detailCommentInput.value.trim();
     if (!content) return showToast('请输入评论');
-    await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content);
+    var parentId = replyingTo ? replyingTo.id : null;
+    var replyToUserId = replyingTo ? replyingTo.userId : null;
+    var replyToName = replyingTo ? replyingTo.name : null;
+    await addComment(currentDetailPostId, currentUser.nickname, currentUser.id, content, parentId, replyToUserId, replyToName);
     detailCommentInput.value = '';
+    detailCommentInput.placeholder = '写评论…';
+    replyingTo = null;
     await fetchAllCommentCounts();
     await renderDetail(currentDetailPostId);
     showToast('评论已发送');
@@ -893,7 +924,7 @@ async function renderAdminPanel(){
         '<div class="user-info"><div class="name-row"><span class="nickname">'+escapeHtml(u.nickname)+'</span>'+
         (role?'<span class="role-badge" style="background:'+role.role_color+'">'+escapeHtml(role.role_name)+'</span>':"")+
         '<span class="status-badge '+(isBanned?"banned":"normal")+'">'+(isBanned?"已封禁":"正常")+'</span></div>'+
-        '<div class="phone-row">'+escapeHtml(u.phone)+' · <b style="color:var(--primary)">'+(u.coins||0)+' 币</b></div></div></div>'+
+        '<div class="phone-row">'+(u.phone?escapeHtml(u.phone)+' · ':'')+'UID: '+escapeHtml(u.custom_uid||u.user_no||'')+' · <b style="color:var(--primary)">'+(u.coins||0)+' 币</b></div></div></div>'+
         '<div class="user-actions">'+
         '<button class="btn-coin" onclick="adjustCoinsPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\',\''+(u.coins||0)+'\')">调币</button>'+
         (isBanned?'<button class="btn-unban" onclick="unbanUserById(\''+u.id+'\')">解封</button>':'<button class="btn-ban" onclick="banUserPrompt(\''+u.id+'\',\''+escapeHtml(u.nickname)+'\')">封号</button>')+
