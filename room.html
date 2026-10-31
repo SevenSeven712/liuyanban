@@ -81,6 +81,20 @@ body{display:flex;flex-direction:column;height:100vh;height:100dvh}
 .game-stage{display:none;background:rgba(255,255,255,.9);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;backdrop-filter:blur(10px);position:relative;margin-top:10px}
 .room-body[data-theme="spy"] .game-stage,.room-body[data-theme="werewolf"] .game-stage{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15)}
 .game-stage.active{display:flex;flex-direction:column}
+.game-modal-layer{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);padding:20px}
+.game-modal-layer.show{display:flex}
+.game-modal{background:linear-gradient(160deg,#2a1a3a,#1a0f2a);border:1px solid rgba(200,160,255,.35);border-radius:16px;padding:22px 20px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;animation:gmPop .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes gmPop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.game-modal .gm-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:1.5em;font-weight:900;color:#fff;background-color:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.4)}
+.game-modal .gm-title{font-size:1.15em;font-weight:900;margin-bottom:6px;color:#e0d5f0}
+.game-modal .gm-sub{font-size:.8em;opacity:.8;color:#c8bce0;margin-bottom:6px;line-height:1.5}
+.game-modal .gm-tag{display:inline-block;padding:3px 12px;border-radius:99px;font-size:.78em;font-weight:800;margin-top:8px}
+.game-modal .gm-tag.spy{background:rgba(255,82,82,.25);color:#ff8a8a}
+.game-modal .gm-tag.civ{background:rgba(139,92,246,.25);color:#c8a5ff}
+.game-modal .gm-btn{margin-top:18px;padding:10px 28px;border:none;border-radius:99px;background:#8b5cf6;color:#fff;font-weight:800;font-size:.85em;font-family:inherit;cursor:pointer}
+.game-modal .gm-wordrow{display:flex;justify-content:center;gap:20px;margin-top:14px;font-size:.85em}
+.game-modal .gm-wordrow .w{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 14px}
+.game-modal .gm-wordrow .w b{display:block;font-size:1.2em;margin-top:2px}
 .game-topbar{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(0,0,0,.06);flex-shrink:0}
 .room-body[data-theme="spy"] .game-topbar,.room-body[data-theme="werewolf"] .game-topbar{border-bottom-color:rgba(255,255,255,.12)}
 .gpm-players{display:flex;align-items:center;gap:6px;flex:1;overflow-x:auto;padding:2px 0}
@@ -493,6 +507,7 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
           <button id="exitSpectateBtn" class="ghost">退出观战</button>
         </div>
         <div class="game-content" id="gameContent"></div>
+        <div class="game-modal-layer" id="gameModalLayer"></div>
         <div class="danmaku-layer" id="danmakuLayer"></div>
       </div>
     </div>
@@ -1018,6 +1033,8 @@ async function beginGame(){
   if(!state.room||!state.room.current_game)return;
   var game=state.room.current_game;
   if(game.host_id!==currentUser.id){showToast('只有房主能开始游戏');return}
+  _lastSpyVoteKey=null;_lastWWVoteKey=null;
+  if(typeof closeGameModal==='function')closeGameModal();
   var g=GAMES.find(function(x){return x.id===game.type});if(!g)return;
   var players=game.players||[];
   if(players.length<g.min){showToast('至少需要 '+g.min+' 人');return}
@@ -1057,6 +1074,8 @@ async function restartGame(){
   if(!state.room||!state.room.current_game)return;
   var game=state.room.current_game;
   if(game.host_id!==currentUser.id){showToast('只有房主能重开');return}
+  _lastSpyVoteKey=null;_lastWWVoteKey=null;
+  if(typeof closeGameModal==='function')closeGameModal();
   await beginGame();
 }
 window.restartGame=restartGame;
@@ -1140,10 +1159,25 @@ async function advanceDrawRound(){
 /* ============================================================
    游戏渲染
 ============================================================ */
+/* ===== 游戏内弹窗（限制在 gameStage 框内） ===== */
+function showGameModal(html){
+  var layer=document.getElementById('gameModalLayer');
+  if(!layer)return;
+  layer.innerHTML='<div class="game-modal">'+html+'</div>';
+  layer.classList.add('show');
+}
+function closeGameModal(){
+  var layer=document.getElementById('gameModalLayer');
+  if(layer){layer.classList.remove('show');layer.innerHTML='';}
+}
+window.closeGameModal=closeGameModal;
+var _lastSpyVoteKey=null;      // 已弹过的谁是卧底投票
+var _lastWWVoteKey=null;       // 已弹过的狼人杀投票
+
 function renderGame(){
   var r=state.room;var stage=document.getElementById('gameStage');var body=document.getElementById('roomBody');
   var sbar=document.getElementById('spectatorBar');
-  if(!r||!r.current_game){stage.classList.remove('active');body.removeAttribute('data-theme');if(sbar)sbar.style.display='none';return}
+  if(!r||!r.current_game){stage.classList.remove('active');body.removeAttribute('data-theme');if(sbar)sbar.style.display='none';if(typeof closeGameModal==='function')closeGameModal();return}
   var game=r.current_game;body.setAttribute('data-theme',game.type);
   var g=GAMES.find(function(x){return x.id===game.type});
   if(!g)return;
@@ -1435,14 +1469,18 @@ function initDrawCanvas(game,isDrawer){
   };
   requestAnimationFrame(setup);
   if(!isDrawer)return;
-  canvas.addEventListener('mousedown',startDraw);canvas.addEventListener('mousemove',moveDraw);canvas.addEventListener('mouseup',endDraw);canvas.addEventListener('mouseleave',endDraw);
-  canvas.addEventListener('touchstart',function(e){e.preventDefault();startDraw(e.touches[0])},{passive:false});
-  canvas.addEventListener('touchmove',function(e){e.preventDefault();moveDraw(e.touches[0])},{passive:false});
-  canvas.addEventListener('touchend',function(e){e.preventDefault();endDraw()},{passive:false});
+  canvas.addEventListener('mousedown',startDraw);
+  canvas.addEventListener('mousemove',moveDraw);
+  window.addEventListener('mouseup',endDraw);
+  canvas.addEventListener('mouseleave',function(e){ if(drawState.drawing) endDraw(); });
+  canvas.addEventListener('touchstart',function(e){ if(e.touches.length===1){e.preventDefault();startDraw(e.touches[0]);} },{passive:false});
+  canvas.addEventListener('touchmove',function(e){ if(e.touches.length===1){e.preventDefault();moveDraw(e.touches[0]);} },{passive:false});
+  window.addEventListener('touchend',function(e){ if(drawState.drawing) endDraw(); },{passive:false});
+  window.addEventListener('touchcancel',function(e){ if(drawState.drawing) endDraw(); },{passive:false});
 }
-function getPos(canvas,e){var r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
+function getPos(canvas,e){var r=canvas.getBoundingClientRect();var x=(e.clientX-r.left)/r.width;var y=(e.clientY-r.top)/r.height;return{x:Math.max(0,Math.min(1,x)),y:Math.max(0,Math.min(1,y))}}
 function startDraw(e){if(!drawState.isDrawer)return;drawState.drawing=true;drawState.currentStroke={color:drawState.color,size:drawState.size,points:[getPos(drawState.canvas,e)]}}
-function moveDraw(e){if(!drawState.drawing)return;var p=getPos(drawState.canvas,e);var s=drawState.currentStroke;var last=s.points[s.points.length-1];s.points.push(p);var ctx=drawState.ctx;var W=drawState.canvas.width,H=drawState.canvas.height;ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(last.x*W,last.y*H);ctx.lineTo(p.x*W,p.y*H);ctx.stroke();clearTimeout(drawState._syncTimer);drawState._syncTimer=setTimeout(syncStrokes,150)}
+function moveDraw(e){if(!drawState.drawing)return;if(e.type==='mousemove'&&e.buttons===0){endDraw();return}var p=getPos(drawState.canvas,e);var s=drawState.currentStroke;if(!s)return;var last=s.points[s.points.length-1];s.points.push(p);var ctx=drawState.ctx;var W=drawState.canvas.width,H=drawState.canvas.height;ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(last.x*W,last.y*H);ctx.lineTo(p.x*W,p.y*H);ctx.stroke();clearTimeout(drawState._syncTimer);drawState._syncTimer=setTimeout(syncStrokes,150)}
 function endDraw(){if(!drawState.drawing)return;drawState.drawing=false;if(drawState.currentStroke&&drawState.currentStroke.points.length<2)drawState.currentStroke.points.push(drawState.currentStroke.points[0]);syncStrokes()}
 async function syncStrokes(){if(!state.room||!state.room.current_game)return;var game=state.room.current_game;var strokes=(game.state.strokes||[]).slice();if(drawState.currentStroke&&strokes.indexOf(drawState.currentStroke)<0)strokes.push(drawState.currentStroke);try{await updateGame(Object.assign({},game,{state:Object.assign({},game.state,{strokes:strokes})}))}catch(e){}}
 function redrawStrokes(strokes){var ctx=drawState.ctx;if(!ctx)return;var W=drawState.canvas.width,H=drawState.canvas.height;ctx.clearRect(0,0,W,H);strokes.forEach(function(s){ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();s.points.forEach(function(p,i){if(i===0)ctx.moveTo(p.x*W,p.y*H);else ctx.lineTo(p.x*W,p.y*H)});ctx.stroke()})}
@@ -1483,15 +1521,22 @@ function renderSpy(game,el){
   var eliminated=st.eliminated||[];var descriptions=st.descriptions||[];
   var alive=players.filter(function(p){return eliminated.indexOf(p.user_id)<0});
   var spyAlive=(st.spy_ids||[]).filter(function(id){return eliminated.indexOf(id)<0});
+  var _spyIdsAll=(st.spy_ids||[]);
+  var _spyWord='';var _civWord='';
+  _spyIdsAll.forEach(function(id){if(st.words&&st.words[id])_spyWord=st.words[id]});
+  players.forEach(function(p){if(_spyIdsAll.indexOf(p.user_id)<0&&st.words&&st.words[p.user_id]&&!_civWord)_civWord=st.words[p.user_id]});
+  var _spyListHtml=_spyIdsAll.map(function(id){var p=players.find(function(x){return x.user_id===id})||{};var has=p.avatar_url&&String(p.avatar_url).indexOf('http')===0;return '<div class="spy-player" style="margin-top:6px;"><div class="gpm-avatar" style="'+(has?'background-image:url('+escapeHtml(p.avatar_url)+');background-size:cover;background-position:center;':'background:#e53935;')+'">'+(has?'':escapeHtml(String(p.nickname||'?').charAt(0).toUpperCase()))+'</div><div class="name">'+escapeHtml(p.nickname||'?')+'</div><span class="gm-tag spy">卧底</span></div>'}).join('');
+  var _spyExtraHtml='<div style="margin-top:18px;text-align:left;"><div style="font-size:.78em;font-weight:800;color:#ff8a8a;margin-bottom:6px;">🔍 本局卧底</div>'+_spyListHtml+'</div>'+
+    '<div class="gm-wordrow" style="margin-top:16px;"><div class="w" style="color:#ff8a8a;">卧底词<b>'+escapeHtml(_spyWord||'?')+'</b></div><div class="w" style="color:#c8a5ff;">平民词<b>'+escapeHtml(_civWord||'?')+'</b></div></div>';
   if(spyAlive.length===0){
-    var h='<div class="spy-wrap"><div class="spy-result"><div class="big" style="color:#a78bfa;">平民获胜！</div><div>所有卧底已被淘汰</div>';
+    var h='<div class="spy-wrap"><div class="spy-result"><div class="big" style="color:#a78bfa;">平民获胜！</div><div>所有卧底已被淘汰</div>'+_spyExtraHtml;
     if(game.host_id===currentUser.id)h+='<button class="lobby-btn start" style="margin-top:16px;background:#8b5cf6;" onclick="restartGame()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>再来一轮</button>';
     else h+='<div style="font-size:.75em;opacity:.7;margin-top:14px;">等待房主重开…</div>';
     h+='</div></div>';el.innerHTML=h;return;
   }
   var aliveCount=alive.length;var spiesLeft=spyAlive.length;var citizensLeft=aliveCount-spiesLeft;
   if(spiesLeft>=citizensLeft){
-    var h2='<div class="spy-wrap"><div class="spy-result"><div class="big" style="color:#ff5252;">卧底获胜！</div><div>卧底人数已不少于平民</div>';
+    var h2='<div class="spy-wrap"><div class="spy-result"><div class="big" style="color:#ff5252;">卧底获胜！</div><div>卧底人数已不少于平民</div>'+_spyExtraHtml;
     if(game.host_id===currentUser.id)h2+='<button class="lobby-btn start" style="margin-top:16px;background:#8b5cf6;" onclick="restartGame()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>再来一轮</button>';
     else h2+='<div style="font-size:.75em;opacity:.7;margin-top:14px;">等待房主重开…</div>';
     h2+='</div></div>';el.innerHTML=h2;return;
@@ -1531,6 +1576,24 @@ function renderSpy(game,el){
   }
   if(st.lastVote){var lv=st.lastVote;var votedPlayer=players.find(function(p){return p.user_id===lv.out_id});html+='<div class="spy-timeline"><div class="spy-line">'+escapeHtml(votedPlayer?votedPlayer.nickname:'?')+' 被淘汰（'+(lv.is_spy?'卧底':'平民')+'）</div></div>'}
   html+='</div>';el.innerHTML=html;
+
+  // 投票结果 → 游戏框内弹窗
+  if(st.lastVote){
+    var lv2=st.lastVote;
+    var voteKey='spy_'+lv2.out_id+'_'+st.round;
+    if(_lastSpyVoteKey!==voteKey && lv2.out_id){
+      _lastSpyVoteKey=voteKey;
+      var vp=players.find(function(p){return p.user_id===lv2.out_id})||{};
+      var vpHas=vp.avatar_url&&String(vp.avatar_url).indexOf('http')===0;
+      var av='<div class="gm-avatar" style="'+(vpHas?'background-image:url('+escapeHtml(vp.avatar_url)+');':'')+'">'+(vpHas?'':escapeHtml(String(vp.nickname||'?').charAt(0).toUpperCase()))+'</div>';
+      var tag=lv2.is_spy?'<span class="gm-tag spy">卧底</span>':'<span class="gm-tag civ">平民</span>';
+      showGameModal(av+
+        '<div class="gm-title">'+escapeHtml(vp.nickname||'?')+'</div>'+
+        '<div class="gm-sub">被投票淘汰出局</div>'+
+        '<div style="margin-top:8px;">'+tag+'</div>'+
+        '<button class="gm-btn" onclick="closeGameModal()">知道了</button>');
+    }
+  }
 }
 async function submitSpyDesc(){if(!state.room||!state.room.current_game)return;var game=state.room.current_game;var input=document.getElementById('spyDescInput');var text=(input.value||'').trim();if(!text)return;var descs=(game.state.descriptions||[]).slice();descs.push({user_id:currentUser.id,nickname:currentUser.nickname,text:text});await updateGame(Object.assign({},game,{state:Object.assign({},game.state,{descriptions:descs})}))}
 window.submitSpyDesc=submitSpyDesc;
@@ -1562,7 +1625,11 @@ function renderWerewolf(game,el){
   var hostId=game.host_id;
   if(game.status==='finished'){
     var winner=st.winner||'';
+    var rolesAll=st.roles||{};
+    var wolfIds=Object.keys(rolesAll).filter(function(id){return rolesAll[id]==='狼人'});
+    var wolfListHtml=wolfIds.map(function(id){var p=players.find(function(x){return x.user_id===id})||{};var has=p.avatar_url&&String(p.avatar_url).indexOf('http')===0;return '<div class="spy-player" style="margin-top:6px;"><div class="gpm-avatar" style="'+(has?'background-image:url('+escapeHtml(p.avatar_url)+');background-size:cover;background-position:center;':'background:#e53935;')+'">'+(has?'':escapeHtml(String(p.nickname||'?').charAt(0).toUpperCase()))+'</div><div class="name">'+escapeHtml(p.nickname||'?')+'</div><span class="gm-tag spy">狼人</span></div>'}).join('');
     var h='<div class="ww-wrap"><div class="ww-role-card"><div class="ww-role-word">'+escapeHtml(winner)+' 获胜</div></div>';
+    h+='<div style="margin-top:18px;text-align:left;"><div style="font-size:.78em;font-weight:800;color:#ff8a8a;margin-bottom:6px;">🐺 本局狼人</div>'+wolfListHtml+'</div>';
     if(game.host_id===currentUser.id)h+='<button class="lobby-btn start" style="margin-top:16px;background:#ff5252;color:#fff;" onclick="restartGame()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>再来一轮</button>';
     else h+='<div style="font-size:.75em;opacity:.7;margin-top:14px;">等待房主重开…</div>';
     h+='</div>';
@@ -1590,6 +1657,22 @@ function renderWerewolf(game,el){
   html+='</div>';
   if(st.phase==='day')html+='<div style="text-align:center;margin-top:10px;"><button class="lobby-btn join" onclick="advanceWerewolfPhase()">天亮了，下一夜</button></div>';
   html+='</div>';el.innerHTML=html;
+
+  // 白天投票淘汰 → 游戏框内弹窗
+  if(st.lastVote){
+    var lvw=st.lastVote;
+    var wKey='ww_'+lvw.out_id+'_'+lvw.round;
+    if(_lastWWVoteKey!==wKey && lvw.out_id){
+      _lastWWVoteKey=wKey;
+      var wvp=players.find(function(p){return p.user_id===lvw.out_id})||{};
+      var wHas=wvp.avatar_url&&String(wvp.avatar_url).indexOf('http')===0;
+      var wav='<div class="gm-avatar" style="'+(wHas?'background-image:url('+escapeHtml(wvp.avatar_url)+');':'')+'">'+(wHas?'':escapeHtml(String(wvp.nickname||'?').charAt(0).toUpperCase()))+'</div>';
+      showGameModal(wav+
+        '<div class="gm-title">'+escapeHtml(wvp.nickname||'?')+'</div>'+
+        '<div class="gm-sub">白天被投票放逐出局</div>'+
+        '<button class="gm-btn" onclick="closeGameModal()">知道了</button>');
+    }
+  }
 }
 async function startWerewolf(mode){
   if(!state.room||!state.room.current_game)return;var game=state.room.current_game;
@@ -1626,6 +1709,7 @@ async function advanceWerewolfPhase(){
     var alive2=(st.alive||[]).slice();
     if(maxId)alive2=alive2.filter(function(id){return id!==maxId});
     var ns2=Object.assign({},st,{alive:alive2,phase:'night',votes:{},day:(st.day||1)+1});
+    if(maxId){ ns2.lastVote={out_id:maxId,is_wolf:(st.roles[maxId]==='狼人'),round:(st.day||1)}; }
     await updateGame(Object.assign({},game,{state:ns2}));
   }
 }
