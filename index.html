@@ -429,6 +429,25 @@ white-space: pre-line;
 .modal-box .modal-actions {
 display: flex;
 justify-content: center;
+gap: 10px;
+flex-wrap: wrap;
+}
+.modal-box .modal-actions .btn-secondary {
+padding: 0.6em 1.4em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: transparent;
+color: var(--text-muted);
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+font-family: inherit;
+transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.modal-box .modal-actions .btn-secondary:hover {
+border-color: var(--primary);
+color: var(--primary);
+background: var(--primary-bg);
 }
 .modal-box .modal-actions .btn-primary {
 padding: 0.6em 2em;
@@ -584,6 +603,7 @@ box-shadow: 0 0 25px var(--primary-glow);
 <div class="modal-title" id="uiModalTitle">提示</div>
 <div class="modal-body" id="uiModalBody">内容</div>
 <div class="modal-actions">
+<button class="btn-secondary" id="uiModalSecondaryBtn" style="display:none;"></button>
 <button class="btn-primary" id="uiModalBtn">知道了</button>
 </div>
 </div>
@@ -703,7 +723,8 @@ loginFail: '账号未注册或密码错误',
 deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
 deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
 deviceLimitTitle: '设备已达上限',
-deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请联系管理员。',
+deviceLimitFeedbackBtn: '去反馈说明情况',
+deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请提交反馈说明原因，管理员会尽快处理。',
 netError: '网络异常，请检查网络后重试'
 },
 en: {
@@ -749,7 +770,8 @@ loginFail: 'Account not registered or wrong password',
 deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
 deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
 deviceLimitTitle: 'Device Limit Reached',
-deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nContact admin if needed.',
+deviceLimitFeedbackBtn: 'Submit feedback',
+deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nIf you need an exception, please submit feedback and an admin will review it.',
 netError: 'Network error, please check your connection and try again'
 }
 };
@@ -808,13 +830,35 @@ clearTimeout(window.toastTimer);
 window.toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
 }
 
-function showModal(title, body, isWarn) {
+function showModal(title, body, isWarn, secondary) {
 document.getElementById('uiModalTitle').textContent = title;
 document.getElementById('uiModalBody').textContent = body;
 var iconWrap = document.getElementById('uiModalIconWrap');
 if (isWarn) iconWrap.classList.add('warn');
 else iconWrap.classList.remove('warn');
-document.getElementById('uiModal').classList.add('active');
+
+var modal = document.getElementById('uiModal');
+var primaryBtn = document.getElementById('uiModalBtn');
+var secondaryBtn = document.getElementById('uiModalSecondaryBtn');
+
+// 每次调用都重置按钮行为，避免上一次的回调残留
+primaryBtn.onclick = function() {
+    modal.classList.remove('active');
+};
+
+if (secondary && secondary.text) {
+    secondaryBtn.textContent = secondary.text;
+    secondaryBtn.style.display = '';
+    secondaryBtn.onclick = function() {
+        modal.classList.remove('active');
+        if (typeof secondary.onClick === 'function') secondary.onClick();
+    };
+} else {
+    secondaryBtn.style.display = 'none';
+    secondaryBtn.onclick = null;
+}
+
+modal.classList.add('active');
 }
 document.getElementById('uiModalBtn').onclick = function() {
 document.getElementById('uiModal').classList.remove('active');
@@ -1006,7 +1050,10 @@ var count = await getDeviceRegisterCount(deviceId);
 if (count >= MAX_ACCOUNTS_PER_DEVICE) {
 errEl.textContent = '';
 btn.disabled = false;
-showModal(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), true);
+showModal(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), true, {
+    text: t.deviceLimitFeedbackBtn,
+    onClick: function() { window.location.href = '/liuyanban/profile.html?view=feedback'; }
+});
 return;
 }
 
