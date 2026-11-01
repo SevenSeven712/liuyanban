@@ -147,48 +147,70 @@ function svgIcon(name, size) {
 // ============================================================
 // 会话管理
 // ============================================================
-// 全局获取客户端 IP 和 城市（自动执行，缓存在会话中）
+// 全局获取客户端 IP 和 城市（多级容错，自动执行，缓存在会话中）
 window.sqClientGeo = { ip: '0.0.0.0', location: '未知' };
 async function initGeoIP() {
     var cached = sessionStorage.getItem('sq_client_geo');
     if (cached) {
         try { 
             window.sqClientGeo = JSON.parse(cached); 
-            // 如果缓存的是 0.0.0.0，说明上次失败了，这次清掉重新获取
             if (window.sqClientGeo.ip !== '0.0.0.0') return; 
         } catch(e){}
     }
-    try {
-        var controller = new AbortController();
-        var timeoutId = setTimeout(() => controller.abort(), 5000);
-        // 换用支持 HTTPS 和 CORS 的 ipapi.co
-        var res = await fetch("https://ipapi.co/json/", { signal: controller.signal });
-        var data = await res.json();
-        clearTimeout(timeoutId);
-        
-        if (data && data.ip) {
-            // 拼接地区：国家/省份/城市
-            var loc = data.city || data.region || data.country_name || '未知';
-            if(data.city && data.region && data.city !== data.region) {
-                loc = data.region + ' ' + data.city;
+
+    // 依次尝试多个接口，任何一个成功就返回
+    var apis = [
+        {
+            url: "https://ipapi.co/json/",
+            parse: function(d) {
+                var loc = d.city || d.region || d.country_name || '未知';
+                if (d.city && d.region && d.city !== d.region) loc = d.region + ' ' + d.city;
+                return { ip: d.ip, location: loc };
             }
-            window.sqClientGeo = { ip: data.ip, location: loc };
-            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
-        } else {
-            // 如果 ipapi.co 失败，兜底用 ipify（只拿 IP）
-            var res2 = await fetch("https://api.ipify.org?format=json");
-            var data2 = await res2.json();
-            window.sqClientGeo = { ip: data2.ip || '0.0.0.0', location: '未知' };
-            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
+        },
+        {
+            url: "https://ipinfo.io/json",
+            parse: function(d) {
+                return { ip: d.ip, location: d.city || d.region || d.country || '未知' };
+            }
+        },
+        {
+            url: "https://freeipapi.com/api/json",
+            parse: function(d) {
+                var loc = (d.regionName || '') + ' ' + (d.cityName || '');
+                return { ip: d.ipAddress, location: loc.trim() || '未知' };
+            }
         }
-    } catch (e) {
-        console.warn('获取IP信息失败', e);
+    ];
+
+    for (var i = 0; i < apis.length; i++) {
         try {
-            var res3 = await fetch("https://api.ipify.org?format=json");
-            var data3 = await res3.json();
-            window.sqClientGeo = { ip: data3.ip || '0.0.0.0', location: '未知' };
-            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
-        } catch(err) {}
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function(){ controller.abort(); }, 4000);
+            var res = await fetch(apis[i].url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            var data = await res.json();
+            var parsed = apis[i].parse(data);
+            if (parsed.ip && parsed.ip !== '0.0.0.0') {
+                window.sqClientGeo = parsed;
+                sessionStorage.setItem('sq_client_geo', JSON.stringify(parsed));
+                return;
+            }
+        } catch (e) {
+            console.warn('IP接口 ' + apis[i].url + ' 失败，尝试下一个', e);
+        }
+    }
+
+    // 全部失败，尝试国内可用的备用接口，或者展示友好提示
+    try {
+        var r = await fetch("https://api.ipify.org?format=json");
+        var d = await r.json();
+        window.sqClientGeo = { ip: d.ip || '未知', location: '网络异常' };
+        sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
+    } catch(e) {
+        // 终极兜底
+        window.sqClientGeo = { ip: '未知', location: '本地网络' };
+        sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
     }
 }
 // 页面加载自动识别
@@ -970,196 +992,7 @@ window.showAvatarPrompt = showAvatarPrompt;
 // ============================================================
 // PWA：Service Worker + 系统通知
 // ============================================================
-(function initPWA() {
-    if (!('serviceWorker' in navigator)) return;
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
-    navigator.serviceWorker.register('/liuyanban/sw.js', { scope: '/liuyanban/' }).catch(function (e) {
-        console.warn('SW 注册失败:', e);
-    });
-})();
 
-// 请求通知权限（登录后才请求，避免骚扰）
-function requestNotifyPermission() {
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
-}
-window.requestNotifyPermission = requestNotifyPermission;
-
-// 发一条系统通知（网页开着/后台时可见）
-function showSystemNotification(title, body, url) {
-    try {
-        if (!('Notification' in window)) return;
-        if (Notification.permission !== 'granted') return;
-        var opts = {
-            body: body || '',
-            icon: '/liuyanban/icon.svg',
-            badge: '/liuyanban/icon.svg',
-            data: { url: url || '/liuyanban/chats.html' }
-        };
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(function (reg) {
-                reg.showNotification(title, opts);
-            });
-        } else {
-            new Notification(title, opts);
-        }
-    } catch (e) {}
-}
-window.showSystemNotification = showSystemNotification;
-
-// ============================================================
-// PWA 安装到桌面（自定义弹窗 UI）
-// ============================================================
-var deferredInstallPrompt = null;
-
-window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-});
-
-function isPWAInstalled() {
-    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-}
-
-function showInstallModal() {
-    var old = document.getElementById('pwaInstallModal');
-    if (old) old.remove();
-
-    var ua = (navigator.userAgent || '').toLowerCase();
-    var isWechat = ua.indexOf('micromessenger') >= 0;
-    var isIOS = /iphone|ipad|ipod/.test(ua);
-    var isAndroid = /android/.test(ua);
-
-    var steps = '';
-    var iosDiagram = '';
-    if (isWechat) {
-        steps = '当前在<b>微信</b>里打开，无法直接安装。<br>请点右上角「⋯」→ <b>「在浏览器打开」</b>，再用浏览器安装。';
-    } else if (isIOS) {
-        steps = '<div class="pwa-ios-step"><span class="pwa-ios-num">1</span>用 <b>Safari</b> 打开本页</div>' +
-                '<div class="pwa-ios-step"><span class="pwa-ios-num">2</span>点底部中间的 <b>分享按钮</b>' +
-                  '<span class="pwa-share-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>' +
-                '</div>' +
-                '<div class="pwa-ios-step"><span class="pwa-ios-num">3</span>往下滑，选 <b>「添加到主屏幕」</b></div>' +
-                '<div class="pwa-ios-step"><span class="pwa-ios-num">4</span>点右上角 <b>「添加」</b></div>' +
-                '<div class="pwa-ios-tip">💡 装到桌面后，才能正常接收新消息通知</div>';
-    } else if (isAndroid) {
-        steps = '点右上角 <b>浏览器菜单</b>（⋮）<br>选择 <b>「安装应用」</b> 或 <b>「添加到主屏幕」</b>';
-    } else {
-        steps = '点浏览器地址栏右侧的 <b>安装图标</b>（显示器带箭头）<br>或在浏览器菜单里选 <b>「安装此应用」</b>';
-    }
-
-    var canNativeInstall = !!deferredInstallPrompt;
-    var installed = isPWAInstalled();
-
-    var btnHtml;
-    if (installed) {
-      btnHtml = '<button class="pwa-modal-btn disabled" disabled>已安装</button>' +
-                '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">关闭</button>';
-    } else {
-      btnHtml = '<button class="pwa-modal-btn" onclick="handleInstallClick()">下载到桌面</button>' +
-                '<button class="pwa-modal-btn ghost" onclick="closeInstallModal()">稍后再说</button>';
-    }
-
-    var html = '' +
-      '<div class="pwa-modal-mask" id="pwaInstallModal">' +
-        '<div class="pwa-modal">' +
-          '<div class="pwa-modal-close" onclick="closeInstallModal()">✕</div>' +
-          '<img class="pwa-modal-icon" src="/liuyanban/icon.svg" alt="图标" />' +
-          '<div class="pwa-modal-title">安装到桌面</div>' +
-          '<div class="pwa-modal-sub">把 Seven戚 装成 App，随时一键打开</div>' +
-          '<div class="pwa-modal-steps">' + steps + '</div>' +
-          btnHtml +
-        '</div>' +
-      '</div>';
-
-    var wrap = document.createElement('div');
-    wrap.innerHTML = html;
-    document.body.appendChild(wrap.firstChild);
-
-    if (!document.getElementById('pwa-modal-style')) {
-        var st = document.createElement('style');
-        st.id = 'pwa-modal-style';
-        st.textContent = '' +
-          '.pwa-modal-mask{position:fixed;inset:0;z-index:100000;background:rgba(30,58,46,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:pwaFade .25s ease}' +
-          '@keyframes pwaFade{from{opacity:0}to{opacity:1}}' +
-          '.pwa-modal{background:#fff;border-radius:20px;max-width:340px;width:100%;padding:28px 24px 20px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pwaPop .3s cubic-bezier(.34,1.56,.64,1)}' +
-          '@keyframes pwaPop{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}' +
-          '.pwa-modal-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:#f0f0f0;color:#888;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;user-select:none}' +
-          '.pwa-modal-close:hover{background:#e0e0e0}' +
-          '.pwa-modal-icon{width:80px;height:80px;border-radius:20px;box-shadow:0 8px 24px rgba(46,125,50,.25);margin-bottom:16px}' +
-          '.pwa-modal-title{font-size:1.25em;font-weight:800;color:#1e3a2e;margin-bottom:6px}' +
-          '.pwa-modal-sub{font-size:.82em;color:#5a7a6a;margin-bottom:18px}' +
-          '.pwa-modal-steps{font-size:.85em;color:#1e3a2e;line-height:1.8;background:#e8f5e9;border-radius:12px;padding:14px 16px;margin-bottom:18px;text-align:left}' +
-          '.pwa-modal-steps b{color:#2e7d32}' +
-          '.pwa-ios-step{display:flex;align-items:center;gap:8px;margin-bottom:10px;line-height:1.5}' +
-          '.pwa-ios-num{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#2e7d32;color:#fff;font-size:.75em;font-weight:800;display:flex;align-items:center;justify-content:center}' +
-          '.pwa-share-icon{display:inline-flex;width:22px;height:22px;color:#2e7d32;margin-left:2px;vertical-align:middle}' +
-          '.pwa-share-icon svg{width:100%;height:100%}' +
-          '.pwa-ios-tip{margin-top:6px;font-size:.9em;color:#e67e22;background:#fff8e1;border-radius:8px;padding:8px 10px}' +
-          '.pwa-modal-btn{width:100%;padding:13px;border:none;border-radius:12px;background:#2e7d32;color:#fff;font-weight:800;font-size:.95em;cursor:pointer;font-family:inherit;transition:.2s;margin-bottom:10px}' +
-          '.pwa-modal-btn:hover{background:#4caf50;box-shadow:0 6px 20px rgba(46,125,50,.35)}' +
-          '.pwa-modal-btn.disabled{background:#c8c8c8;color:#fff;cursor:not-allowed;box-shadow:none}' +
-          '.pwa-modal-btn.ghost{background:#f0f0f0;color:#5a7a6a;margin-bottom:0}' +
-          '.pwa-modal-btn.ghost:hover{background:#e5e5e5;box-shadow:none}';
-        document.head.appendChild(st);
-    }
-}
-window.showInstallModal = showInstallModal;
-
-function closeInstallModal() {
-    var m = document.getElementById('pwaInstallModal');
-    if (m) m.remove();
-}
-window.closeInstallModal = closeInstallModal;
-
-async function doNativeInstall() {
-    if (!deferredInstallPrompt) { closeInstallModal(); return; }
-    deferredInstallPrompt.prompt();
-    try {
-        var r = await deferredInstallPrompt.userChoice;
-        if (r && r.outcome === 'accepted') showToast('正在安装…');
-    } catch (e) {}
-    deferredInstallPrompt = null;
-    closeInstallModal();
-}
-window.doNativeInstall = doNativeInstall;
-
-// 点击「下载到桌面」
-function handleInstallClick() {
-    if (deferredInstallPrompt) {
-        doNativeInstall();
-    } else {
-        // 手机端/不支持原生安装 → 提示按上方步骤操作
-        showToast('请按上方步骤操作');
-    }
-}
-window.handleInstallClick = handleInstallClick;
-
-async function installPWA() {
-    if (isPWAInstalled()) { showToast('已经安装过了，直接在桌面打开即可'); return; }
-    showInstallModal();
-}
-window.installPWA = installPWA;
-
-// iOS 用户首次访问，自动弹一次安装引导（每个浏览器只弹一次）
-(function autoPromptIOS() {
-    try {
-        if (isPWAInstalled()) return;
-        var ua = (navigator.userAgent || '').toLowerCase();
-        // 只在真正的 Safari（iOS）里自动提示，微信里不弹（用户也没法装）
-        var isIOS = /iphone|ipad|ipod/.test(ua);
-        var isSafari = isIOS && ua.indexOf('safari') >= 0 && ua.indexOf('crios') < 0 && ua.indexOf('fxios') < 0;
-        var isWechat = ua.indexOf('micromessenger') >= 0;
-        if (!isSafari || isWechat) return;
-        if (localStorage.getItem('sq_ios_install_prompted') === '1') return;
-        setTimeout(function () {
-            localStorage.setItem('sq_ios_install_prompted', '1');
-            showInstallModal();
-        }, 3000);
-    } catch (e) {}
-})();
 
 // ============================================================
 // F12 / 开发者工具 控制台大字提醒
@@ -1171,11 +1004,7 @@ window.installPWA = installPWA;
         console.log('%c爬虫千千万，我的小网站就算了吧！', 'font-size: 18px; font-weight: bold; color: #2e7d32; background: #e8f5e9; padding: 8px 16px; border-radius: 8px; margin-top: 10px; border: 2px dashed #4caf50;');
         console.log('%c如果想看代码，直接按 F12 就可以啦，不用扒我的小网站啦~ 欢迎交流技术！', 'font-size: 14px; color: #888; margin-top: 10px;');
     }
-
-    // 延迟 1 秒打印一次，防止被其他页面的 console 清掉
     setTimeout(printAlert, 1000);
-
-    // 监听清空控制台操作，自动重印
     if (window.console && console.clear) {
         const originalClear = console.clear;
         console.clear = function() {
@@ -1185,42 +1014,3 @@ window.installPWA = installPWA;
         };
     }
 })();
-
-// ============================================================
-// ★ UID 升级提醒（老用户隐私保护）
-// ============================================================
-(function injectUidStyles() {
-    if (document.getElementById('sq-uid-styles')) return;
-    var st = document.createElement('style');
-    st.id = 'sq-uid-styles';
-    st.textContent = '@keyframes sq-uid-pulse{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(238,82,83,.7)}70%{transform:scale(1.05);box-shadow:0 0 0 8px rgba(238,82,83,0)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(238,82,83,0)}}';
-    document.head.appendChild(st);
-})();
-
-function checkAndPromptUidChange(user) {
-    if (window.location.pathname.indexOf('/set-uid.html') >= 0) return;
-    if (sessionStorage.getItem('sq_uid_prompted') === '1') return;
-    sessionStorage.setItem('sq_uid_prompted', '1');
-
-    var mask = document.createElement('div');
-    mask.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(30,58,46,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:"PingFang SC","Segoe UI",system-ui,sans-serif;';
-    mask.innerHTML =
-        '<div style="background:#fff;border-radius:16px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);border:1px solid #c8e0c8;">' +
-            '<div style="width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:#ffebee;display:grid;place-items:center;">' +
-                '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e57373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
-            '</div>' +
-            '<div style="font-size:18px;font-weight:900;color:#1e3a2e;margin-bottom:8px;">隐私安全提醒</div>' +
-            '<div style="font-size:13px;color:#5a7a6a;line-height:1.6;margin-bottom:20px;">为避免手机号隐私泄露，请尽快修改为自定义 UID 账号。</div>' +
-            '<div style="display:flex;gap:10px;">' +
-                '<button id="sqUidLater" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid #c8e0c8;background:#fff;color:#5a7a6a;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">稍后</button>' +
-                '<button id="sqUidGo" style="flex:1;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#ff6b6b,#ee5253);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(238,82,83,.4);">前去修改</button>' +
-            '</div>' +
-        '</div>';
-    document.body.appendChild(mask);
-
-    document.getElementById('sqUidLater').onclick = function () { mask.remove(); };
-    document.getElementById('sqUidGo').onclick = function () {
-        window.location.href = '/liuyanban/set-uid.html';
-    };
-    mask.addEventListener('click', function (e) { if (e.target === mask) mask.remove(); });
-}
