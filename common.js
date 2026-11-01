@@ -161,10 +161,13 @@ async function initGeoIP() {
     // 依次尝试多个接口，任何一个成功就返回
     var apis = [
         {
-            url: "https://ipapi.co/json/",
+            // 强制返回中文
+            url: "https://ipapi.co/json/?lang=zh-CN",
             parse: function(d) {
-                var loc = d.city || d.region || d.country_name || '未知';
-                if (d.city && d.region && d.city !== d.region) loc = d.region + ' ' + d.city;
+                var city = d.city || '';
+                var region = d.region || '';
+                var loc = city || region || d.country_name || '未知';
+                if (city && region && city !== region) loc = region + ' ' + city;
                 return { ip: d.ip, location: loc };
             }
         },
@@ -177,8 +180,11 @@ async function initGeoIP() {
         {
             url: "https://freeipapi.com/api/json",
             parse: function(d) {
-                var loc = (d.regionName || '') + ' ' + (d.cityName || '');
-                return { ip: d.ipAddress, location: loc.trim() || '未知' };
+                var city = d.cityName || '';
+                var region = d.regionName || '';
+                var loc = city || region || '未知';
+                if (city && region && city !== region) loc = region + ' ' + city;
+                return { ip: d.ipAddress, location: loc };
             }
         }
     ];
