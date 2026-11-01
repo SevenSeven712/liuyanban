@@ -154,22 +154,41 @@ async function initGeoIP() {
     if (cached) {
         try { 
             window.sqClientGeo = JSON.parse(cached); 
-            return; 
+            // 如果缓存的是 0.0.0.0，说明上次失败了，这次清掉重新获取
+            if (window.sqClientGeo.ip !== '0.0.0.0') return; 
         } catch(e){}
     }
     try {
         var controller = new AbortController();
         var timeoutId = setTimeout(() => controller.abort(), 5000);
-        var res = await fetch("https://ip.useragentinfo.com/json", { signal: controller.signal });
+        // 换用支持 HTTPS 和 CORS 的 ipapi.co
+        var res = await fetch("https://ipapi.co/json/", { signal: controller.signal });
         var data = await res.json();
         clearTimeout(timeoutId);
+        
         if (data && data.ip) {
-            var loc = (data.province || '') + (data.city || '');
-            window.sqClientGeo = { ip: data.ip, location: loc || '未知' };
+            // 拼接地区：国家/省份/城市
+            var loc = data.city || data.region || data.country_name || '未知';
+            if(data.city && data.region && data.city !== data.region) {
+                loc = data.region + ' ' + data.city;
+            }
+            window.sqClientGeo = { ip: data.ip, location: loc };
+            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
+        } else {
+            // 如果 ipapi.co 失败，兜底用 ipify（只拿 IP）
+            var res2 = await fetch("https://api.ipify.org?format=json");
+            var data2 = await res2.json();
+            window.sqClientGeo = { ip: data2.ip || '0.0.0.0', location: '未知' };
             sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
         }
     } catch (e) {
         console.warn('获取IP信息失败', e);
+        try {
+            var res3 = await fetch("https://api.ipify.org?format=json");
+            var data3 = await res3.json();
+            window.sqClientGeo = { ip: data3.ip || '0.0.0.0', location: '未知' };
+            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
+        } catch(err) {}
     }
 }
 // 页面加载自动识别
