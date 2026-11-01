@@ -144,6 +144,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .adm-coin-actions button{padding:6px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:700;font-size:.78em;cursor:pointer;font-family:inherit}
 .adm-coin-actions button.minus{background:var(--danger)}
 .adm-skin-list{display:flex;flex-direction:column;gap:6px}
+.adm-skin-confiscate{margin-left:8px;padding:4px 12px;border:none;border-radius:99px;background:var(--danger-bg);color:var(--danger-text);font-weight:700;font-size:.72em;cursor:pointer;font-family:inherit;flex-shrink:0;transition:background .15s}
+.adm-skin-confiscate:hover{background:var(--danger);color:#fff}
 .adm-skin-item{display:flex;justify-content:space-between;font-size:.82em;padding:8px 12px;background:var(--bg-input);border-radius:8px}
 .adm-skin-name{font-weight:600}
 .adm-skin-exp{color:var(--text-light);font-size:.9em}
@@ -296,6 +298,25 @@ async function loadAdminView(){
 }
 
 // 管理员调币
+async function confiscateSkin(skinId){
+  if (!isAdmin) return showToast('无权限');
+  if (!viewingUser) return;
+  var name = SKINS[skinId] || ('皮肤#' + skinId);
+  showConfirm('没收气泡', '确定要没收「' + name + '」吗？\n没收后将扣除此皮肤，并通知用户。', async function(){
+    try {
+      var r = await window.sb.rpc('confiscate_skin', {
+        p_user_id: viewingUser.id,
+        p_skin_id: parseInt(skinId, 10)
+      });
+      if (r.error) throw r.error;
+      if (!r.data || !r.data.ok) return showToast((r.data && r.data.message) || '操作失败');
+      showToast('已没收，用户已收到提醒');
+      await render();
+    } catch (e) { showToast('操作失败：' + e.message); }
+  });
+}
+window.confiscateSkin = confiscateSkin;
+
 async function adminAdjustCoins(delta){
   var amt = prompt(delta > 0 ? '加多少小七币？' : '扣多少小七币？', '100');
   if (amt === null) return;
@@ -388,7 +409,8 @@ async function render(){
       skins.forEach(function(s){
         var name = SKINS[s.skin_id] || ('皮肤#' + s.skin_id);
         var exp = new Date(s.expire_at).toLocaleDateString('zh-CN');
-        adminHtml += '<div class="adm-skin-item"><span class="adm-skin-name">' + escapeHtml(name) + '</span><span class="adm-skin-exp">至 ' + exp + '</span></div>';
+        var confBtn = amIAdmin ? '<button class="adm-skin-confiscate" onclick="confiscateSkin(\'' + s.skin_id + '\')">没收</button>' : '';
+        adminHtml += '<div class="adm-skin-item"><div style="flex:1;min-width:0;"><span class="adm-skin-name">' + escapeHtml(name) + '</span><div class="adm-skin-exp">至 ' + exp + '</div></div>' + confBtn + '</div>';
       });
       adminHtml += '</div>';
     } else {

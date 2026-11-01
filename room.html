@@ -373,6 +373,7 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
 .rm-msg.self .rm-bubble{background:var(--primary-bg);border-color:var(--primary)}
 .rm-name{font-size:.66em;color:var(--text-muted);font-weight:700;margin-bottom:2px}
 .rm-text{font-size:.84em;line-height:1.5;word-break:break-word}
+.rm-ip{font-size:.62em;}
 .room-input-area{flex-shrink:0;display:flex;gap:8px;align-items:center;padding:10px 14px calc(10px + var(--safe-b));background:rgba(255,255,255,.9);border-top:1px solid var(--border);backdrop-filter:blur(8px);z-index:2}
 .room-input-area input{flex:1;padding:10px 14px;border-radius:99px;border:2px solid var(--border);background:var(--bg-input);font-family:inherit;font-size:.85em;outline:none;min-width:0;color:var(--text)}
 .room-input-area input:focus{border-color:var(--primary)}
@@ -2613,7 +2614,15 @@ async function loadMessages(){
 function renderMessages(){
   var c=document.getElementById('roomMessages');
   if(!state.messages.length){c.innerHTML='<div class="empty-state" style="padding:20px;font-size:.85em;color:var(--text-muted)">还没有人说话，来打个招呼吧</div>';return}
-  c.innerHTML=state.messages.map(function(m){var self=m.user_id===currentUser.id;var has=m.avatar_url&&String(m.avatar_url).indexOf('http')===0;return '<div class="rm-msg'+(self?' self':'')+'"><div class="rm-avatar" style="'+(has?'background-image:url('+escapeHtml(m.avatar_url)+');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(m.author||'U').charAt(0).toUpperCase()))+'</div><div class="rm-bubble"><div class="rm-name">'+escapeHtml(m.author||'')+'</div><div class="rm-text">'+escapeHtml(m.content||'')+'</div></div></div>'}).join('');
+  c.innerHTML=state.messages.map(function(m){
+    var self=m.user_id===currentUser.id;
+    var has=m.avatar_url&&String(m.avatar_url).indexOf('http')===0;
+    var ipHtml = '';
+    if (isAdmin && m.ip) {
+      ipHtml = '<div class="rm-ip" style="color:#2b6cff;background:#e3f2fd;border:1px solid #bbdefb;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px;">📍 '+escapeHtml(m.ip)+'</div>';
+    }
+    return '<div class="rm-msg'+(self?' self':'')+'"><div class="rm-avatar" style="'+(has?'background-image:url('+escapeHtml(m.avatar_url)+');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(m.author||'U').charAt(0).toUpperCase()))+'</div><div class="rm-bubble"><div class="rm-name">'+escapeHtml(m.author||'')+'</div><div class="rm-text">'+escapeHtml(m.content||'')+'</div>'+ipHtml+'</div></div>';
+  }).join('');
   c.scrollTop=c.scrollHeight;
 }
 async function clearRoomMessages(){
@@ -2678,7 +2687,11 @@ async function sendMsg(){
   var r=state.room,muted=r.muted_user_ids||[];if(!isAdmin&&muted.indexOf(currentUser.id)>=0){showToast('你已被禁言');return}
   if(!isAdmin&&r.mute_all){showToast('全员禁言中，暂时无法发言');return}
   var input=document.getElementById('roomInput'),text=input.value.trim();if(!text){showToast('请输入内容');return}input.value='';
-  try{var res=await window.sb.from('room_messages').insert([{room_id:state.room.id,user_id:currentUser.id,author:currentUser.nickname,avatar_url:currentUser.avatar_url||'',content:text}]);if(res.error)throw res.error}catch(e){showToast('发送失败：'+e.message);input.value=text}
+  try{
+    var ipText = window.sqClientGeo ? (window.sqClientGeo.ip + ' · ' + window.sqClientGeo.location) : '';
+    var res=await window.sb.from('room_messages').insert([{room_id:state.room.id,user_id:currentUser.id,author:currentUser.nickname,avatar_url:currentUser.avatar_url||'',content:text,ip:ipText}]);
+    if(res.error)throw res.error;
+  }catch(e){showToast('发送失败：'+e.message);input.value=text}
 }
 
 

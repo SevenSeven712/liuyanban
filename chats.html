@@ -228,8 +228,14 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .chat-ctx-item{padding:10px 16px;font-size:.85em;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:8px}
 .chat-ctx-item:hover{background:var(--primary-bg);color:var(--primary)}
 .chat-ctx-item.danger:hover{background:#ffebee;color:var(--danger)}
+.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+.row.self .msg-ip{text-align:right;}
+.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+.row.self .msg-ip{text-align:right;}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:.7em 1.5em;border-radius:2em;font-weight:600;font-size:.85em;opacity:0;transition:all .4s ease;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow);max-width:90vw}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+.row.self .msg-ip{text-align:right;}
 .custom-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
 .custom-modal.active{display:flex}
 .custom-modal .modal-box{background:var(--bg-card);border-radius:var(--radius);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
@@ -599,8 +605,8 @@ async function fetchChats(){
   });
   return res.data||[];
 }
-async function addChat(userId,author,content,isOfficial){
-  var r=await window.sb.from('chats').insert([{user_id:userId,author:author,content:content,is_official:isOfficial,is_deleted:false,deleted_by:null}]);
+async function addChat(userId,author,content,isOfficial,ip){
+  var r=await window.sb.from('chats').insert([{user_id:userId,author:author,content:content,is_official:isOfficial,is_deleted:false,deleted_by:null,ip:ip}]);
   if(r.error)throw r.error;return r.data;
 }
 async function revokeChat(id,author,revoker,isSelf){
@@ -693,7 +699,11 @@ function renderChat(){
     var skinCls2='b'+(skinId2>=0&&skinId2<=44?skinId2:0);
     var avCls2='avatar'+(isSelf?' self-av':'');
     var av2=(au&&String(au).indexOf('http')===0)?'<div class="'+avCls2+'" style="background-image:url('+escapeHtml(au)+');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls2+'">'+escapeHtml(String(dn).charAt(0).toUpperCase())+'</div>';
-    html+='<div class="row '+(isSelf?'self':'other')+' '+skinCls2+'" data-id="'+c.id+'" data-author="'+escapeHtml(c.author)+'" data-self="'+isSelf+'">'+av2+'<div class="bubble-wrap"><div class="uname">'+escapeHtml(dn)+badge+'</div><div class="bubble">'+escapeHtml(c.content)+'</div></div></div>';
+    var ipHtml = '';
+    if (isAdmin && c.ip) {
+      ipHtml = '<div class="msg-ip" style="color:#2b6cff;background:#e3f2fd;border:1px solid #bbdefb;padding:2px 6px;border-radius:4px;display:inline-block;">📍 '+escapeHtml(c.ip)+'</div>';
+    }
+    html+='<div class="row '+(isSelf?'self':'other')+' '+skinCls2+'" data-id="'+c.id+'" data-author="'+escapeHtml(c.author)+'" data-self="'+isSelf+'">'+av2+'<div class="bubble-wrap"><div class="uname">'+escapeHtml(dn)+badge+'</div><div class="bubble">'+escapeHtml(c.content)+'</div>'+ipHtml+'</div></div>';
   });
   container.innerHTML=html;
   container.scrollTop=container.scrollHeight;
@@ -769,10 +779,20 @@ function sendChat(){
   var btn=document.getElementById('sendChatBtn'),orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='发送中...';
   var isOfficial=currentUser.nickname==='Seven戚'||isAuthorMode;
-  addChat(currentUser.id,currentUser.nickname,content,isOfficial)
-    .then(function(){input.value='';loadAllChats();showToast('消息已发送')})
-    .catch(function(e){showToast('发送失败：'+e.message)})
-    .finally(function(){btn.disabled=false;btn.innerHTML=orig});
+  var ipText = window.sqClientGeo ? (window.sqClientGeo.ip + ' · ' + window.sqClientGeo.location) : '';
+  addChat(currentUser.id,currentUser.nickname,content,isOfficial,ipText)
+    .then(function(){
+      input.value='';
+      loadAllChats();
+      showToast('消息已发送');
+    })
+    .catch(function(e){
+      showToast('发送失败：'+e.message);
+    })
+    .finally(function(){
+      btn.disabled=false;
+      btn.innerHTML=orig;
+    });
 }
 async function loadAllChats(){
   chatsLoading=true;renderChat();

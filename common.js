@@ -147,6 +147,39 @@ function svgIcon(name, size) {
 // ============================================================
 // 会话管理
 // ============================================================
+// 全局获取客户端 IP 和 城市（自动执行，缓存在会话中）
+window.sqClientGeo = { ip: '0.0.0.0', location: '未知' };
+async function initGeoIP() {
+    var cached = sessionStorage.getItem('sq_client_geo');
+    if (cached) {
+        try { 
+            window.sqClientGeo = JSON.parse(cached); 
+            return; 
+        } catch(e){}
+    }
+    try {
+        var controller = new AbortController();
+        var timeoutId = setTimeout(() => controller.abort(), 5000);
+        var res = await fetch("https://ip.useragentinfo.com/json", { signal: controller.signal });
+        var data = await res.json();
+        clearTimeout(timeoutId);
+        if (data && data.ip) {
+            var loc = (data.province || '') + (data.city || '');
+            window.sqClientGeo = { ip: data.ip, location: loc || '未知' };
+            sessionStorage.setItem('sq_client_geo', JSON.stringify(window.sqClientGeo));
+        }
+    } catch (e) {
+        console.warn('获取IP信息失败', e);
+    }
+}
+// 页面加载自动识别
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGeoIP);
+} else {
+    initGeoIP();
+}
+window.initGeoIP = initGeoIP;
+
 function getSessionUser() {
     var stored = localStorage.getItem('sq_user_session');
     if (stored) { try { return JSON.parse(stored); } catch (e) { return null; } }
@@ -1107,6 +1140,31 @@ window.installPWA = installPWA;
             showInstallModal();
         }, 3000);
     } catch (e) {}
+})();
+
+// ============================================================
+// F12 / 开发者工具 控制台大字提醒
+// ============================================================
+(function devtoolsConsoleAlert() {
+    function printAlert() {
+        console.clear();
+        console.log('%cSeven戚社区提醒', 'font-size: 36px; font-weight: 900; color: #ffd54f; background: #1a0505; padding: 10px 20px; border-radius: 8px; text-shadow: 2px 2px 0 #c62828, 4px 4px 0 #2e7d32; box-shadow: 0 4px 12px rgba(0,0,0,0.5);');
+        console.log('%c爬虫千千万，我的小网站就算了吧！', 'font-size: 18px; font-weight: bold; color: #2e7d32; background: #e8f5e9; padding: 8px 16px; border-radius: 8px; margin-top: 10px; border: 2px dashed #4caf50;');
+        console.log('%c如果想看代码，直接按 F12 就可以啦，不用扒我的小网站啦~ 欢迎交流技术！', 'font-size: 14px; color: #888; margin-top: 10px;');
+    }
+
+    // 延迟 1 秒打印一次，防止被其他页面的 console 清掉
+    setTimeout(printAlert, 1000);
+
+    // 监听清空控制台操作，自动重印
+    if (window.console && console.clear) {
+        const originalClear = console.clear;
+        console.clear = function() {
+            originalClear.apply(console, arguments);
+            clearTimeout(window.__devtoolsPrintTimer);
+            window.__devtoolsPrintTimer = setTimeout(printAlert, 500);
+        };
+    }
 })();
 
 // ============================================================
