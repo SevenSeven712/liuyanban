@@ -237,6 +237,58 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
 .ww-player .name{flex:1;font-size:.82em;font-weight:700}
 .ww-player .btn{background:rgba(255,140,140,.25);color:#ffb5b5;border:none;padding:4px 12px;border-radius:99px;font-size:.72em;font-weight:700;cursor:pointer;font-family:inherit}
 .ww-player .btn:hover{background:#ff5252;color:#fff}
+/* ===== 斗地主 · 段位徽章 & 玩家资料浮层 ===== */
+.ddz-lv-badge{
+  display:inline-block;font-size:.68em;font-weight:800;letter-spacing:.4px;
+  padding:2px 8px;border-radius:99px;color:#fff;line-height:1.4;
+  box-shadow:0 1px 4px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+  white-space:nowrap;
+}
+.ddz-player-tap{cursor:pointer;}
+.ddz-player-tap:hover{filter:brightness(1.12);}
+.ddz-player-card{
+  position:fixed;z-index:5001;width:200px;pointer-events:auto;
+  transform-origin:top left;
+  animation:dpIn .16s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes dpIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.ddz-player-card .dp-card{
+  background:rgba(12,46,26,.82);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  backdrop-filter:blur(14px) saturate(150%);
+  border:1.5px solid var(--lv-color, #ffd54f);
+  border-radius:14px;padding:14px 14px 12px;color:#eaf7ee;
+  box-shadow:0 12px 32px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+.ddz-player-card .dp-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ddz-player-card .dp-avatar{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#3a6b4a,#1e4a2e);
+  color:#ffd54f;display:grid;place-items:center;font-weight:800;font-size:15px;
+  background-size:cover;background-position:center;
+  border:2px solid rgba(255,213,79,.55);
+}
+.ddz-player-card .dp-name{
+  flex:1;min-width:0;font-weight:800;font-size:.95em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#f5d98a;
+}
+.ddz-player-card .dp-badge{
+  display:inline-block;font-size:.68em;font-weight:800;color:#fff;
+  padding:2px 8px;border-radius:99px;line-height:1.4;margin-top:6px;
+  box-shadow:0 1px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  white-space:nowrap;
+}
+.ddz-player-card .dp-score{
+  margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,213,79,.25);
+  display:flex;align-items:baseline;gap:6px;justify-content:center;
+}
+.ddz-player-card .dp-score-num{
+  font-size:1.7em;font-weight:900;color:#ffd54f;line-height:1;
+  text-shadow:0 2px 8px rgba(255,213,79,.35);
+}
+.ddz-player-card .dp-score-lbl{font-size:.7em;color:rgba(232,247,238,.65);font-weight:700;}
+
 /* ===== 斗地主 ===== */
 .room-body[data-theme="doudizhu"]{background:linear-gradient(135deg,#0b3d1e,#14532d 50%,#052e16);color:#e8f5e9}
 .room-body[data-theme="doudizhu"] .game-stage{background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.15)}
@@ -303,6 +355,11 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
 .ddz-center{display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;flex:1;min-height:50px}
 .ddz-my-play{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:40px;align-items:center;animation:ddzIn .25s}
 .ddz-pass-tag{font-size:.7em;color:rgba(232,245,233,.65);font-weight:800;padding:5px 12px;background:rgba(0,0,0,.22);border-radius:99px}
+.ddz-counter{display:flex;flex-wrap:wrap;align-items:center;gap:4px;justify-content:center;background:rgba(0,0,0,.22);border:1px solid rgba(255,213,79,.25);border-radius:10px;padding:5px 8px;margin:2px 0}
+.ddz-counter-lbl{font-size:.66em;font-weight:800;color:rgba(255,213,79,.85);margin-right:2px;letter-spacing:1px}
+.ddz-counter-item{display:inline-flex;align-items:center;gap:1px;font-size:.64em;font-weight:800;color:#e8f5e9;background:rgba(255,255,255,.1);border-radius:6px;padding:1px 5px;line-height:1.5}
+.ddz-counter-item b{color:#ffd54f;font-size:1.05em;margin-right:1px}
+.ddz-counter-item.zero{opacity:.35;text-decoration:line-through}
 @keyframes ddzIn{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:none}}
 .ddz-card.deal-in{animation:ddzDeal .3s ease}
 @keyframes ddzDeal{from{opacity:0;transform:translateY(-30px) scale(.5)}to{opacity:1;transform:none}}
@@ -567,19 +624,103 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
   <div class="gprefs-box">
     <h3>游戏设置</h3>
     <div class="gprefs-item">
-      <span>五子棋落子确认</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        五子棋落子确认
+      </span>
       <div class="toggle-switch">
         <input class="toggle-input" id="gomokuConfirmToggle" type="checkbox" />
         <label class="toggle-label" for="gomokuConfirmToggle"></label>
       </div>
     </div>
     <p class="gprefs-hint">开启后，落子前需点「下这里」确认；关闭则点击棋盘直接落子。</p>
+    <div class="gprefs-item">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        斗地主音效
+      </span>
+      <div class="toggle-switch">
+        <input class="toggle-input" id="ddzSoundToggle" type="checkbox" />
+        <label class="toggle-label" for="ddzSoundToggle"></label>
+      </div>
+    </div>
+    <p class="gprefs-hint">出牌、炸弹、王炸、胜负等音效；关闭后静音。</p>
     <button class="gprefs-close" id="gamePrefsClose">完成</button>
   </div>
 </div>
 
 <script src="/liuyanban/common.js"></script>
 <script>
+/* ============================================================
+   斗地主音效引擎（Web Audio 合成，无外部资源）
+   开关：localStorage 'sq_ddz_sound' !== 'false' 时开启
+   与全局"提醒音效"开关 sq_sound_enabled 分离，互不影响
+============================================================ */
+var DDZ_SOUND_ENABLED = localStorage.getItem('sq_ddz_sound') !== 'false';
+var _ddzAudioCtx = null;
+function ddzAudioCtx(){
+  if(!_ddzAudioCtx){
+    try{ _ddzAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(_ddzAudioCtx && _ddzAudioCtx.state === 'suspended'){ try{ _ddzAudioCtx.resume(); }catch(e){} }
+  return _ddzAudioCtx;
+}
+/* 基础音：频率 f、时长 dur、音量 vol、类型 type */
+function ddzBeep(f, dur, vol, type, sweepTo){
+  if(!DDZ_SOUND_ENABLED) return;
+  var ctx = ddzAudioCtx(); if(!ctx) return;
+  var t0 = ctx.currentTime;
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(f, t0);
+  if(sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t0 + dur);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(vol || 0.2, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.02);
+}
+/* 出牌：轻快"啪" */
+function sfxPlay(){ ddzBeep(520, 0.09, 0.18, 'triangle', 260); }
+/* 不要：低沉一声 */
+function sfxPass(){ ddzBeep(300, 0.12, 0.14, 'sine', 200); }
+/* 叫地主：上扬 */
+function sfxBid(){ ddzBeep(520, 0.10, 0.20, 'square', 760); }
+/* 不叫：下沉 */
+function sfxNoBid(){ ddzBeep(420, 0.12, 0.14, 'square', 260); }
+/* 炸弹：重击 */
+function sfxBomb(){
+  ddzBeep(160, 0.35, 0.35, 'sawtooth', 60);
+  setTimeout(function(){ ddzBeep(90, 0.25, 0.25, 'square', 50); }, 40);
+}
+/* 王炸：超重击 */
+function sfxRocket(){
+  ddzBeep(220, 0.28, 0.32, 'sawtooth', 80);
+  setTimeout(function(){ ddzBeep(140, 0.30, 0.30, 'square', 50); }, 90);
+  setTimeout(function(){ ddzBeep(80, 0.35, 0.28, 'triangle', 40); }, 200);
+}
+/* 轮到你了：轻提示（双音） */
+function sfxYourTurn(){
+  ddzBeep(880, 0.08, 0.14, 'sine');
+  setTimeout(function(){ ddzBeep(1174, 0.10, 0.12, 'sine'); }, 80);
+}
+/* 胜利 */
+function sfxWin(){
+  ddzBeep(523, 0.12, 0.20, 'sine');
+  setTimeout(function(){ ddzBeep(659, 0.12, 0.20, 'sine'); }, 120);
+  setTimeout(function(){ ddzBeep(784, 0.18, 0.22, 'sine'); }, 240);
+  setTimeout(function(){ ddzBeep(1046, 0.22, 0.24, 'sine'); }, 380);
+}
+/* 失败 */
+function sfxLose(){
+  ddzBeep(392, 0.16, 0.20, 'sine');
+  setTimeout(function(){ ddzBeep(330, 0.16, 0.20, 'sine'); }, 160);
+  setTimeout(function(){ ddzBeep(262, 0.30, 0.22, 'sine'); }, 320);
+}
+/* 点击反馈（提示/重选） */
+function sfxTap(){ ddzBeep(760, 0.05, 0.10, 'sine'); }
+
 var SUPABASE_URL="https://ulvhuqtpdafspbdvkogs.supabase.co";
 var SUPABASE_ANON_KEY="sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
 window.sb=window.sb||window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -663,6 +804,12 @@ async function enterRoom(roomId,openSettings){
     history.replaceState({},'','?id='+roomId);
     showDetail();
     updateHeaderBtns();
+    // 若当前是斗地主，先把全局段位分灌进 state.scores，再渲染
+    if(state.room.current_game && state.room.current_game.type==='doudizhu'){
+      try{
+        state.room.current_game = await hydrateDdzScores(state.room.current_game);
+      }catch(e){ console.warn('[hydrate scores]', e); }
+    }
     renderMic();renderGame();
     await loadMessages();
     subscribe();
@@ -987,7 +1134,7 @@ function initGameState(type){
   if(type==='draw')return{order:[],drawer_index:0,word:'',strokes:[],correct:[],messages:[],scores:{},round_started_at:0,round_end:false};
   if(type==='spy')return{words:{},spy_ids:[],phase:'describe',descriptions:[],votes:{},eliminated:[],round:1};
   if(type==='werewolf')return{roles:{},phase:'choose',alive:[],night_action:null,day:1,votes:{},mode:0};
-  if(type==='doudizhu')return{phase:'bid',order:[],hands:{},bottom:[],bids:{},bidTurn:0,bidCount:0,maxBid:0,maxBidder:null,landlord:null,currentTurn:null,lastPlay:null,passCount:0,winner:null,winnerSide:null,multiplier:1,bombCount:0};
+  if(type==='doudizhu')return{phase:'bid',order:[],hands:{},bottom:[],bids:{},bidTurn:0,bidCount:0,maxBid:0,maxBidder:null,landlord:null,currentTurn:null,lastPlay:null,passCount:0,winner:null,winnerSide:null,multiplier:1,bombCount:0,scores:{},result:null};
   return{};
 }
 
@@ -1062,7 +1209,16 @@ async function beginGame(){
     var dzDeck=ddzShuffle(ddzNewDeck());
     var dzHands={};
     dzIds.forEach(function(uid,i){dzHands[uid]=ddzSort(dzDeck.slice(i*17,i*17+17))});
-    st=Object.assign({},st,{phase:'bid',order:dzIds,hands:dzHands,bottom:dzDeck.slice(51,54),bids:{},bidTurn:0,bidCount:0,maxBid:0,maxBidder:null,landlord:null,currentTurn:null,lastPlay:null,passCount:0,winner:null,winnerSide:null,multiplier:1,bombCount:0});
+    var prevScores=(st&&st.scores)||{};
+    try{
+      var stats = await fetchDdzStats(dzIds);
+      dzIds.forEach(function(uid){
+        if(prevScores[uid]===undefined) prevScores[uid] = stats[uid]||0;
+      });
+    }catch(e){
+      dzIds.forEach(function(uid){ if(prevScores[uid]===undefined) prevScores[uid]=0; });
+    }
+    st=Object.assign({},st,{phase:'bid',order:dzIds,hands:dzHands,bottom:dzDeck.slice(51,54),bids:{},bidTurn:0,bidCount:0,maxBid:0,maxBidder:null,landlord:null,currentTurn:null,lastPlay:null,passCount:0,winner:null,winnerSide:null,multiplier:1,bombCount:0,scores:prevScores,result:null});
   }
   var ng=Object.assign({},game,{status:'playing',state:st});
   try{await updateGame(ng);showToast('游戏开始！')}catch(e){console.error('[开始游戏]',e)}
@@ -1177,7 +1333,7 @@ var _lastWWVoteKey=null;       // 已弹过的狼人杀投票
 function renderGame(){
   var r=state.room;var stage=document.getElementById('gameStage');var body=document.getElementById('roomBody');
   var sbar=document.getElementById('spectatorBar');
-  if(!r||!r.current_game){stage.classList.remove('active');body.removeAttribute('data-theme');if(sbar)sbar.style.display='none';if(typeof closeGameModal==='function')closeGameModal();return}
+  if(!r||!r.current_game){stage.classList.remove('active');body.removeAttribute('data-theme');if(sbar)sbar.style.display='none';if(typeof closeGameModal==='function')closeGameModal();ddzSel=[];return}
   var game=r.current_game;body.setAttribute('data-theme',game.type);
   var g=GAMES.find(function(x){return x.id===game.type});
   if(!g)return;
@@ -1718,6 +1874,8 @@ window.advanceWerewolfPhase=advanceWerewolfPhase;
    斗地主 —— 核心逻辑
 ============================================================ */
 var ddzSuits=['♠','♥','♣','♦'];
+/* 选中的牌（本地状态，不写库；每局重置） */
+var ddzSel = [];
 function ddzVal(id){return id<52?(Math.floor(id/4))+3:(id===52?16:17);}
 function ddzSuit(id){return id<52?id%4:-1;}
 function ddzNewDeck(){var d=[];for(var i=0;i<54;i++)d.push(i);return d;}
@@ -1793,6 +1951,19 @@ function ddzAnalyze(cards){
     var ok3=true;for(var i=1;i<keys.length;i++){if(keys[i]!==keys[i-1]+1){ok3=false;break;}}
     if(ok3)return{type:'plane',len:keys.length,value:keys[keys.length-1]};
   }
+  // 四带二（四张+两张单牌）
+  if(n===6&&maxCnt===4){
+    var fourV=keys.filter(function(k){return cnt[k]===4;})[0];
+    if(fourV!==undefined)return{type:'four_two',len:1,value:fourV};
+  }
+  // 四带两对（四张+两个对子）
+  if(n===8&&maxCnt===4){
+    var fours=keys.filter(function(k){return cnt[k]===4;});
+    if(fours.length===1){
+      var pairs=keys.filter(function(k){return cnt[k]===2;});
+      if(pairs.length===2)return{type:'four_two_pair',len:1,value:fours[0]};
+    }
+  }
   return ddzCheckPlane(cnt,keys,n);
 }
 function ddzCanBeat(play,last){
@@ -1805,17 +1976,125 @@ function ddzCanBeat(play,last){
   if(last.type==='bomb')return false;
   if(play.type!==last.type)return false;
   if(play.len!==last.len)return false;
+  // 四带二/四带两对：只比四张的大小
+  if(play.type==='four_two'||play.type==='four_two_pair')return play.value>last.value;
+  // 飞机系列：同类型、同长度才能压，比起始值
+  if(play.type==='plane'||play.type==='plane_single'||play.type==='plane_pair'){
+    if(play.len!==last.len)return false;
+    return play.value>last.value;
+  }
   return play.value>last.value;
 }
+/* ============================================================
+   斗地主 · 全局积分 & 段位
+   段位（7 级，积分越高越爽）：
+   Lv.1 村夫 0-9 / Lv.2 佃户 10-29 / Lv.3 长工 30-59
+   Lv.4 小地主 60-99 / Lv.5 大地主 100-199
+   Lv.6 财主 200-399 / Lv.7 地主爷 400+
+   高级段位（Lv.4+）使用渐变徽章
+============================================================ */
+var DDZ_LEVELS = [
+  { lv:1, name:'村夫',   min:0,   max:9,        color:'#9e9e9e', grad:null },
+  { lv:2, name:'佃户',   min:10,  max:29,       color:'#b07d47', grad:null },
+  { lv:3, name:'长工',   min:30,  max:59,       color:'#9aa4a8', grad:null },
+  { lv:4, name:'小地主', min:60,  max:99,       color:'#2e7d32', grad:'linear-gradient(135deg,#4caf50,#2e7d32)' },
+  { lv:5, name:'大地主', min:100, max:199,      color:'#f0b429', grad:'linear-gradient(135deg,#ffd54f,#f0b429,#b8860b)' },
+  { lv:6, name:'财主',   min:200, max:399,      color:'#7e57c2', grad:'linear-gradient(135deg,#b39ddb,#7e57c2,#5e35b1)' },
+  { lv:7, name:'地主爷', min:400, max:Infinity, color:'#c62828', grad:'linear-gradient(135deg,#ffd54f,#ff8f00,#c62828,#7b1fa2)' }
+];
+function ddzLevelOf(score){
+  var s = Math.max(0, Number(score)||0);
+  for(var i=DDZ_LEVELS.length-1;i>=0;i--){
+    if(s >= DDZ_LEVELS[i].min) return DDZ_LEVELS[i];
+  }
+  return DDZ_LEVELS[0];
+}
+function ddzLevelBadgeHTML(score){
+  var L = ddzLevelOf(score);
+  var bg = L.grad || L.color;
+  return '<span class="ddz-lv-badge" style="background:'+bg+';">Lv.'+L.lv+' '+L.name+'</span>';
+}
+/* 从 ddz_stats 拉取一批用户的全局分数（只读，任何人可读） */
+async function fetchDdzStats(userIds){
+  var result = {};
+  if(!userIds || !userIds.length) return result;
+  try{
+    var r = await window.sb.from('ddz_stats').select('user_id,score').in('user_id', userIds);
+    (r.data||[]).forEach(function(row){ result[row.user_id] = row.score||0; });
+  }catch(e){ console.warn('[ddz_stats 读取失败]', e); }
+  return result;
+}
+/* 写回自己的分数（只增不减，RPC 会兜底校验） */
+async function saveMyDdzScore(score){
+  try{
+    var r = await window.sb.rpc('save_ddz_score', { p_score: score });
+    if(r.error) console.warn('[ddz_stats 写回失败]', r.error);
+  }catch(e){ console.warn('[ddz_stats 写回失败]', e); }
+}
+/* 房间开局前：把全局分数载入 state.scores */
+async function hydrateDdzScores(game){
+  if(!game || game.type!=='doudizhu') return game;
+  var players = game.players || [];
+  var ids = players.map(function(p){return p.user_id;});
+  var stats = await fetchDdzStats(ids);
+  var scores = Object.assign({}, (game.state&&game.state.scores)||{});
+  ids.forEach(function(uid){ if(scores[uid]===undefined) scores[uid] = stats[uid]||0; });
+  game.state = Object.assign({}, game.state, { scores: scores });
+  return game;
+}
+
+/* 记牌器：根据当前 hands / lastPlays 推算剩余未出的牌 */
+function ddzCalcRemain(st){
+  var allCards=ddzNewDeck();
+  var collected=[];
+  var hands=st.hands||{};
+  Object.keys(hands).forEach(function(uid){ (hands[uid]||[]).forEach(function(c){ collected.push(c); }); });
+  var lps=st.lastPlays||{};
+  Object.keys(lps).forEach(function(uid){
+    var lp=lps[uid];
+    if(lp && !lp.pass && lp.cards) lp.cards.forEach(function(c){ collected.push(c); });
+  });
+  var remain={};
+  allCards.forEach(function(id){
+    if(collected.indexOf(id)<0){
+      var v=ddzVal(id);
+      remain[v]=(remain[v]||0)+1;
+    }
+  });
+  return remain;
+}
+var _ddzLastTurnKey = "";
 function renderDoudizhu(game,el){
   var st=game.state||{},players=game.players||[];
   var order=st.order||[];
+  // 轮到你提示音：只有从"不是我"变成"是我"时响一次
+  var turnKey = st.phase + "_" + (st.phase==="bid" ? (order[st.bidTurn]===currentUser.id ? "me" : "other") : (st.currentTurn===currentUser.id ? "me" : "other"));
+  if(turnKey.indexOf("me") >= 0 && _ddzLastTurnKey !== turnKey){
+    sfxYourTurn();
+  }
+  _ddzLastTurnKey = turnKey;
   var myHand=st.hands?st.hands[currentUser.id]:null;
   var isAdminNow=!!(currentUser&&currentUser.is_admin===true);
   if(st.phase==="finished"){
     var msg=st.aborted?"游戏已中止":(st.winnerSide==="landlord"?"地主获胜":"农民获胜");
+    // 结算音效：只响一次（用 key 去重）
+    var finKey = "fin_" + (st.winnerSide||"") + "_" + (st.aborted?"ab":"ok");
+    if(_ddzLastTurnKey !== finKey){
+      var iAmLandlord = (st.landlord===currentUser.id);
+      var iWin = (st.winnerSide==="landlord" && iAmLandlord) || (st.winnerSide==="farmer" && !iAmLandlord);
+      if(st.aborted){ /* 中止不响 */ }
+      else if(iWin) sfxWin(); else sfxLose();
+      _ddzLastTurnKey = finKey;
+    }
     var h1='<div class="ddz-result"><div class="big">'+msg+"</div>";
     if(st.multiplier&&st.multiplier>1)h1+='<div style="font-size:.8em;opacity:.8;">倍数 x'+st.multiplier+"</div>";
+    var _myDelta=(st.result&&st.result.deltas)?(st.result.deltas[currentUser.id]||0):0;
+    var _myScore=(st.scores&&st.scores[currentUser.id])?st.scores[currentUser.id]:0;
+    var _deltaText=(_myDelta>0?'+':'')+_myDelta;
+    if(!st.aborted){
+      h1+='<div style="font-size:.95em;font-weight:800;margin-top:8px;color:'+(_myDelta>=0?'#66bb6a':'#ef5350')+';">本局 '+_deltaText+' 分</div>';
+      h1+='<div style="font-size:.82em;opacity:.85;margin-top:2px;">总分 '+_myScore+' 分</div>';
+    }
     if(game.host_id===currentUser.id)h1+='<button class="lobby-btn start" style="margin-top:16px;" onclick="restartGame()">再来一轮</button>';
     else h1+='<div style="font-size:.75em;opacity:.7;margin-top:14px;">等待房主重开…</div>';
     h1+="</div>";el.innerHTML=h1;return;
@@ -1833,11 +2112,13 @@ function renderDoudizhu(game,el){
     var bid=st.bids?st.bids[uid]:undefined;
     var lp=lpOf(uid);
     var has=p.avatar_url&&String(p.avatar_url).indexOf("http")===0;
+    var _pScore=(st.scores&&st.scores[uid])?st.scores[uid]:0;
     var h='<div class="ddz-opp'+(isTurn?" turn":"")+(isLL?" landlord":"")+'">';
-    h+='<div class="ddz-opp-head"'+(isAdminNow?' onclick="ddzPeek(\''+uid+'\')" title="查看手牌"':"")+'>';
-    h+='<div class="avatar" style="'+(has?"background-image:url("+escapeHtml(p.avatar_url)+");":"")+'">'+(has?"":escapeHtml(String(p.nickname||"U").charAt(0)))+'</div>';
-    h+='<div class="nm">'+escapeHtml(p.nickname||"")+(isLL?" · 地主":"")+'</div>';
-    h+='<div class="cnt">'+cnt+"张"+(isAdminNow?' <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>':"")+"</div>";
+    h+='<div class="ddz-opp-head">';
+    h+='<div class="avatar ddz-player-tap" data-uid="'+uid+'" style="'+(has?"background-image:url("+escapeHtml(p.avatar_url)+");":"")+'" title="查看资料">'+(has?"":escapeHtml(String(p.nickname||"U").charAt(0)))+'</div>';
+    h+='<div class="nm ddz-player-tap" data-uid="'+uid+'" title="查看资料">'+escapeHtml(p.nickname||"")+(isLL?" · 地主":"")+'</div>';
+    h+='<div class="cnt">'+cnt+"张 · "+_pScore+"分"+(isAdminNow?' <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>':"")+"</div>";
+    h+='<div style="display:block;margin-top:4px;">'+ddzLevelBadgeHTML(_pScore)+'</div>';
     if(isLL)h+='<span class="crown"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#f0b429" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M2 18h20l-2-9-4 4-4-7-4 7-4-4z"/></svg></span>';
     h+="</div>";
     if(st.phase==="bid"&&bid!==undefined&&bid!==null){h+='<div class="ddz-bubble '+(bid?"yes":"no")+'">'+(bid?"叫地主！":"不叫")+"</div>";}
@@ -1855,14 +2136,117 @@ function renderDoudizhu(game,el){
   h+='<div class="ddz-my-play">';
   if(myLp){if(myLp.pass)h+='<span class="ddz-pass-tag">不要</span>';else h+=myLp.cards.map(function(c){return ddzCardHTML(c,{mini:true})}).join("");}
   h+="</div>";
-  h+='<div class="ddz-hand" id="ddzHand">'+(myHand?ddzSort(myHand).map(function(c){return ddzCardHTML(c)}).join(""):"")+"</div>";
-  if(st.phase==="bid"&&order[st.bidTurn]===currentUser.id){h+='<div class="ddz-actions"><button class="ddz-btn" onclick="ddzBid(true)">叫地主</button><button class="ddz-btn pass" onclick="ddzBid(false)">不叫</button></div>';}
-  else if(st.phase==="play"&&st.currentTurn===currentUser.id){h+='<div class="ddz-actions"><button class="ddz-btn" onclick="ddzPlay()">出牌</button>'+(st.lastPlay&&st.lastPlay.uid!==currentUser.id?'<button class="ddz-btn pass" onclick="ddzPass()">不要</button>':"")+"</div>";}
+  /* 记牌器：显示各点数剩余张数 */
+  if(st.phase==="play"){
+    var remain=ddzCalcRemain(st);
+    var remainKeys=Object.keys(remain).map(Number).sort(function(a,b){return a-b;});
+    if(remainKeys.length){
+      h+='<div class="ddz-counter" title="记牌器：各点数剩余张数（未出+未在手的牌，仅供参考）">';
+      h+='<span class="ddz-counter-lbl">剩余</span>';
+      remainKeys.forEach(function(v){
+        var nm=ddzValName(v);
+        var c=remain[v];
+        h+='<span class="ddz-counter-item'+(c===0?' zero':'')+'"><b>'+nm+'</b>'+c+'</span>';
+      });
+      h+='</div>';
+    }
+  }
+  var _myScoreNow=(st.scores&&st.scores[currentUser.id])?st.scores[currentUser.id]:0;
+  h+='<div style="text-align:center;font-size:.72em;color:rgba(232,245,233,.75);font-weight:700;margin:2px 0 -2px;">我的总分：'+_myScoreNow+' 分 '+ddzLevelBadgeHTML(_myScoreNow)+'</div>';
+  var selIds=ddzSel||[];
+  h+='<div class="ddz-hand" id="ddzHand">'+(myHand?ddzSort(myHand).map(function(c){return ddzCardHTML(c,{sel:selIds.indexOf(c)>=0})}).join(""):"")+"</div>";
+  if(st.phase==="bid"&&order[st.bidTurn]===currentUser.id){
+    var icBid='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M2 18h20l-2-9-4 4-4-7-4 7-4-4z"/></svg>';
+    var icNoBid='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    h+='<div class="ddz-actions"><button class="ddz-btn" onclick="ddzBid(true)">'+icBid+'叫地主</button><button class="ddz-btn pass" onclick="ddzBid(false)">'+icNoBid+'不叫</button></div>';
+  }
+  else if(st.phase==="play"&&st.currentTurn===currentUser.id){
+    var icPlay='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M5 3l14 9-14 9V3z"/></svg>';
+    var icHint='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>';
+    var icClear='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
+    var icPass='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    h+='<div class="ddz-actions">';
+    h+='<button class="ddz-btn" onclick="ddzPlay()">'+icPlay+'出牌</button>';
+    h+='<button class="ddz-btn pass" onclick="ddzHint()">'+icHint+'提示</button>';
+    h+='<button class="ddz-btn pass" onclick="ddzClearSel()">'+icClear+'重选</button>';
+    if(st.lastPlay&&st.lastPlay.uid!==currentUser.id)h+='<button class="ddz-btn pass" onclick="ddzPass()">'+icPass+'不要</button>';
+    h+="</div>";
+  }
   h+="</div>";
   el.innerHTML=h;
   var handEl=document.getElementById("ddzHand");
-  if(handEl){handEl.querySelectorAll(".ddz-card").forEach(function(c){c.onclick=function(){this.classList.toggle("sel");};});}
+  if(handEl){handEl.querySelectorAll(".ddz-card").forEach(function(c){c.onclick=function(){ddzToggleSel(parseInt(this.dataset.id,10));};});}
+  // 点击对家头像/昵称 → 显示资料浮层
+  el.querySelectorAll(".ddz-player-tap").forEach(function(node){
+    node.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      var uid = this.dataset.uid;
+      if(uid) ddzShowPlayerCard(uid, this);
+    });
+  });
 }
+/* ============================================================
+   斗地主 · 玩家资料浮层（A 方案：头像 + 昵称 + 段位 + 积分，点外部关闭）
+============================================================ */
+function ddzShowPlayerCard(uid, anchorEl){
+  var game = state.room && state.room.current_game;
+  if(!game || game.type!=='doudizhu') return;
+  var st = game.state || {};
+  var players = game.players || [];
+  var p = players.find(function(x){return x.user_id===uid;}) || {};
+  var score = (st.scores && st.scores[uid]) ? st.scores[uid] : 0;
+  var L = ddzLevelOf(score);
+  var nickname = p.nickname || '玩家';
+  var hasAvatar = p.avatar_url && String(p.avatar_url).indexOf('http')===0;
+
+  var old = document.getElementById('ddzPlayerCardOverlay');
+  if(old) old.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'ddzPlayerCardOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.25);backdrop-filter:blur(2px);';
+  var card = document.createElement('div');
+  card.className = 'ddz-player-card';
+  var bg = L.grad || L.color;
+  card.innerHTML =
+    '<div class="dp-card" style="--lv-color:'+bg+';">' +
+      '<div class="dp-head">' +
+        '<div class="dp-avatar" style="'+(hasAvatar?'background-image:url('+escapeHtml(p.avatar_url)+');':'')+'">' +
+          (hasAvatar?'':escapeHtml(String(nickname).charAt(0).toUpperCase())) +
+        '</div>' +
+        '<div class="dp-name">'+escapeHtml(nickname)+'</div>' +
+        '<div class="dp-badge" style="background:'+bg+';">Lv.'+L.lv+' '+L.name+'</div>' +
+      '</div>' +
+      '<div class="dp-score">' +
+        '<div class="dp-score-num">'+score+'</div>' +
+        '<div class="dp-score-lbl">积分</div>' +
+      '</div>' +
+    '</div>';
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  // 定位：紧贴被点击的头像旁边，不超出屏幕
+  var rect = anchorEl.getBoundingClientRect();
+  card.style.visibility = 'hidden';
+  card.style.left = '0px'; card.style.top = '0px';
+  var cardW = card.offsetWidth;
+  var cardH = card.offsetHeight;
+  var left = rect.right + 8;
+  var top = rect.top - 4;
+  if(left + cardW + 8 > window.innerWidth) left = rect.left - cardW - 8;
+  if(left < 8) left = 8;
+  if(top + cardH + 8 > window.innerHeight) top = window.innerHeight - cardH - 8;
+  if(top < 8) top = 8;
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+  card.style.visibility = 'visible';
+
+  // 点外部关闭
+  overlay.addEventListener('click', function(ev){
+    if(ev.target === overlay) overlay.remove();
+  });
+}
+window.ddzShowPlayerCard = ddzShowPlayerCard;
 function ddzPeek(uid){
   if(!currentUser||currentUser.is_admin!==true){showToast("无权查看");return;}
   var game=state.room&&state.room.current_game;
@@ -1898,7 +2282,10 @@ async function ddzBid(want){
   var st=game.state;
   if(st.phase!=='bid')return;
   if(st.order[st.bidTurn]!==currentUser.id){showToast('还没轮到你');return}
+  // 音效：叫/不叫
+  if(want) sfxBid(); else sfxNoBid();
   var ns=Object.assign({},st);
+  ddzSel=[];
   ns.bids=Object.assign({},st.bids||{});
   ns.bids[currentUser.id]=want;
   if(want){
@@ -1918,13 +2305,210 @@ async function ddzBid(want){
   try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[叫地主]',e)}
 }
 window.ddzBid=ddzBid;
+function ddzToggleSel(id){
+  var i = ddzSel.indexOf(id);
+  if(i>=0) ddzSel.splice(i,1); else ddzSel.push(id);
+  sfxTap();
+  var game = state.room && state.room.current_game;
+  if(game) renderDoudizhu(game, document.getElementById('gameContent'));
+}
+window.ddzToggleSel = ddzToggleSel;
+
+function ddzClearSel(){
+  ddzSel = [];
+  sfxTap();
+  var game = state.room && state.room.current_game;
+  if(game) renderDoudizhu(game, document.getElementById('gameContent'));
+}
+window.ddzClearSel = ddzClearSel;
+
+/* 提示：找出能压过上家的最小牌型（或自由出牌时的最小牌） */
+function ddzHint(){
+  var game = state.room && state.room.current_game;
+  if(!game || game.type!=='doudizhu') return;
+  var st = game.state;
+  if(st.phase!=='play' || st.currentTurn!==currentUser.id) return;
+  var hand = st.hands[currentUser.id] || [];
+  var last = (st.lastPlay && st.lastPlay.uid!==currentUser.id) ? st.lastPlay.typeInfo : null;
+  var play = ddzFindPlay(hand, last);
+  if(!play){ showToast('没有能出的牌，请选择不要'); return; }
+  ddzSel = play.slice();
+  sfxTap();
+  renderDoudizhu(game, document.getElementById('gameContent'));
+}
+window.ddzHint = ddzHint;
+
+/* 按点数分组 */
+function ddzGroupByValue(hand){
+  var m = {};
+  hand.forEach(function(c){ var v=ddzVal(c); if(!m[v])m[v]=[]; m[v].push(c); });
+  return m;
+}
+
+/* 找能压过 last 的牌；last 为 null 时自由出牌 */
+function ddzFindPlay(hand, last){
+  var m = ddzGroupByValue(hand);
+  var vals = Object.keys(m).map(Number).sort(function(a,b){return a-b;});
+  if(!last){
+    // 自由出牌：优先出最小的单张，若有能一次性出完的更好
+    var sorted = ddzSort(hand);
+    // 尝试整手出完
+    var allType = ddzAnalyze(hand);
+    if(allType) return hand.slice();
+    // 优先顺子/连对/飞机（简化：找最小单张）
+    return [sorted[0]];
+  }
+  // 找同类型能压的
+  var cand = ddzFindSameType(m, vals, last);
+  if(cand) return cand;
+  // 找炸弹
+  var bomb = ddzFindBomb(m, vals);
+  if(bomb) return bomb;
+  // 王炸
+  if(m[16] && m[17]) return [m[16][0], m[17][0]];
+  return null;
+}
+
+function ddzFindBomb(m, vals){
+  for(var i=0;i<vals.length;i++){
+    if(m[vals[i]].length===4) return m[vals[i]].slice(0,4);
+  }
+  return null;
+}
+
+function ddzFindSameType(m, vals, need){
+  var i, j;
+  var t = need.type;
+  var v = need.value;
+  if(t==='single'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>v) return [m[vals[i]][0]]; }
+  }
+  if(t==='pair'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>v && m[vals[i]].length>=2) return m[vals[i]].slice(0,2); }
+  }
+  if(t==='trio'){
+    for(i=0;i<vals.length;i++){ if(vals[i]>v && m[vals[i]].length>=3) return m[vals[i]].slice(0,3); }
+  }
+  if(t==='trio_single'){
+    for(i=0;i<vals.length;i++){
+      if(vals[i]>v && m[vals[i]].length>=3){
+        var trio = m[vals[i]].slice(0,3);
+        for(j=0;j<vals.length;j++){ if(vals[j]!==vals[i]) return trio.concat([m[vals[j]][0]]); }
+      }
+    }
+  }
+  if(t==='trio_pair'){
+    for(i=0;i<vals.length;i++){
+      if(vals[i]>v && m[vals[i]].length>=3){
+        var trio2 = m[vals[i]].slice(0,3);
+        for(j=0;j<vals.length;j++){ if(vals[j]!==vals[i] && m[vals[j]].length>=2) return trio2.concat(m[vals[j]].slice(0,2)); }
+      }
+    }
+  }
+  if(t==='straight'){
+    return ddzFindStraight(m, vals, v, need.len, 1);
+  }
+  if(t==='straight_pair'){
+    return ddzFindStraight(m, vals, v, need.len, 2);
+  }
+  if(t==='plane'||t==='plane_single'||t==='plane_pair'){
+    return ddzFindPlane(m, vals, v, need.len, t);
+  }
+  if(t==='four_two'||t==='four_two_pair'){
+    return ddzFindFour(m, vals, v, t);
+  }
+  return null;
+}
+
+/* 找顺子/连对（per=1 顺子，per=2 连对） */
+function ddzFindStraight(m, vals, minVal, len, per){
+  var vv = vals.filter(function(x){return x<=14;}).sort(function(a,b){return a-b;});
+  for(var start=0; start<vv.length; start++){
+    var minV = vv[start];
+    if(minV + len - 1 <= minVal) continue;
+    var ok = true, cards = [];
+    for(var k=0;k<len;k++){
+      var need = minV + k;
+      if(!m[need] || m[need].length < per){ ok=false; break; }
+      cards = cards.concat(m[need].slice(0,per));
+    }
+    if(ok && (minV+len-1) > minVal) return cards;
+  }
+  return null;
+}
+
+/* 找飞机（连续三张，可带单/带对） */
+function ddzFindPlane(m, vals, minVal, len, type){
+  var triples = vals.filter(function(x){return m[x].length>=3 && x<=14;}).sort(function(a,b){return a-b;});
+  for(var i=0;i<triples.length;i++){
+    var start = triples[i];
+    if(start + len - 1 <= minVal) continue;
+    var ok = true;
+    for(var k=0;k<len;k++){ if(triples.indexOf(start+k)<0){ ok=false; break; } }
+    if(!ok) continue;
+    var planeCards = [];
+    var usedVals = [];
+    for(var k=0;k<len;k++){ planeCards = planeCards.concat(m[start+k].slice(0,3)); usedVals.push(start+k); }
+    if(type==='plane') return planeCards;
+    if(type==='plane_single'){
+      var singles = [];
+      for(var j=0;j<vals.length;j++){
+        if(usedVals.indexOf(vals[j])<0 && m[vals[j]].length>=1){
+          singles.push(m[vals[j]][0]);
+          if(singles.length>=len) break;
+        }
+      }
+      if(singles.length>=len) return planeCards.concat(singles);
+    }
+    if(type==='plane_pair'){
+      var pairs = [];
+      for(var j=0;j<vals.length;j++){
+        if(usedVals.indexOf(vals[j])<0 && m[vals[j]].length>=2){
+          pairs = pairs.concat(m[vals[j]].slice(0,2));
+          if(pairs.length>=len*2) break;
+        }
+      }
+      if(pairs.length>=len*2) return planeCards.concat(pairs);
+    }
+  }
+  return null;
+}
+
+/* 找四带二 / 四带两对 */
+function ddzFindFour(m, vals, minVal, type){
+  for(var i=0;i<vals.length;i++){
+    if(vals[i]>minVal && m[vals[i]].length===4){
+      var four = m[vals[i]].slice(0,4);
+      if(type==='four_two'){
+        var singles = [];
+        for(var j=0;j<vals.length;j++){
+          if(vals[j]!==vals[i] && m[vals[j]].length>=1){
+            singles.push(m[vals[j]][0]);
+            if(singles.length>=2) break;
+          }
+        }
+        if(singles.length>=2) return four.concat(singles);
+      } else {
+        var pairs = [];
+        for(var j=0;j<vals.length;j++){
+          if(vals[j]!==vals[i] && m[vals[j]].length>=2){
+            pairs = pairs.concat(m[vals[j]].slice(0,2));
+            if(pairs.length>=4) break;
+          }
+        }
+        if(pairs.length>=4) return four.concat(pairs);
+      }
+    }
+  }
+  return null;
+}
+
 async function ddzPlay(){
   var game=state.room&&state.room.current_game;
   if(!game||game.type!=='doudizhu')return;
   var st=game.state;
   if(st.phase!=='play'||st.currentTurn!==currentUser.id)return;
-  var handEl=document.getElementById('ddzHand');
-  var sel=[];handEl.querySelectorAll('.ddz-card.sel').forEach(function(e){sel.push(parseInt(e.dataset.id,10))});
+  var sel=ddzSel.slice();
   if(!sel.length){showToast('请选择要出的牌');return}
   var type=ddzAnalyze(sel);
   if(!type){showToast('牌型不合法');return}
@@ -1936,18 +2520,53 @@ async function ddzPlay(){
   var newHand=myHand.filter(function(c){return sel.indexOf(c)<0});
   hands[currentUser.id]=newHand;ns.hands=hands;
   ns.lastPlay={uid:currentUser.id,cards:ddzSort(sel).slice(),typeInfo:type};
-  ns.lastPlays=Object.assign({},st.lastPlays||{});
-  if(st.newRound){ns.lastPlays={};ns.newRound=false;}
+  // 基准牌变了：清掉其他人之前的「不要」标记（他们还没对新牌表态）
+  var newLastPlays={};
+  var oldPlays=st.lastPlays||{};
+  Object.keys(oldPlays).forEach(function(uid){
+    if(uid!==currentUser.id && !oldPlays[uid].pass){
+      newLastPlays[uid]=oldPlays[uid]; // 保留别人上一手真实出的牌（可作参考）
+    }
+  });
+  ns.lastPlays=newLastPlays;
   ns.lastPlays[currentUser.id]={cards:ddzSort(sel).slice(),typeInfo:type};
+  ns.newRound=false;
   ns.passCount=0;
-  if(type.type==='bomb'||type.type==='rocket'){ns.multiplier=(st.multiplier||1)*2;}
+  if(type.type==='bomb'){ns.multiplier=(st.multiplier||1)*2; sfxBomb();}
+  else if(type.type==='rocket'){ns.multiplier=(st.multiplier||1)*2; sfxRocket();}
+  else {sfxPlay();}
   var order=st.order;var myIdx=order.indexOf(currentUser.id);
   ns.currentTurn=order[(myIdx+1)%order.length];
   if(newHand.length===0){
     ns.phase='finished';ns.winner=currentUser.id;
     ns.winnerSide=(currentUser.id===st.landlord)?'landlord':'farmer';
+    /* ===== 积分结算（零和，底分1，炸弹/王炸已计入 multiplier） ===== */
+    var base=1;
+    var mult=ns.multiplier||1;
+    var deltas={};
+    var scores=Object.assign({},st.scores||{});
+    order.forEach(function(uid){
+      var isLL=(uid===st.landlord);
+      var delta;
+      if(ns.winnerSide==='landlord'){
+        delta = isLL ? (2*base*mult) : (-1*base*mult);
+      }else{
+        delta = isLL ? (-2*base*mult) : (1*base*mult);
+      }
+      deltas[uid]=delta;
+      scores[uid]=(scores[uid]||0)+delta;
+    });
+    ns.scores=scores;
+    ns.result={winnerSide:ns.winnerSide,multiplier:mult,deltas:deltas};
+    /* 音效：玩家视角 */
+    var iAmLandlord=(st.landlord===currentUser.id);
+    var iWin=(ns.winnerSide==='landlord'&&iAmLandlord)||(ns.winnerSide==='farmer'&&!iAmLandlord);
+    if(iWin) sfxWin(); else sfxLose();
+    /* 把玩家的新总分写回 ddz_stats（只增不减，库端校验） */
+    var myNew = scores[currentUser.id] || 0;
+    saveMyDdzScore(myNew);
   }
-  try{await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[出牌]',e)}
+  try{ddzSel=[];await updateGame(Object.assign({},game,{state:ns}))}catch(e){console.error('[出牌]',e)}
 }
 window.ddzPlay=ddzPlay;
 async function ddzPass(){
@@ -1957,6 +2576,8 @@ async function ddzPass(){
   if(st.phase!=='play'||st.currentTurn!==currentUser.id)return;
   if(!st.lastPlay||st.lastPlay.uid===currentUser.id){showToast('你必须出牌');return}
   var ns=Object.assign({},st);
+  ddzSel=[];
+  sfxPass();
   var order=st.order;var myIdx=order.indexOf(currentUser.id);
   var nextUid=order[(myIdx+1)%order.length];
   ns.currentTurn=nextUid;ns.passCount=(st.passCount||0)+1;
@@ -2181,6 +2802,8 @@ document.getElementById("gamePrefsBtn").onclick=function(){
   var ov=document.getElementById("gamePrefsOverlay");if(!ov)return;
   var tg=document.getElementById("gomokuConfirmToggle");
   if(tg)tg.checked=(localStorage.getItem("gomoku_skip_confirm")!=="1");
+  var st=document.getElementById("ddzSoundToggle");
+  if(st)st.checked=DDZ_SOUND_ENABLED;
   ov.classList.add("open");
 };
 document.getElementById("gamePrefsClose").onclick=function(){document.getElementById("gamePrefsOverlay").classList.remove("open");};
@@ -2188,6 +2811,12 @@ document.getElementById("gamePrefsOverlay").addEventListener("click",function(e)
 document.getElementById("gomokuConfirmToggle").onchange=function(){
   if(this.checked){localStorage.removeItem("gomoku_skip_confirm");showToast("已开启落子确认");}
   else{localStorage.setItem("gomoku_skip_confirm","1");showToast("已关闭落子确认");}
+};
+document.getElementById("ddzSoundToggle").onchange=function(){
+  DDZ_SOUND_ENABLED = this.checked;
+  localStorage.setItem("sq_ddz_sound", this.checked ? "true" : "false");
+  showToast(this.checked ? "斗地主音效已开启" : "斗地主音效已关闭");
+  if(this.checked) sfxTap();
 };
 
 /* ★ 房主退出页面 → 游戏结束 */
