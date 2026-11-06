@@ -1,0 +1,305 @@
+liuyanban/tools/promo-maker.html 已读完，总共 301 行
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>2分钟推广视频生成器</title>
+    <style>
+        body { background: #1a1a1a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; margin: 0; padding: 20px;}
+        canvas { border: 2px solid #333; border-radius: 12px; max-height: 70vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000; }
+        .controls { margin-top: 20px; text-align: center; }
+        button { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; background: #2e7d32; color: #fff; border: none; border-radius: 8px; transition: 0.3s; }
+        button:hover { background: #4caf50; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        #status { margin-top: 10px; font-size: 14px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <canvas id="videoCanvas"></canvas>
+    
+    <div class="controls">
+        <button id="startBtn">开始生成 125 秒完整版视频</button>
+        <div id="status">请耐心等待，录制期间请勿切换标签页。</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = 1080, H = 1920;
+        canvas.width = W;
+        canvas.height = H;
+
+        const DURATION = 125; // 总时长 125 秒
+        const FPS = 30; // 30帧每秒，降低内存占用
+        let startTime = 0;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        const C = {
+            primary: '#2e7d32',
+            primaryLight: '#4caf50',
+            bg: '#f5faf5',
+            text: '#1e3a2e',
+            muted: '#5a7a6a',
+            white: '#ffffff',
+            dark: '#0f1713'
+        };
+
+        // 动画工具
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+        
+        // 绘制圆角矩形
+        function roundRect(x, y, w, h, r, color) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        // 绘制居中文字
+        function textCenter(str, y, size, color, weight = 'bold') {
+            ctx.fillStyle = color;
+            ctx.font = `${weight} ${size}px "PingFang SC", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(str, W / 2, y);
+        }
+
+        // 缓动函数
+        const easeOut = t => 1 - Math.pow(1 - t, 3);
+        const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        // 核心渲染引擎
+        function render(time) {
+            // 白色/黑色背景清屏
+            ctx.fillStyle = time < 20 || time > 115 ? C.dark : C.bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // ==========================================
+            // 第一幕：痛点引入 (0 - 20s)
+            // ==========================================
+            if (time >= 0 && time < 20) {
+                let alpha = 1;
+                if (time < 2) alpha = easeOut(time / 2);
+                if (time > 18) alpha = 1 - (time - 18) / 2;
+                ctx.globalAlpha = alpha;
+                
+                textCenter("在这个快节奏的时代", H/2 - 100, 60, C.white);
+                if (time > 4) textCenter("找个纯粹的社交圈子", H/2 + 50, 80, C.primaryLight);
+                if (time > 8) textCenter("为什么这么难？", H/2 + 200, 70, "#e57373");
+                ctx.globalAlpha = 1;
+            }
+
+            // ==========================================
+            // 第二幕：品牌亮相 (20 - 35s)
+            // ==========================================
+            if (time >= 20 && time < 35) {
+                let t = time - 20;
+                let scale = easeOut(clamp(t / 2, 0, 1));
+                
+                ctx.save();
+                ctx.translate(W/2, H/2 - 100);
+                ctx.scale(scale, scale);
+                textCenter("Seven戚 社区", 0, 120, C.primary);
+                ctx.restore();
+                
+                if (t > 3) {
+                    ctx.globalAlpha = easeOut(clamp((t-3)/1.5, 0, 1));
+                    textCenter("一个完全属于年轻人的纯净空间", H/2 + 100, 50, C.muted, 'normal');
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // ==========================================
+            // 第三幕：帖子广场滑动 (35 - 70s)
+            // ==========================================
+            if (time >= 35 && time < 70) {
+                let t = time - 35;
+                // 手机壳
+                roundRect(W/2 - 350, 200, 700, 1500, 60, C.white);
+                // 顶部导航
+                roundRect(W/2 - 350, 200, 700, 180, 60, C.primary);
+                textCenter("帖子广场", 290, 50, C.white);
+                
+                // 第一条帖子
+                if (t > 2) {
+                    ctx.globalAlpha = clamp((t - 2) / 1.5, 0, 1);
+                    roundRect(W/2 - 300, 450, 600, 400, 30, C.bg);
+                    textCenter("今天天气真好，出去走走🌞", 550, 40, C.text, 'bold');
+                    textCenter("❤️ 23   💬 8", 750, 35, C.muted, 'normal');
+                    ctx.globalAlpha = 1;
+                }
+                // 点赞动画
+                if (t > 10) {
+                    ctx.globalAlpha = 1 - (t - 10);
+                    textCenter("❤️ +1", W/2 - 100, 650, "#e57373");
+                    ctx.globalAlpha = 1;
+                }
+
+                // 滚动到第二条帖子
+                if (t > 15) {
+                    let scrollY = easeInOut(clamp((t - 15) / 2, 0, 1)) * 450;
+                    roundRect(W/2 - 300, 450 + 450 - scrollY, 600, 400, 30, C.white);
+                    textCenter("求推荐好玩的游戏！", 550 + 450 - scrollY, 40, C.text);
+                    textCenter("👍 42   💬 15", 750 + 450 - scrollY, 35, C.muted, 'normal');
+                }
+                // 再滑
+                if (t > 25) {
+                    let scrollY = easeInOut(clamp((t - 25) / 2, 0, 1)) * 450;
+                    roundRect(W/2 - 300, 450 + 900 - scrollY, 600, 400, 30, C.bg);
+                    textCenter("有人一起玩五子棋吗？", 550 + 900 - scrollY, 40, C.text);
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // ==========================================
+            // 第四幕：实时聊天 (70 - 100s)
+            // ==========================================
+            if (time >= 70 && time < 100) {
+                let t = time - 70;
+                roundRect(W/2 - 350, 200, 700, 1500, 60, C.white);
+                roundRect(W/2 - 350, 200, 700, 180, 60, C.primary);
+                textCenter("实时私聊", 290, 50, C.white);
+
+                // 对方发来消息
+                if (t > 2) {
+                    let alpha = clamp((t - 2) / 0.5, 0, 1);
+                    ctx.globalAlpha = alpha;
+                    roundRect(W/2 - 300, 450, 400, 100, 30, C.bg);
+                    textCenter("在吗？一起打游戏！", 500, 35, C.text, 'normal');
+                    ctx.globalAlpha = 1;
+                }
+                // 我方回复
+                if (t > 8) {
+                    let alpha = clamp((t - 8) / 0.5, 0, 1);
+                    ctx.globalAlpha = alpha;
+                    roundRect(W/2 - 100, 600, 400, 100, 30, C.primary);
+                    textCenter("马上来！", 650, 35, C.white, 'normal');
+                    ctx.globalAlpha = 1;
+                }
+
+                // 打字机效果
+                if (t > 15) {
+                    roundRect(W/2 - 300, 800, 600, 120, 30, C.white);
+                    ctx.strokeStyle = C.primary;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    let typing = "我建个房间，房号1234";
+                    let length = Math.floor((t - 15) * 8);
+                    if (length <= typing.length) {
+                        textCenter(typing.substring(0, length) + "|", 860, 35, C.text, 'normal');
+                    }
+                }
+            }
+
+            // ==========================================
+            // 第五幕：趣味游戏 (100 - 115s)
+            // ==========================================
+            if (time >= 100 && time < 115) {
+                let t = time - 100;
+                roundRect(W/2 - 350, 200, 700, 1500, 60, C.white);
+                roundRect(W/2 - 350, 200, 700, 180, 60, "#f57f17");
+                textCenter("游戏大厅", 290, 50, C.white);
+
+                // 卡片1
+                roundRect(W/2 - 300, 450, 600, 200, 30, C.bg);
+                textCenter("🃏 斗地主", 550, 45, C.text);
+                
+                // 卡片2
+                if (t > 2) {
+                    roundRect(W/2 - 300, 700, 600, 200, 30, C.bg);
+                    textCenter("⚫️ 五子棋", 800, 45, C.text);
+                }
+
+                // 模拟匹配
+                if (t > 5) {
+                    ctx.globalAlpha = easeOut(clamp((t - 5) / 1, 0, 1));
+                    roundRect(W/2 - 350, 200, 700, 1500, 60, "rgba(0,0,0,0.6)");
+                    textCenter("匹配成功！准备开局...", H/2, 50, C.white);
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // ==========================================
+            // 第六幕：结尾号召 (115 - 125s)
+            // ==========================================
+            if (time >= 115) {
+                let t = time - 115;
+                ctx.globalAlpha = clamp(t / 2, 0, 1);
+                textCenter("告别繁杂，回归纯粹", H/2 - 100, 65, C.primaryLight);
+                if (t > 2) {
+                    ctx.globalAlpha = clamp((t - 2) / 2, 0, 1);
+                    textCenter("立刻加入 Seven戚", H/2 + 50, 90, C.white);
+                }
+                if (t > 5) {
+                    ctx.globalAlpha = clamp((t - 5) / 2, 0, 1);
+                    textCenter("sevenseven712.github.io/liuyanban", H/2 + 200, 35, C.muted, 'normal');
+                }
+            }
+        }
+
+        // 主循环与录制
+        const startBtn = document.getElementById('startBtn');
+        const statusEl = document.getElementById('status');
+
+        startBtn.onclick = () => {
+            if (isRecording) return;
+            isRecording = true;
+            startBtn.disabled = true;
+            statusEl.textContent = "正在录制中... 请勿关闭或切换页面";
+            
+            const stream = canvas.captureStream(FPS);
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+            
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sevenqi_promo_125s.webm';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                isRecording = false;
+                startBtn.disabled = false;
+                statusEl.textContent = "✅ 录制完成！视频已下载。";
+            };
+
+            mediaRecorder.start();
+            startTime = performance.now();
+
+            function loop(now) {
+                const elapsed = (now - startTime) / 1000;
+                
+                if (elapsed >= DURATION) {
+                    mediaRecorder.stop();
+                    return;
+                }
+
+                render(elapsed);
+                if (isRecording) requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        };
+
+        // 初始预览第一帧
+        render(0);
+    </script>
+</body>
+</html>
+
+(已经到底了，共 301 行)
