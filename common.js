@@ -341,7 +341,7 @@ function renderHeader(title, activeTab) {
             '<span class="chevron">▾</span>' +
             '</div>';
     } else {
-        userAreaHtml = '<div class="user-area" onclick="window.location.href=\'/liuyanban/index.html\'">登录</div>';
+        userAreaHtml = '<div class="user-area" style="background:var(--primary);color:#fff;border-radius:99px;padding:6px 16px;font-weight:700;font-size:0.85em;box-shadow:0 4px 12px rgba(46,125,50,0.25);" onclick="window.location.href=\'/liuyanban/index.html\'">登录 / 注册</div>';
     }
 
     headerContainer.innerHTML = '<div class="app-header">' +

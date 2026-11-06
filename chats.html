@@ -382,6 +382,7 @@ window.sb=window.sb||window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY
 
 function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2600)}
 function escapeHtml(s){if(!s)return '';return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function safeUrl(u){if(!u)return '';var s=String(u).trim();if(!/^https?:\/\//.test(s))return '';if(/[()'"<>;]/.test(s))return '';return escapeHtml(s);}
 function showConfirm(title,body,onOk){var m=document.getElementById('confirmModal');document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmBody').textContent=body;m.classList.add('active');var c=document.getElementById('confirmCancel'),o=document.getElementById('confirmOk');var cleanup=function(){m.classList.remove('active');c.onclick=null;o.onclick=null};c.onclick=cleanup;o.onclick=function(){if(onOk)onOk();cleanup()}}
 
 var currentUser=getSessionUser();
@@ -411,7 +412,7 @@ var isAuthorMode=false;
       '<div class="brand" id="brandBtn">Seven<span>戚</span><small>· 聊天群</small></div>'+
       '<div class="header-right">'+
         '<div class="user-area" onclick="window.location.href=\'/liuyanban/profile.html\'">'+
-          '<div class="avatar" style="'+(has?'background-image:url('+escapeHtml(u.avatar_url)+');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(name.charAt(0).toUpperCase()))+'</div>'+
+          '<div class="avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(name.charAt(0).toUpperCase()))+'</div>'+
           '<span class="user-name">'+escapeHtml(name)+'</span>'+
         '</div>'+
         '<button class="dots-btn" id="dotsBtn" type="button" title="在线用户">'+
@@ -480,7 +481,7 @@ function renderOnlineUsers(){
   var me=currentUser;
   var meHas=me.avatar_url&&String(me.avatar_url).indexOf('http')===0;
   html+='<div class="online-user me">'+
-    '<div class="ou-avatar" style="'+(meHas?'background-image:url('+escapeHtml(me.avatar_url)+');background-size:cover;background-position:center;':'')+'">'+(meHas?'':escapeHtml(String(me.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
+    '<div class="ou-avatar" style="'+(meHas?'background-image:url(\''+safeUrl(me.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(meHas?'':escapeHtml(String(me.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
     '<div class="ou-info">'+
       '<div class="ou-name">'+escapeHtml(me.nickname||'我')+' <span style="font-size:.75em;color:var(--primary);font-weight:800;">（我）</span></div>'+
       '<div class="ou-status"><span class="dot"></span>在线</div>'+
@@ -498,7 +499,7 @@ function renderOnlineUsers(){
     html+=others.map(function(u){
       var has=u.avatar_url&&String(u.avatar_url).indexOf('http')===0;
       return '<div class="online-user">'+
-        '<div class="ou-avatar" style="'+(has?'background-image:url('+escapeHtml(u.avatar_url)+');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(u.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
+        '<div class="ou-avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(u.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
         '<div class="ou-info">'+
           '<div class="ou-name">'+escapeHtml(u.nickname||'用户')+'</div>'+
           '<div class="ou-status"><span class="dot"></span>在线</div>'+
@@ -667,7 +668,7 @@ function renderChat(){
       var skinId = rpSelf?((currentUser&&currentUser.bubble_skin)||0):((rpUi&&rpUi.bubble_skin)||0);
       var skinCls = 'b'+(skinId>=0&&skinId<=44?skinId:0);
       var avCls = 'avatar'+(rpSelf?' self-av':'');
-      var av = (rpAu&&String(rpAu).indexOf('http')===0)?'<div class="'+avCls+'" style="background-image:url('+escapeHtml(rpAu)+');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls+'">'+escapeHtml(String(rpName||'U').charAt(0).toUpperCase())+'</div>';
+      var av = (rpAu&&String(rpAu).indexOf('http')===0)?'<div class="'+avCls+'" style="background-image:url(\''+safeUrl(rpAu)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls+'">'+escapeHtml(String(rpName||'U').charAt(0).toUpperCase())+'</div>';
       html+='<div class="row '+(rpSelf?'self':'other')+' '+skinCls+'" data-rp="'+p.id+'">'+av+
         '<div class="bubble-wrap"><div class="uname">'+escapeHtml(rpName||'')+'</div>'+
         '<div class="rp-card '+rpCls+'" data-rp="'+p.id+'">'+
@@ -698,7 +699,7 @@ function renderChat(){
     else { skinId2=(ui&&ui.bubble_skin)||0; }
     var skinCls2='b'+(skinId2>=0&&skinId2<=44?skinId2:0);
     var avCls2='avatar'+(isSelf?' self-av':'');
-    var av2=(au&&String(au).indexOf('http')===0)?'<div class="'+avCls2+'" style="background-image:url('+escapeHtml(au)+');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls2+'">'+escapeHtml(String(dn).charAt(0).toUpperCase())+'</div>';
+    var av2=(au&&String(au).indexOf('http')===0)?'<div class="'+avCls2+'" style="background-image:url(\''+safeUrl(au)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls2+'">'+escapeHtml(String(dn).charAt(0).toUpperCase())+'</div>';
     var ipHtml = '';
     if (isAdmin && c.ip) {
       ipHtml = '<div class="msg-ip" style="color:#2b6cff;background:#e3f2fd;border:1px solid #bbdefb;padding:2px 6px;border-radius:4px;display:inline-block;">📍 '+escapeHtml(c.ip)+'</div>';

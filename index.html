@@ -159,6 +159,9 @@ display: flex;
 flex-direction: column;
 gap: 0.9em;
 }
+.field-hint { font-size: 0.75em; margin-top: 4px; height: 1em; transition: color 0.2s; }
+.field-hint.error { color: #e57373; }
+.field-hint.success { color: #2e7d32; }
 .field-group {
 display: flex;
 flex-direction: column;
@@ -520,7 +523,8 @@ box-shadow: 0 0 25px var(--primary-glow);
 </div>
 <div class="field-group">
 <label id="phoneLabel">手机号 / UID</label>
-<input type="text" id="loginPhone" placeholder="请输入手机号或自定义UID" maxlength="11" />
+<input type="text" id="loginPhone" placeholder="手机号或自定义UID" maxlength="11" oninput="checkUidLive(this.value, true)" />
+<div id="loginPhoneHint" class="field-hint"></div>
 </div>
 <div class="field-group">
 <label id="passwordLabel">密码</label>
@@ -564,7 +568,8 @@ box-shadow: 0 0 25px var(--primary-glow);
 </div>
 <div class="field-group">
 <label id="regPhoneLabel">自定义UID</label>
-<input type="text" id="regPhone" placeholder="5-10位数字加字母组合" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')" />
+<input type="text" id="regPhone" placeholder="例如：abc12345" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,''); checkUidLive(this.value)" />
+<div id="regPhoneHint" class="field-hint"></div>
 </div>
 <div class="field-group">
 <label id="regPassLabel">密码</label>
@@ -710,7 +715,11 @@ modalTitle: '无法登录',
 modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
 modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
 fillAll: '请填写完整信息',
-badPhone: '格式不正确：手机号须11位数字，UID须5-10位且包含数字和字母',
+badPhone: '格式不对哦：手机号需11位纯数字，UID需5-10位字母+数字组合',
+    uidPureNum: '请不要只填数字，UID必须带字母（例如：abc123）',
+    uidPureLetter: '请不要只填字母，UID必须带数字（例如：123abc）',
+    uidTooShort: 'UID至少要有5位哦',
+    uidValid: '✅ 格式正确',
 shortPwd: '密码至少6位',
 pwdMismatch: '两次密码不一致',
 nicknameTaken: '该昵称不可用，请使用其他名称',
@@ -757,7 +766,11 @@ modalTitle: 'Login Unavailable',
 modalDescGoogle: "Where'd you come from? You got a Google account?",
 modalDescGithub: "Where'd you come from? You got a Github account?",
 fillAll: 'Please fill in all fields',
-badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 chars with letters and numbers',
+badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 letters+numbers',
+    uidPureNum: 'UID cannot be pure numbers, please add letters',
+    uidPureLetter: 'UID cannot be pure letters, please add numbers',
+    uidTooShort: 'UID must be at least 5 characters',
+    uidValid: '✅ Valid format',
 shortPwd: 'Password must be at least 6 characters',
 pwdMismatch: 'Passwords do not match',
 nicknameTaken: 'This nickname is unavailable',
@@ -998,6 +1011,50 @@ if (!user) throw new Error(T().loginFail);
 return user;
 }
 
+// 实时检查 UID 格式
+function checkUidLive(val, isLogin) {
+    var hintId = isLogin ? 'loginPhoneHint' : 'regPhoneHint';
+    var hintEl = document.getElementById(hintId);
+    if (!hintEl) return;
+    var t = T();
+    val = val.trim();
+    if (!val) { hintEl.textContent = ''; hintEl.className = 'field-hint'; return; }
+
+    // 11位纯数字当作手机号（登录允许，注册不允许）
+    if (/^\d{11}$/.test(val)) {
+        if (isLogin) { hintEl.textContent = '✅ 手机号格式'; hintEl.className = 'field-hint success'; }
+        else { hintEl.textContent = '⚠️ 这是手机号，请设置字母+数字的UID'; hintEl.className = 'field-hint error'; }
+        return;
+    }
+
+    // 校验长度
+    if (val.length < 5) {
+        hintEl.textContent = t.uidTooShort;
+        hintEl.className = 'field-hint error';
+        return;
+    }
+    if (val.length > 10) {
+        hintEl.textContent = '⚠️ UID不能超过10位';
+        hintEl.className = 'field-hint error';
+        return;
+    }
+
+    // 检查混合
+    var hasLetter = /[a-zA-Z]/.test(val);
+    var hasNum = /\d/.test(val);
+    
+    if (!hasLetter && hasNum) {
+        hintEl.textContent = t.uidPureNum;
+        hintEl.className = 'field-hint error';
+    } else if (hasLetter && !hasNum) {
+        hintEl.textContent = t.uidPureLetter;
+        hintEl.className = 'field-hint error';
+    } else if (hasLetter && hasNum) {
+        hintEl.textContent = t.uidValid;
+        hintEl.className = 'field-hint success';
+    }
+}
+
 function handleLogin() {
 var t = T();
 var account = document.getElementById('loginPhone').value.trim();
@@ -1006,7 +1063,14 @@ var errEl = document.getElementById('loginError');
 var btn = document.getElementById('loginBtn');
 
 if (!account || !password) { errEl.textContent = t.fillAll; return; }
-if (!/^\d{11}$/.test(account) && !/^[a-zA-Z0-9]{5,10}$/.test(account)) { errEl.textContent = t.badPhone; return; }
+if (/^\d{11}$/.test(account)) {
+  // 手机号放行
+} else if (!/^[a-zA-Z0-9]{5,10}$/.test(account)) {
+  errEl.textContent = t.badPhone; return;
+} else if (!/[a-zA-Z]/.test(account) || !/\d/.test(account)) {
+  // 专门拦截只有数字或只有字母的 UID
+  errEl.textContent = t.badPhone; return;
+}
 if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
 
 errEl.textContent = t.logging;
@@ -1038,7 +1102,13 @@ var btn = document.getElementById('registerBtn');
 
 if (!nickname || !uid || !password || !password2) { errEl.textContent = t.fillAll; return; }
 if (nickname.toLowerCase() === 'seven戚') { errEl.textContent = t.nicknameTaken; return; }
-if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) { errEl.textContent = t.badPhone; return; }
+if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(uid)) { 
+    if (/^\d{11}$/.test(uid)) { errEl.textContent = '这是手机号，请不要填在UID框里'; }
+    else if (!/\d/.test(uid)) { errEl.textContent = t.uidPureLetter; }
+    else if (!/[a-zA-Z]/.test(uid)) { errEl.textContent = t.uidPureNum; }
+    else { errEl.textContent = t.badPhone; }
+    return; 
+  }
 if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
 if (password !== password2) { errEl.textContent = t.pwdMismatch; return; }
 
