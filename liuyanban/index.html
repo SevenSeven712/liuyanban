@@ -1,4 +1,4 @@
-liuyanban/index.html 读完了，一共 1078 行，都在这儿：
+liuyanban/index.html 全读完了，全文 1079 行
 
 <!DOCTYPE html>
 <html lang="zh">
@@ -961,8 +961,8 @@ var currentLang = 'zh';
 // ============================================================
 // 首次访问引导页逻辑
 // ============================================================
-(function initFirstVisitIntro() {
-    var hasSeenIntro = localStorage.getItem('seven_intro_shown');
+function initFirstVisitIntro() {
+    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v2');
     if (hasSeenIntro) return; // 如果不是第一次访问，直接退出，显示登录框
     
     var introOverlay = document.getElementById('introOverlay');
@@ -1017,7 +1017,7 @@ var currentLang = 'zh';
 
     const finishIntro = () => {
         // 记录已展示过，以后不再弹
-        localStorage.setItem('seven_intro_shown', '1');
+        localStorage.setItem('seven_intro_shown_v2', '1');
         
         introOverlay.style.opacity = '0';
         setTimeout(() => { 
@@ -1047,7 +1047,8 @@ var currentLang = 'zh';
     if (skipBtn) {
         skipBtn.onclick = finishIntro;
     }
-})();
+}
+document.addEventListener('DOMContentLoaded', initFirstVisitIntro);
 
 var currentLang = 'zh';
 function T() { return LANGS[currentLang]; }
@@ -1079,4 +1080,4 @@ document.getElementById('registerSubTitle').textContent = t.registerSubTitle;
 document.getElementById('regNickLabel').textContent = t.regNickLabel;
 document.getElementById('regPhoneLabel').textContent = t.regPhoneLabel;
 
-(已经到底了，共 1078 行)
+(已到文件末尾，共 1079 行)
