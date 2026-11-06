@@ -477,6 +477,172 @@ box-shadow: 0 0 25px var(--primary-glow);
 </head>
 <body>
 
+<!-- 首次访问专属引导页 -->
+<div id="introOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%); flex-direction:column; align-items:center; justify-content:center; color:#1e3a2e; transition:opacity 0.8s ease; overflow:hidden;">
+    <div class="bg-orb bg-orb-1" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:350px; height:350px; background:rgba(76,175,80,0.25); top:-100px; left:-100px;"></div>
+    <div class="bg-orb bg-orb-2" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:450px; height:450px; background:rgba(46,125,50,0.15); bottom:-150px; right:-100px; animation-delay:-4s;"></div>
+
+    <div class="slides-wrap" style="position:relative; z-index:2; width:100%; max-width:420px; height:480px;">
+        <!-- 第 1 步：社区广场 -->
+        <div class="slide" data-idx="0" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #4caf50, #2e7d32);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="commGrad" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.9"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#2e7d32" flood-opacity="0.3"/>
+                    </filter>
+                  </defs>
+                  <path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="url(#commGrad)" filter="url(#shadow)"/>
+                  <path d="M26 26H38M26 32H34" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/>
+                  <circle cx="46" cy="18" r="6" fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">社区广场</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">帖子广场、实时聊天群、匿名留言板<br>发布动态，随便聊聊，找到同好</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M10 4h28v40H10z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M18 14h12m-12 8h12m-12 8h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 帖子广场</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M4 6h40v28H24l-8 8V34H4z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M16 18h16m-16 6h10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 实时聊天</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="4" y="10" width="40" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 12l20 14 20-14" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 匿名留言</span>
+            </div>
+        </div>
+
+        <!-- 第 2 步：互动游戏 -->
+        <div class="slide" data-idx="1" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #7c3aed, #db2777);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="gameGrad" x1="12" y1="20" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.6"/>
+                    </linearGradient>
+                    <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.4"/>
+                    </filter>
+                  </defs>
+                  <path d="M22 24C16 24 12 30 12 38C12 44 16 48 20 48C24 48 26 46 28 42H36C38 46 40 48 44 48C48 48 52 44 52 38C52 30 48 24 42 24H22Z" fill="url(#gameGrad)" filter="url(#shadow2)"/>
+                  <circle cx="24" cy="36" r="4" fill="#7c3aed"/>
+                  <path d="M38 32V40M34 36H42" stroke="#db2777" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M28 18L32 22L36 18" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">互动游戏</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">开个房间，和朋友一起玩<br>斗地主、五子棋、你画我猜、连麦聊天</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 12h36v24H6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M12 18h8m-8 6h8m-8 6h8m8-12h8m-8 6h8m-8 6h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 斗地主</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="6" width="36" height="36" fill="none" stroke="currentColor" stroke-width="4"/><path d="M18 6v36M30 6v36M6 18h36M6 30h36" stroke="currentColor" stroke-width="4"/></svg> 五子棋</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20c2.21 0 4-1.79 4-4 0-1.38-.71-2.58-1.78-3.31-.64-.44-1.22-1.12-1.22-1.91 0-1.53 1.24-2.78 2.78-2.78h3.44C37.5 32 44 25.5 44 17.5S35.5 4 24 4z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="14" cy="18" r="2" fill="currentColor"/><circle cx="20" cy="12" r="2" fill="currentColor"/><circle cx="28" cy="12" r="2" fill="currentColor"/><circle cx="34" cy="18" r="2" fill="currentColor"/></svg> 你画我猜</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="18" y="4" width="12" height="24" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><path d="M10 22c0 8 6 14 14 14s14-6 14-14M24 36v8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 连麦</span>
+            </div>
+        </div>
+
+        <!-- 第 3 步：皮肤商城 -->
+        <div class="slide" data-idx="2" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #d4af37, #b8941f);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="shopGrad" x1="18" y1="20" x2="46" y2="50" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#d4af37" flood-opacity="0.5"/>
+                    </filter>
+                  </defs>
+                  <path d="M20 24H44L46 48C46.2 50.2 44.5 52 42.3 52H21.7C19.5 52 17.8 50.2 18 48L20 24Z" fill="url(#shopGrad)" filter="url(#shadow3)"/>
+                  <path d="M24 24V18C24 13.5817 27.5817 10 32 10C36.4183 10 40 13.5817 40 18V24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                  <circle cx="32" cy="36" r="4" fill="#d4af37"/>
+                  <path d="M50 16L52 20M14 16L12 20" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">皮肤商城</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">45 款精美气泡皮肤任你挑<br>每日签到、抢红包、晒社区赚小七币</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M14 8l-8 8 4 6 4-4v22h20V18l4 4 4-6-8-8h-6a4 4 0 01-8 0h-6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 45 款皮肤</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 12v24M18 18h12M18 30h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 小七币</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="16" width="36" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 16v26M6 24h36M14 16a6 6 0 006-6c0-2-1-4-4-4-3 0-4 3-2 6zm20 0a6 6 0 01-6-6c0-2 1-4 4-4 3 0 4 3 2 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 每日签到</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="12" width="36" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="24" cy="24" r="4" fill="currentColor"/></svg> 抢红包</span>
+            </div>
+        </div>
+
+        <!-- 第 4 步：匿名留言板 -->
+        <div class="slide" data-idx="3" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #0ea5e9, #0284c7);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="msgGrad" x1="12" y1="16" x2="52" y2="48" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow4" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.4"/>
+                    </filter>
+                  </defs>
+                  <rect x="14" y="20" width="36" height="26" rx="4" fill="url(#msgGrad)" filter="url(#shadow4)"/>
+                  <path d="M14 24L32 36L50 24" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="34" y="36" width="14" height="12" rx="2" fill="#0284c7" stroke="#fff" stroke-width="2"/>
+                  <path d="M38 36V32C38 29.7909 39.7909 28 42 28C44.2091 28 46 29.7909 46 32V36" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">匿名留言板</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">无需登录，随写随发<br>每天 3 条额度，管理员审核后公开</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="22" width="36" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M14 22V14a10 10 0 0 1 20 0v8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 全匿名</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M25.5 37H21l-10 5v-5H4V7h40v11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 25.2c0-1.067 7-3.2 7-3.2s7 2.133 7 3.2c0 8.533-7 12.8-7 12.8s-7-4.267-7-12.8Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 安全审核</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 8.256L24.009 3L42 8.256v10.778A26.32 26.32 0 0 1 24.003 44A26.32 26.32 0 0 1 6 19.029z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> XSS 防护</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="intro-footer" style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:0 20px; margin-top:10px;">
+        <div class="dots" id="dots" style="display:flex; gap:8px; margin-bottom:24px;">
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+        </div>
+        <button id="introBtn" class="intro-btn" style="background:linear-gradient(135deg, #4caf50, #2e7d32); color:#fff; border:none; padding:16px 48px; font-size:1.05em; font-weight:700; border-radius:99px; cursor:pointer; box-shadow:0 10px 25px rgba(46,125,50,0.3); transition:all 0.3s; display:flex; align-items:center; gap:8px; min-width:220px; justify-content:center; position:relative; overflow:hidden;">
+            <span id="introBtnText">下一步</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+        <button id="skipBtn" class="skip-btn" style="background:none; border:none; color:#8aaa9a; font-size:0.85em; cursor:pointer; margin-top:16px; padding:6px 12px; transition:color 0.2s;">跳过，直接进入 →</button>
+    </div>
+</div>
+
+<!-- 启动页 (复刻 common.js) -->
+<div id="bootOverlay" class="boot-loader-wrapper" style="display:none; position:fixed; inset:0; z-index:999998; background:#000; align-items:center; justify-content:center; font-family:'Poppins','Space Grotesk','PingFang SC',sans-serif; font-size:1.6em; font-weight:600; user-select:none; color:#fff; transition:opacity 1s ease; overflow:hidden;">
+    <div class="boot-loader-inner" style="position:relative; display:flex; align-items:center; justify-content:center; height:120px; width:auto; margin:2rem; transform:scale(1.55);">
+        <div class="boot-loader" style="position:absolute; top:0; left:0; height:100%; width:100%; z-index:1; background-color:transparent; -webkit-mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px); mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px);">
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%),radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%),radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%),radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%),radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);animation:boot-transform 2s infinite alternate, boot-opacity 4s infinite;animation-timing-function:cubic-bezier(0.6,0.8,0.5,1);"></div>
+        </div>
+        <div id="bootText"></div>
+    </div>
+</div>
+
+<style>
+    @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
+    .slide .anim-item { opacity: 0; transform: translateY(-160px) scale(0.5); filter: blur(15px); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease; }
+    .slide.active { opacity: 1; pointer-events: auto; }
+    .slide.active .anim-item { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    .slide.active .delay-1 { transition-delay: 0.1s; }
+    .slide.active .delay-2 { transition-delay: 0.35s; }
+    .slide.active .delay-3 { transition-delay: 0.6s; }
+    .slide.active .delay-4 { transition-delay: 0.85s; }
+    .dot.active { width: 28px; border-radius: 4px; background: #2e7d32; }
+    .intro-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(46,125,50,0.4); }
+    .intro-btn:active { transform: scale(0.96); }
+    .skip-btn:hover { color: #2e7d32; transform: scale(1.05); }
+    .feature-pill:hover { transform: translateY(-2px); background: rgba(46,125,50,0.15); }
+    @keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
+    @keyframes boot-opacity { 0%, 100% { opacity: 0; } 15% { opacity: 1; } 65% { opacity: 0; } }
+    .boot-letter { display: inline-block; opacity: 0; animation: boot-letter-anim 4s infinite linear; z-index: 2; white-space: pre; }
+    @keyframes boot-letter-anim { 0% { opacity: 0; } 5% { opacity: 1; text-shadow: 0 0 4px #fff; transform: scale(1.1) translateY(-2px); } 20% { opacity: 0.2; } 100% { opacity: 0; } }
+    .boot-loader-wrapper.fade-out { opacity: 0; pointer-events: none; }
+</style>
+
 <div class="login-card">
 <div class="login-header">
 <div class="login-logo">
@@ -788,6 +954,99 @@ deviceLimitBody: 'This device has registered {n} accounts. You cannot register m
 netError: 'Network error, please check your connection and try again'
 }
 };
+var currentLang = 'zh';
+
+// ============================================================
+// 首次访问引导页逻辑
+// ============================================================
+(function initFirstVisitIntro() {
+    var hasSeenIntro = localStorage.getItem('seven_intro_shown');
+    if (hasSeenIntro) return; // 如果不是第一次访问，直接退出，显示登录框
+    
+    var introOverlay = document.getElementById('introOverlay');
+    var bootOverlay = document.getElementById('bootOverlay');
+    var bootText = document.getElementById('bootText');
+    var introBtn = document.getElementById('introBtn');
+    var introBtnText = document.getElementById('introBtnText');
+    var skipBtn = document.getElementById('skipBtn');
+    var dots = document.querySelectorAll('.dot');
+    var slides = document.querySelectorAll('.slide');
+    var currentSlide = 0;
+    var totalSlides = slides.length;
+
+    if (!introOverlay) return;
+    
+    // 显示遮罩层
+    introOverlay.style.display = 'flex';
+    
+    // 初始化启动文字
+    if (bootText) {
+        const text = 'Seven戚  出品';
+        const chars = text.split('');
+        chars.forEach((c, i) => {
+            const span = document.createElement('span');
+            span.className = 'boot-letter';
+            span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
+            span.textContent = c;
+            bootText.appendChild(span);
+        });
+    }
+
+    // 初始第一页动画
+    setTimeout(() => {
+        if(slides[0]) {
+            slides[0].classList.add('active');
+            dots[0].classList.add('active');
+        }
+    }, 100);
+
+    const goToSlide = (idx) => {
+        if(slides[currentSlide]) slides[currentSlide].classList.remove('active');
+        if(dots[currentSlide]) dots[currentSlide].classList.remove('active');
+        currentSlide = idx;
+        if(slides[currentSlide]) slides[currentSlide].classList.add('active');
+        if(dots[currentSlide]) dots[currentSlide].classList.add('active');
+        if (currentSlide === totalSlides - 1) {
+            if(introBtnText) introBtnText.textContent = '开启体验';
+        } else {
+            if(introBtnText) introBtnText.textContent = '下一步';
+        }
+    };
+
+    const finishIntro = () => {
+        // 记录已展示过，以后不再弹
+        localStorage.setItem('seven_intro_shown', '1');
+        
+        introOverlay.style.opacity = '0';
+        setTimeout(() => { 
+            introOverlay.style.display = 'none'; 
+            bootOverlay.style.display = 'flex';
+            
+            // 启动动画 4 秒后淡出，露出底下的登录框
+            setTimeout(() => {
+                bootOverlay.classList.add('fade-out');
+                setTimeout(() => { 
+                    bootOverlay.style.display = 'none'; 
+                }, 1000);
+            }, 4000); 
+        }, 800);
+    };
+
+    if (introBtn) {
+        introBtn.onclick = function() {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else {
+                finishIntro();
+            }
+        };
+    }
+
+    if (skipBtn) {
+        skipBtn.onclick = finishIntro;
+    }
+})();
+
 var currentLang = 'zh';
 function T() { return LANGS[currentLang]; }
 
