@@ -1,0 +1,19 @@
+liuyanban/manifest.json 已读完，一共 15 行：
+
+{
+  "name": "Seven戚社区",
+  "short_name": "Seven戚",
+  "description": "Seven戚社区 · 帖子广场",
+  "start_url": "./posts.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5faf5",
+  "theme_color": "#2e7d32",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
+
+
+(没有更多了，全 15 行)
