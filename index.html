@@ -51,18 +51,22 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .orb2 { width: 450px; height: 450px; background: rgba(46,125,50,0.15); bottom: -150px; right: -100px; animation-delay: -4s; }
 @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
 
-.slides-wrap { position: relative; z-index: 2; width: 100%; max-width: 400px; height: 420px; display: flex; align-items: center; justify-content: center; }
+.slides-wrap { position: relative; z-index: 2; width: 100%; max-width: 400px; height: 440px; display: flex; align-items: center; justify-content: center; }
 
 .intro-slide { display: none; text-align: center; padding: 20px; width: 100%; }
 .intro-slide.active { display: block; }
-/* 核心：炸裂弹簧出场效果 */
-.intro-slide.active .anim-item { animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+/* 核心修复：防止闪现 */
+.intro-slide .anim-item { opacity: 0; }
+.intro-slide.active .anim-item { 
+    animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; 
+}
 .intro-slide.active .delay-1 { animation-delay: 0.1s; }
 .intro-slide.active .delay-2 { animation-delay: 0.25s; }
 .intro-slide.active .delay-3 { animation-delay: 0.4s; }
 
 @keyframes popIn { 
-    0% { opacity: 0; transform: translateY(-30px) scale(0.5) rotate(-5deg); filter: blur(10px); }
+    0% { opacity: 0; transform: translateY(-40px) scale(0.5) rotate(-5deg); filter: blur(10px); }
     100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); filter: blur(0); }
 }
 
@@ -77,7 +81,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 /* 图标背后的光晕 */
 .intro-icon::after {
     content: ''; position: absolute; inset: -10px; border-radius: 36px;
-    background: inherit; filter: blur(20px); opacity: 0.5; z-index: -1;
+    background: inherit; filter: blur(20px); opacity: 0.4; z-index: -1;
 }
 .intro-icon svg { width: 52px; height: 52px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
 .intro-title { font-size: 1.8em; font-weight: 900; margin-bottom: 12px; color: #1e3a2e; letter-spacing: 1px; }
@@ -148,64 +152,38 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
     </div>
 </div>
 
-<!-- 全新加入的引导页 -->
 <div id="introScreen">
     <div class="intro-orb orb1"></div>
     <div class="intro-orb orb2"></div>
 
     <div class="slides-wrap">
-        <!-- Slide 1 -->
         <div id="introSlide0" class="intro-slide active">
             <div class="intro-icon anim-item delay-1">
-                <!-- 高质量社区广场图标（带渐变+立体感） -->
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 20C8 12.268 14.268 6 22 6H26C33.732 6 40 12.268 40 20V26C40 33.732 33.732 40 26 40H20L10 46V40C8.791 40 8 39.209 8 38V20Z" fill="white" fill-opacity="0.9"/>
-                    <path d="M16 18H32M16 26H28" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="36" cy="12" r="6" fill="#ff6b6b" stroke="white" stroke-width="2"/>
-                </svg>
+                <svg viewBox="0 0 48 48" fill="none"><path d="M8 20C8 12.268 14.268 6 22 6H26C33.732 6 40 12.268 40 20V26C40 33.732 33.732 40 26 40H20L10 46V40C8.791 40 8 39.209 8 38V20Z" fill="white" fill-opacity="0.9"/><path d="M16 18H32M16 26H28" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/><circle cx="36" cy="12" r="6" fill="#ff6b6b" stroke="white" stroke-width="2"/></svg>
             </div>
             <div class="intro-title anim-item delay-2">社区广场</div>
             <div class="intro-desc anim-item delay-3">帖子广场、实时聊天群、匿名留言板<br>发布动态，随便聊聊</div>
         </div>
 
-        <!-- Slide 2 -->
         <div id="introSlide1" class="intro-slide">
             <div class="intro-icon anim-item delay-1" style="background: linear-gradient(135deg, #a855f7, #7e22ce);">
-                <!-- 高质量游戏手柄图标 -->
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16 18C10 18 6 24 6 32C6 38 10 42 14 42C18 42 20 40 22 36H26C28 40 30 42 34 42C38 42 42 38 42 32C42 24 38 18 32 18H16Z" fill="white" fill-opacity="0.9"/>
-                    <circle cx="18" cy="30" r="4" fill="#7e22ce"/>
-                    <path d="M32 26V34M28 30H36" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-                </svg>
+                <svg viewBox="0 0 48 48" fill="none"><path d="M16 18C10 18 6 24 6 32C6 38 10 42 14 42C18 42 20 40 22 36H26C28 40 30 42 34 42C38 42 42 38 42 32C42 24 38 18 32 18H16Z" fill="white" fill-opacity="0.9"/><circle cx="18" cy="30" r="4" fill="#7e22ce"/><path d="M32 26V34M28 30H36" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/></svg>
             </div>
             <div class="intro-title anim-item delay-2">互动游戏</div>
             <div class="intro-desc anim-item delay-3">开个房间，和朋友一起玩<br>斗地主、五子棋等</div>
         </div>
 
-        <!-- Slide 3 -->
         <div id="introSlide2" class="intro-slide">
             <div class="intro-icon anim-item delay-1" style="background: linear-gradient(135deg, #fbbf24, #d97706);">
-                <!-- 高质量购物袋图标 -->
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 18H36L38 42H10L12 18Z" fill="white" fill-opacity="0.9"/>
-                    <path d="M18 18V12C18 8.686 20.686 6 24 6C27.314 6 30 8.686 30 12V18" stroke="white" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="24" cy="28" r="4" fill="#d97706"/>
-                </svg>
+                <svg viewBox="0 0 48 48" fill="none"><path d="M12 18H36L38 42H10L12 18Z" fill="white" fill-opacity="0.9"/><path d="M18 18V12C18 8.686 20.686 6 24 6C27.314 6 30 8.686 30 12V18" stroke="white" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="28" r="4" fill="#d97706"/></svg>
             </div>
             <div class="intro-title anim-item delay-2">皮肤商城</div>
             <div class="intro-desc anim-item delay-3">45 款精美气泡皮肤任你挑<br>每日签到赚小七币</div>
         </div>
 
-        <!-- Slide 4 -->
         <div id="introSlide3" class="intro-slide">
             <div class="intro-icon anim-item delay-1" style="background: linear-gradient(135deg, #38bdf8, #0284c7);">
-                <!-- 高质量邮件图标 -->
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="12" width="36" height="24" rx="4" fill="white" fill-opacity="0.9"/>
-                    <path d="M6 16L24 28L42 16" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="36" cy="32" r="6" fill="#f87171" stroke="white" stroke-width="2"/>
-                    <path d="M34 32H38M36 30V34" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
+                <svg viewBox="0 0 48 48" fill="none"><rect x="6" y="12" width="36" height="24" rx="4" fill="white" fill-opacity="0.9"/><path d="M6 16L24 28L42 16" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="32" r="6" fill="#f87171" stroke="white" stroke-width="2"/><path d="M34 32H38M36 30V34" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
             </div>
             <div class="intro-title anim-item delay-2">匿名留言</div>
             <div class="intro-desc anim-item delay-3">无需登录，随写随发<br>每天 3 条额度，安全审核</div>
@@ -270,11 +248,12 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 <script>
 var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
-if (!window.sb) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!window.sb && window.supabase) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 var DOMESTIC_EMAIL_REGEX = /^[a-zA-Z0-9_.-]+@(qq|vip\.qq|foxmail|163|126|yeah|sina|sohu|139|189|aliyun)\.(com|cn|net)$/i;
 
 async function fetchMyProfileServer() {
+    if (!window.sb) return null;
     try {
         var r = await window.sb.rpc('get_my_profile');
         if (!r.error && r.data) return Array.isArray(r.data) ? r.data[0] : r.data;
@@ -290,6 +269,7 @@ async function fetchMyProfileServer() {
 }
 
 async function ensureProfileFromAuth(nickname) {
+    if (!window.sb) return null;
     try {
         var s = await window.sb.auth.getUser();
         var me = s && s.data && s.data.user;
@@ -314,6 +294,7 @@ function saveLocalSession(profile) {
 }
 
 async function doLogin() {
+    if (!window.sb) return alert('网络组件未加载完毕，请稍后重试');
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value;
     var errEl = document.getElementById('loginError');
@@ -341,6 +322,7 @@ async function doLogin() {
 }
 
 async function doRegister() {
+    if (!window.sb) return alert('网络组件未加载完毕，请稍后重试');
     var nickname = document.getElementById('regNick').value.trim();
     var email = document.getElementById('regEmail').value.trim();
     var pwd = document.getElementById('regPassword').value;
@@ -388,33 +370,43 @@ function switchCard(which) {
     if (which === 'login') document.getElementById('regEmailHint').textContent = '';
 }
 
-(async function init() {
+// ==========================================
+// 核心修正逻辑：开屏与后台查状态互不干扰
+// ==========================================
+(function init() {
+    // 1. 初始化开屏文字
     var bootText = document.getElementById('bootText');
-    var text = 'Seven戚  出品';
-    text.split('').forEach(function(c, i) {
-        var span = document.createElement('span');
-        span.className = 'boot-letter';
-        span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
-        span.textContent = c;
-        bootText.appendChild(span);
-    });
+    if (bootText) {
+        var text = 'Seven戚  出品';
+        text.split('').forEach(function(c, i) {
+            var span = document.createElement('span');
+            span.className = 'boot-letter';
+            span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
+            span.textContent = c;
+            bootText.appendChild(span);
+        });
+    }
 
     var isBootShown = sessionStorage.getItem('index_boot_shown');
-    var minTimePromise = Promise.resolve();
     
+    // 2. 只给开屏最多 1.5 秒的时间，时间一到必定关闭（防卡死）
     if (isBootShown) {
         document.getElementById('bootScreen').style.display = 'none';
     } else {
         sessionStorage.setItem('index_boot_shown', '1');
-        minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
+        setTimeout(function() {
+            document.getElementById('bootScreen').classList.add('hide');
+            setTimeout(function() { document.getElementById('bootScreen').style.display = 'none'; }, 800);
+        }, 1500); 
     }
 
-    document.getElementById('toRegisterBtn').onclick = () => switchCard('register');
-    document.getElementById('toLoginBtn').onclick = () => switchCard('login');
+    // 3. UI 事件绑定
+    document.getElementById('toRegisterBtn').onclick = function() { switchCard('register'); };
+    document.getElementById('toLoginBtn').onclick = function() { switchCard('login'); };
     document.getElementById('loginBtn').onclick = doLogin;
     document.getElementById('registerBtn').onclick = doRegister;
-    document.getElementById('loginPassword').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
-    document.getElementById('regPassword2').addEventListener('keydown', e => e.key === 'Enter' && doRegister());
+    document.getElementById('loginPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('regPassword2').addEventListener('keydown', function(e) { if (e.key === 'Enter') doRegister(); });
 
     document.getElementById('regEmail').addEventListener('input', function() {
         var val = this.value.trim();
@@ -432,8 +424,8 @@ function switchCard(which) {
     var currentSlide = 0, totalSlides = 4;
     function updateSlide(idx) {
         currentSlide = idx;
-        document.querySelectorAll('.intro-slide').forEach((el, i) => el.classList.toggle('active', i === idx));
-        document.querySelectorAll('.intro-dots .dot').forEach((el, i) => el.classList.toggle('active', i === idx));
+        document.querySelectorAll('.intro-slide').forEach(function(el, i) { el.classList.toggle('active', i === idx); });
+        document.querySelectorAll('.intro-dots .dot').forEach(function(el, i) { el.classList.toggle('active', i === idx); });
         document.getElementById('introNextBtn').textContent = idx === totalSlides - 1 ? '开启体验' : '下一步';
     }
     document.getElementById('introNextBtn').onclick = function() {
@@ -445,47 +437,56 @@ function switchCard(which) {
     function finishIntro() {
         localStorage.setItem('seven_intro_shown_v6', '1');
         document.getElementById('introScreen').classList.add('hide');
-        setTimeout(() => {
+        setTimeout(function() {
             document.getElementById('introScreen').style.display = 'none';
             window.location.href = './messages.html';
         }, 400);
     }
 
-    var authPromise = (async function() {
-        try {
-            var s = await window.sb.auth.getSession();
+    // 4. 后台静默检查状态（即使网络卡死，也不影响开屏消失）
+    if (window.sb) {
+        window.sb.auth.getSession().then(function(s) {
             if (s.data && s.data.session) {
-                var p = await fetchMyProfileServer() || await ensureProfileFromAuth();
-                if (p) { saveLocalSession(p); return 'AUTHED'; }
+                return fetchMyProfileServer().then(function(p) {
+                    if (!p) return ensureProfileFromAuth();
+                    return p;
+                });
             }
-        } catch(e) {}
-        return 'GUEST';
-    })();
+            return null;
+        }).then(function(profile) {
+            if (profile) {
+                saveLocalSession(profile);
+                // 查到登录状态后，直接跳转帖子广场
+                window.location.replace('./posts.html');
+                return;
+            }
+            // --- 未登录的状态分流 ---
+            var urlParams = new URLSearchParams(location.search);
+            var isLoginIntent = urlParams.get('login') === '1';
+            var hasSeenIntro = localStorage.getItem('seven_intro_shown_v6');
+            var isReferrerInternal = document.referrer && document.referrer.includes(window.location.host);
 
-    var results = await Promise.all([minTimePromise, authPromise]);
-    var status = results[1];
-
-    if (!isBootShown) {
-        document.getElementById('bootScreen').classList.add('hide');
-        setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 800);
-    }
-
-    if (status === 'AUTHED') {
-        window.location.replace('./posts.html');
-        return;
-    }
-
-    var urlParams = new URLSearchParams(location.search);
-    var isLoginIntent = urlParams.get('login') === '1';
-    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v6');
-    var isReferrerInternal = document.referrer && document.referrer.includes(window.location.host);
-
-    if (isLoginIntent || isReferrerInternal) {
-        document.getElementById('authScreen').style.display = 'flex';
-    } else if (!hasSeenIntro) {
-        document.getElementById('introScreen').style.display = 'flex';
+            if (isLoginIntent || isReferrerInternal) {
+                document.getElementById('authScreen').style.display = 'flex';
+            } else if (!hasSeenIntro) {
+                document.getElementById('introScreen').style.display = 'flex';
+            } else {
+                window.location.replace('./messages.html');
+            }
+        }).catch(function(e) {
+            console.error('身份检查失败，请检查网络', e);
+            // 网络报错时，如果没开屏，给个引导页让用户能操作
+            if (document.getElementById('introScreen').style.display !== 'flex' && document.getElementById('authScreen').style.display !== 'flex') {
+                document.getElementById('introScreen').style.display = 'flex';
+            }
+        });
     } else {
-        window.location.replace('./messages.html');
+        // 如果 SDK 没加载出来，直接显示引导页
+        setTimeout(function(){
+            if (document.getElementById('introScreen').style.display !== 'flex' && document.getElementById('authScreen').style.display !== 'flex') {
+                document.getElementById('introScreen').style.display = 'flex';
+            }
+        }, 1500);
     }
 })();
 </script>
