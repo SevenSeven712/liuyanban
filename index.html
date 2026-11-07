@@ -10,7 +10,7 @@
 <script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <script>
-  // 阻止 common.js 自带的局部动画
+  // 阻止 common.js 内部干扰开屏
   sessionStorage.setItem('sq_boot_shown', '1');
 </script>
 
@@ -25,16 +25,22 @@
 }
 html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
 
-/* ===== 1. 全屏开屏动画 ===== */
-#bootScreen { position: fixed; inset: 0; z-index: 99999; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; opacity: 1; }
+/* ===== 1. 原版高精度开屏动画 (完美复刻) ===== */
+#bootScreen {
+    position: fixed; inset: 0; z-index: 99999; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Poppins", "Space Grotesk", "PingFang SC", sans-serif;
+    font-size: 1.6em; font-weight: 600; color: #fff;
+    transition: opacity 0.8s ease; opacity: 1; overflow: hidden;
+}
 #bootScreen.hide { opacity: 0; pointer-events: none; }
-.boot-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.boot-loader { position: absolute; inset: 0; z-index: 1; background-color: transparent; -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 8px, black 9px, black 10px); mask: repeating-linear-gradient(90deg, transparent 0, transparent 8px, black 9px, black 10px); }
-.boot-loader::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%); -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); animation: boot-transform 2s infinite alternate, boot-opacity 3s infinite; }
-@keyframes boot-transform { 0% { transform: translate(-100%); } 100% { transform: translate(100%); } }
-@keyframes boot-opacity { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
-.boot-text { position: relative; z-index: 2; color: #fff; font-size: clamp(2.5rem, 10vw, 6rem); font-weight: 900; letter-spacing: 0.2em; text-shadow: 0 0 20px rgba(255,255,255,0.8); animation: textPulse 1.5s infinite alternate; }
-@keyframes textPulse { 0% { opacity: 0.6; } 100% { opacity: 1; text-shadow: 0 0 30px #fff, 0 0 60px var(--primary); } }
+.boot-loader-inner { position: relative; display: flex; align-items: center; justify-content: center; height: 120px; width: auto; margin: 2rem; transform: scale(1.55); }
+.boot-loader { position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1; background-color: transparent; -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); }
+.boot-loader::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%); -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); animation: boot-transform 2s infinite alternate, boot-opacity 4s infinite; animation-timing-function: cubic-bezier(0.6, 0.8, 0.5, 1); }
+@keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
+@keyframes boot-opacity { 0%, 100% { opacity: 0; } 15% { opacity: 1; } 65% { opacity: 0; } }
+.boot-letter { display: inline-block; opacity: 0; animation: boot-letter-anim 4s infinite linear; z-index: 2; white-space: pre; }
+@keyframes boot-letter-anim { 0% { opacity: 0; } 5% { opacity: 1; text-shadow: 0 0 4px #fff; transform: scale(1.1) translateY(-2px); } 20% { opacity: 0.2; } 100% { opacity: 0; } }
 
 /* ===== 2. 引导页 ===== */
 #introScreen { position: fixed; inset: 0; z-index: 9000; background: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease; opacity: 1; }
@@ -85,9 +91,9 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 <body>
 
 <div id="bootScreen">
-    <div class="boot-inner">
+    <div class="boot-loader-inner">
         <div class="boot-loader"></div>
-        <div class="boot-text">Seven戚 出品</div>
+        <div id="bootText"></div>
     </div>
 </div>
 
@@ -288,7 +294,18 @@ function switchCard(which) {
 }
 
 (async function init() {
-    // 1. 判断当前会话是否已经展示过开屏
+    // 初始化开屏文字 (逐个闪烁)
+    var bootText = document.getElementById('bootText');
+    var text = 'Seven戚  出品';
+    text.split('').forEach(function(c, i) {
+        var span = document.createElement('span');
+        span.className = 'boot-letter';
+        span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
+        span.textContent = c;
+        bootText.appendChild(span);
+    });
+
+    // 判断是否是当前标签页第一次加载
     var isBootShown = sessionStorage.getItem('index_boot_shown');
     var minTimePromise = Promise.resolve();
     
@@ -300,7 +317,7 @@ function switchCard(which) {
         minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
     }
 
-    // 2. 绑定 UI 事件
+    // UI 事件绑定
     document.getElementById('toRegisterBtn').onclick = () => switchCard('register');
     document.getElementById('toLoginBtn').onclick = () => switchCard('login');
     document.getElementById('loginBtn').onclick = doLogin;
@@ -308,7 +325,7 @@ function switchCard(which) {
     document.getElementById('loginPassword').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
     document.getElementById('regPassword2').addEventListener('keydown', e => e.key === 'Enter' && doRegister());
 
-    // 实时监听邮箱输入校验
+    // 实时监听邮箱
     document.getElementById('regEmail').addEventListener('input', function() {
         var val = this.value.trim();
         var hint = document.getElementById('regEmailHint');
@@ -344,7 +361,7 @@ function switchCard(which) {
         }, 400);
     }
 
-    // 3. 静默检查登录状态
+    // 静默查状态
     var authPromise = (async function() {
         try {
             var s = await window.sb.auth.getSession();
@@ -359,37 +376,28 @@ function switchCard(which) {
     var results = await Promise.all([minTimePromise, authPromise]);
     var status = results[1];
 
-    // 4. 隐藏开屏
+    // 隐藏开屏
     if (!isBootShown) {
         document.getElementById('bootScreen').classList.add('hide');
         setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 800);
     }
 
-    // 5. 路由分流逻辑
+    // 路由分流
     if (status === 'AUTHED') {
         window.location.replace('./posts.html');
         return;
     }
 
-    // 未登录状态下的分流
     var urlParams = new URLSearchParams(location.search);
     var isLoginIntent = urlParams.get('login') === '1';
     var hasSeenIntro = localStorage.getItem('seven_intro_shown_v6');
-    
-    // 判断是不是从本站其他页面（如 user.html）因未登录被踢回来的
     var isReferrerInternal = document.referrer && document.referrer.includes(window.location.host);
 
-    if (isLoginIntent) {
-        // 主动点了登录
-        document.getElementById('authScreen').style.display = 'flex';
-    } else if (isReferrerInternal) {
-        // 从其他受限页面被踢回来，直接显示登录框，绝不跳留言板，防止死循环
+    if (isLoginIntent || isReferrerInternal) {
         document.getElementById('authScreen').style.display = 'flex';
     } else if (!hasSeenIntro) {
-        // 第一次直接输入域名访问，展示引导页
         document.getElementById('introScreen').style.display = 'flex';
     } else {
-        // 已经有记录，且是直接访问，默认去留言板
         window.location.replace('./messages.html');
     }
 })();
