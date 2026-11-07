@@ -7,7 +7,8 @@
 <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>通行证 · Seven戚社区</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -1020,16 +1021,20 @@ function initFirstVisitIntro() {
         introOverlay.style.opacity = '0';
         setTimeout(() => { 
             introOverlay.style.display = 'none'; 
+            if (!bootOverlay) return;
             bootOverlay.style.display = 'flex';
-            
-            // 启动动画 4 秒后淡出，露出底下的登录框
-            setTimeout(() => {
+
+            // 启动动画 2 秒后淡出（原来 4 秒太长，且脚本出错会一直黑屏）
+            var done = false;
+            function endBoot() {
+                if (done) return;
+                done = true;
                 bootOverlay.classList.add('fade-out');
-                setTimeout(() => { 
-                    bootOverlay.style.display = 'none'; 
-                }, 1000);
-            }, 4000); 
-        }, 800);
+                setTimeout(() => { bootOverlay.style.display = 'none'; }, 600);
+            }
+            setTimeout(endBoot, 2000);
+            setTimeout(endBoot, 5000);   // 兜底
+        }, 600);
     };
 
     if (introBtn) {
@@ -1051,29 +1056,489 @@ document.addEventListener('DOMContentLoaded', initFirstVisitIntro);
 var currentLang = 'zh';
 function T() { return LANGS[currentLang]; }
 
+
+/* ============================================================
+   ★ 账号 → 邮箱映射（唯一需要按后端实际情况修改的地方）
+   Supabase Auth 在本项目只开启了「邮箱」登录，
+   而用户习惯用 手机号 / 自定义 UID 登录，
+   因此注册时后端会把账号写成 `${账号}@${AUTH_DOMAIN}`。
+   若你的数据库用的是别的域名，只改这一行即可。
+   ============================================================ */
+var AUTH_DOMAIN = '@sevenqi.local';
+
+// 登录时会依次尝试这些域名，命中即通过。
+// 如果你在数据库里用的不是第一个，把真实域名放到第一位即可。
+var AUTH_DOMAIN_CANDIDATES = [AUTH_DOMAIN, '@sevenqi.com', '@sevenqi.app', '@sevenqi.cn', '@sq.local'];
+
+function accountToEmail(account, domain) {
+    var a = String(account || '').trim().toLowerCase();
+    if (!a) return '';
+    if (a.indexOf('@') > -1) return a;      // 用户直接输了完整邮箱
+    return a + (domain || AUTH_DOMAIN);
+}
+
+/* ============================================================
+   多语言应用
+   ============================================================ */
 function applyLang(lang) {
-currentLang = lang;
-var t = T();
-document.documentElement.lang = lang;
+    currentLang = lang;
+    var t = T();
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
 
-document.querySelectorAll('.lang-btn').forEach(function(b) {
-b.classList.toggle('active', b.dataset.lang === lang);
-});
+    document.querySelectorAll('.lang-btn').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.lang === lang);
+    });
 
-document.getElementById('loginMainTitle').textContent = t.loginMainTitle;
-document.getElementById('loginSubTitle').textContent = t.loginSubTitle;
-document.getElementById('phoneLabel').textContent = t.phoneLabel;
-document.getElementById('passwordLabel').textContent = t.passwordLabel;
-document.getElementById('loginPhone').placeholder = t.phonePh;
-document.getElementById('loginPassword').placeholder = t.passwordPh;
-document.getElementById('loginBtnText').textContent = t.loginBtnText;
-document.getElementById('orText').textContent = t.orText;
-document.getElementById('noAccountText').textContent = t.noAccountText;
-document.getElementById('toRegisterBtn').textContent = t.toRegisterBtn;
-document.getElementById('googleText').textContent = t.googleText;
-document.getElementById('githubText').textContent = t.githubText;
+    function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+    function setPh(id, v) { var el = document.getElementById(id); if (el) el.placeholder = v; }
 
-document.getElementById('registerMainTitle').textContent = t.registerMainTitle;
-document.getElementById('registerSubTitle').textContent = t.registerSubTitle;
-document.getElementById('regNickLabel').textContent = t.regNickLabel;
-document.getElementById('regPhoneLabel').textContent = t.regPhoneLabel;
+    setText('loginMainTitle', t.loginMainTitle);
+    setText('loginSubTitle', t.loginSubTitle);
+    setText('phoneLabel', t.phoneLabel);
+    setText('passwordLabel', t.passwordLabel);
+    setPh('loginPhone', t.phonePh);
+    setPh('loginPassword', t.passwordPh);
+    setText('loginBtnText', t.loginBtnText);
+    setText('orText', t.orText);
+    setText('noAccountText', t.noAccountText);
+    setText('toRegisterBtn', t.toRegisterBtn);
+    setText('googleText', t.googleText);
+    setText('githubText', t.githubText);
+
+    setText('registerMainTitle', t.registerMainTitle);
+    setText('registerSubTitle', t.registerSubTitle);
+    setText('regNickLabel', t.regNickLabel);
+    setText('regPhoneLabel', t.regPhoneLabel);
+    setText('regPassLabel', t.regPassLabel);
+    setText('regPass2Label', t.regPass2Label);
+    setPh('regNick', t.regNickPh);
+    setPh('regPhone', t.regPhonePh);
+    setPh('regPassword', t.regPassPh);
+    setPh('regPassword2', t.regPass2Ph);
+    setText('registerBtnText', t.registerBtnText);
+    setText('hasAccountText', t.hasAccountText);
+    setText('toLoginBtn', t.toLoginBtn);
+
+    try { localStorage.setItem('sq_lang', lang); } catch (e) {}
+}
+
+function setLang(lang) {
+    applyLang(lang);
+    var t = T();
+    var hint = document.getElementById('loginPhoneHint');
+    if (hint && hint.dataset.state === 'error') hint.textContent = t.badPhone;
+}
+
+/* ============================================================
+   账号格式实时校验（登录 / 注册共用）
+   ============================================================ */
+function checkUidLive(value, isLogin) {
+    var t = T();
+    var hint = document.getElementById(isLogin ? 'loginPhoneHint' : 'regPhoneHint');
+    if (!hint) return true;
+
+    var v = String(value || '').trim();
+    hint.className = 'field-hint';
+
+    if (!v) {
+        hint.textContent = '';
+        hint.dataset.state = '';
+        return false;
+    }
+
+    if (isLogin) {
+        // 登录：手机号 11 位纯数字，或 5-10 位字母+数字，或邮箱
+        var ok = /^1\d{10}$/.test(v) || /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        if (!ok) {
+            hint.classList.add('error');
+            hint.textContent = t.badPhone;
+            hint.dataset.state = 'error';
+            return false;
+        }
+        hint.textContent = '';
+        hint.dataset.state = '';
+        return true;
+    }
+
+    // 注册：必须是 5-10 位、字母+数字组合
+    if (/^\d+$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.uidPureNum; hint.dataset.state = 'error'; return false;
+    }
+    if (/^[a-zA-Z]+$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.uidPureLetter; hint.dataset.state = 'error'; return false;
+    }
+    if (v.length < 5) {
+        hint.classList.add('error'); hint.textContent = t.uidTooShort; hint.dataset.state = 'error'; return false;
+    }
+    if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.badPhone; hint.dataset.state = 'error'; return false;
+    }
+    hint.classList.add('success');
+    hint.textContent = t.uidValid;
+    hint.dataset.state = 'success';
+    return true;
+}
+
+/* ============================================================
+   卡片切换 / 提示
+   ============================================================ */
+function showCard(which) {
+    ['loginCard', 'registerCard'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === which + 'Card');
+    });
+    var le = document.getElementById('loginError');
+    var re = document.getElementById('registerError');
+    if (le) le.textContent = '';
+    if (re) re.textContent = '';
+    if (which === 'register') refreshDeviceHint();
+}
+
+var _toastTimer = null;
+function toast(msg) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+}
+
+function uiAlert(title, body, opts) {
+    opts = opts || {};
+    var overlay = document.getElementById('uiModal');
+    if (!overlay) { alert(title + '\n' + body); return; }
+    document.getElementById('uiModalTitle').textContent = title || '提示';
+    document.getElementById('uiModalBody').textContent = body || '';
+    var primary = document.getElementById('uiModalBtn');
+    var secondary = document.getElementById('uiModalSecondaryBtn');
+
+    if (opts.secondaryText) {
+        secondary.style.display = '';
+        secondary.textContent = opts.secondaryText;
+        secondary.onclick = function () {
+            overlay.classList.remove('active');
+            if (opts.onSecondary) opts.onSecondary();
+        };
+    } else {
+        secondary.style.display = 'none';
+    }
+    primary.textContent = opts.okText || '知道了';
+    primary.onclick = function () {
+        overlay.classList.remove('active');
+        if (opts.onOk) opts.onOk();
+    };
+    overlay.classList.add('active');
+}
+
+/* ============================================================
+   登录
+   ============================================================ */
+async function doLogin() {
+    var t = T();
+    var account = document.getElementById('loginPhone').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errEl = document.getElementById('loginError');
+    var btn = document.getElementById('loginBtn');
+    var btnText = document.getElementById('loginBtnText');
+
+    errEl.textContent = '';
+
+    if (!account || !password) { errEl.textContent = t.fillAll; return; }
+    if (!checkUidLive(account, true)) { errEl.textContent = t.badPhone; return; }
+    if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
+
+    btn.disabled = true;
+    btnText.textContent = t.logging;
+
+    try {
+        // 账号 → 邮箱：依次尝试候选域名，避免因域名约定不一致而登录不了
+        var candidates = account.indexOf('@') > -1 ? [account] : AUTH_DOMAIN_CANDIDATES;
+        var res = null;
+        for (var ci = 0; ci < candidates.length; ci++) {
+            res = await window.sb.auth.signInWithPassword({
+                email: accountToEmail(account, candidates[ci]),
+                password: password
+            });
+            if (!res.error) break;
+            // 只有「账号密码不对」才值得换域名重试；网络错误等直接跳出
+            if (!/invalid login credentials/i.test(String(res.error.message || ''))) break;
+        }
+
+        if (res.error) {
+            var msg = String(res.error.message || '');
+            if (/invalid login credentials/i.test(msg)) {
+                errEl.textContent = t.loginFail;
+            } else if (/email not confirmed/i.test(msg)) {
+                errEl.textContent = '邮箱尚未验证，请联系管理员';
+            } else {
+                errEl.textContent = msg || t.netError;
+            }
+            btn.disabled = false;
+            btnText.textContent = t.loginBtnText;
+            return;
+        }
+
+        // 登录成功：立刻从服务端拉取真实档案（is_admin / 封禁状态一律以服务端为准）
+        var profile = null;
+        try { profile = await fetchMyProfileServer(); } catch (e) {}
+
+        if (!profile) {
+            // Auth 有用户但档案缺失 —— 补建一条，避免进站后白屏
+            profile = await ensureProfileFromAuth();
+        }
+        if (!profile) {
+            await window.sb.auth.signOut();
+            errEl.textContent = '账号档案不存在，请联系管理员';
+            btn.disabled = false;
+            btnText.textContent = t.loginBtnText;
+            return;
+        }
+
+        localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(profile)));
+        if (window.sqTrust) { window.sqTrust.user = profile; window.sqTrust.ready = true; }
+
+        toast(t.loginSuccess);
+        setTimeout(function () { window.location.href = './posts.html'; }, 500);
+
+    } catch (e) {
+        errEl.textContent = (e && e.message) || t.netError;
+        btn.disabled = false;
+        btnText.textContent = t.loginBtnText;
+    }
+}
+
+/* ============================================================
+   注册
+   ============================================================ */
+async function doRegister() {
+    var t = T();
+    var nickname = document.getElementById('regNick').value.trim();
+    var uid = document.getElementById('regPhone').value.trim();
+    var pwd = document.getElementById('regPassword').value;
+    var pwd2 = document.getElementById('regPassword2').value;
+    var errEl = document.getElementById('registerError');
+    var btn = document.getElementById('registerBtn');
+    var btnText = document.getElementById('registerBtnText');
+
+    errEl.textContent = '';
+
+    if (!nickname || !uid || !pwd || !pwd2) { errEl.textContent = t.fillAll; return; }
+    if (nickname.length < 2) { errEl.textContent = '昵称至少 2 个字'; return; }
+    if (!checkUidLive(uid, false)) { errEl.textContent = t.badPhone; return; }
+    if (pwd.length < 6) { errEl.textContent = t.shortPwd; return; }
+    if (pwd !== pwd2) { errEl.textContent = t.pwdMismatch; return; }
+
+    btn.disabled = true;
+    btnText.textContent = t.registering;
+
+    try {
+        // 设备注册数（服务端判定，前端只做提示）
+        var deviceId = getDeviceId();
+        var used = await getDeviceRegisterCount(deviceId);
+        if (used >= MAX_ACCOUNTS_PER_DEVICE) {
+            btn.disabled = true;
+            btnText.textContent = t.registerBtnText;
+            uiAlert(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), {
+                secondaryText: t.deviceLimitFeedbackBtn,
+                onSecondary: function () { window.location.href = './messages.html'; }
+            });
+            return;
+        }
+
+        // 昵称 / UID 是否已被占用（服务端查，RPC 不存在时静默跳过）
+        var exists = await checkAccountAvailable(uid, nickname);
+        if (exists.uidTaken) { errEl.textContent = t.phoneExists; throw new Error(t.phoneExists); }
+        if (exists.nickTaken) { errEl.textContent = t.nicknameTaken; throw new Error(t.nicknameTaken); }
+
+        var email = accountToEmail(uid);
+        var res = await window.sb.auth.signUp({
+            email: email,
+            password: pwd,
+            options: { data: { nickname: nickname, custom_uid: uid } }
+        });
+
+        if (res.error) {
+            var msg = String(res.error.message || '');
+            if (/already registered|already exists/i.test(msg)) {
+                errEl.textContent = t.phoneExists;
+            } else if (/password/i.test(msg)) {
+                errEl.textContent = /weak/i.test(msg) ? '密码太简单，请更换更复杂的密码' : msg;
+            } else {
+                errEl.textContent = msg || t.netError;
+            }
+            throw new Error('__handled__');
+        }
+
+        // 自动确认已开启时 signUp 会直接返回会话
+        if (!res.data.session) {
+            // 兜底：尝试用刚注册的账号登录一次
+            var again = await window.sb.auth.signInWithPassword({ email: email, password: pwd });
+            if (again.error) {
+                uiAlert('注册成功', '账号已创建，请返回登录。', { onOk: function () { showCard('login'); } });
+                return;
+            }
+        }
+
+        await ensureProfileFromAuth(nickname, uid);
+        await recordDeviceRegistration(deviceId, null, uid);
+        await window.sb.auth.signOut();
+
+        toast(t.registerSuccess);
+        showCard('login');
+        document.getElementById('loginPhone').value = uid;
+        document.getElementById('loginPassword').value = '';
+
+    } catch (e) {
+        if (e && e.message !== '__handled__') {
+            errEl.textContent = (e && e.message) || t.netError;
+        }
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = t.registerBtnText;
+    }
+}
+
+/* ============================================================
+   服务端档案读取 / 创建
+   —— 权限字段（is_admin、封禁、余额）只能来自这里，不能来自 localStorage
+   ============================================================ */
+async function fetchMyProfileServer() {
+    if (!window.sb) return null;
+
+    // 1) 优先走 RPC（推荐，数据库里配好 SECURITY DEFINER 函数）
+    try {
+        var r = await window.sb.rpc('get_my_profile');
+        if (!r.error && r.data) return Array.isArray(r.data) ? r.data[0] : r.data;
+    } catch (e) {}
+
+    // 2) 退化：读自己的 users 行（受 RLS 保护，只能读到本人）
+    try {
+        var s = await window.sb.auth.getUser();
+        var me = s && s.data && s.data.user;
+        if (!me) return null;
+        var q = await window.sb.from('users')
+            .select('id, nickname, avatar_url, custom_uid, phone, created_at, banned_until, banned_reason, is_admin, coins')
+            .eq('id', me.id).maybeSingle();
+        if (!q.error && q.data) return q.data;
+    } catch (e) {}
+
+    return null;
+}
+
+function sanitizeLocalUser(u) {
+    if (!u) return null;
+    var o = {};
+    var allow = ['id', 'nickname', 'avatar_url', 'custom_uid', 'phone', 'created_at',
+                 'banned_until', 'banned_reason', 'is_admin', 'role', 'role_color',
+                 'is_official', 'coins', 'signature'];
+    allow.forEach(function (k) { if (u[k] !== undefined) o[k] = u[k]; });
+    // 记录服务端签名时间，便于判断缓存是否过期
+    o.__verified_at = Date.now();
+    return o;
+}
+
+async function ensureProfileFromAuth(nickname, uid) {
+    try {
+        var s = await window.sb.auth.getUser();
+        var me = s && s.data && s.data.user;
+        if (!me) return null;
+
+        var meta = me.user_metadata || {};
+        var nick = nickname || meta.nickname || (me.email || '').split('@')[0] || '新用户';
+        var myUid = uid || meta.custom_uid || (me.email || '').split('@')[0] || null;
+
+        // 1) RPC 建档
+        try {
+            var r = await window.sb.rpc('register_profile', { p_nickname: nick, p_uid: myUid });
+            if (!r.error) {
+                var p = await fetchMyProfileServer();
+                if (p) return p;
+            }
+        } catch (e) {}
+
+        // 2) 直接插表兜底
+        try {
+            var ins = await window.sb.from('users')
+                .insert([{ id: me.id, nickname: nick, custom_uid: myUid }])
+                .select();
+            if (!ins.error && ins.data && ins.data[0]) return ins.data[0];
+        } catch (e) {}
+
+        // 3) 也许是触发器已建好，再读一次
+        return await fetchMyProfileServer();
+    } catch (e) {
+        return null;
+    }
+}
+
+async function checkAccountAvailable(uid, nickname) {
+    var out = { uidTaken: false, nickTaken: false };
+    try {
+        var r = await window.sb.rpc('check_account_available', { p_uid: uid, p_nickname: nickname });
+        if (!r.error && r.data) {
+            out.uidTaken = !!r.data.uid_taken;
+            out.nickTaken = !!r.data.nick_taken;
+        }
+    } catch (e) {}
+    return out;
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+(function bindIndexEvents() {
+    function on(id, ev, fn) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener(ev, fn);
+    }
+
+    // 语言
+    document.querySelectorAll('.lang-btn').forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.dataset.lang); });
+    });
+
+    // 卡片切换
+    on('toRegisterBtn', 'click', function () { showCard('register'); });
+    on('toLoginBtn', 'click', function () { showCard('login'); });
+
+    // 登录 / 注册
+    on('loginBtn', 'click', doLogin);
+    on('registerBtn', 'click', doRegister);
+
+    // 回车提交
+    on('loginPassword', 'keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+    on('loginPhone', 'keydown', function (e) { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+    on('regPassword2', 'keydown', function (e) { if (e.key === 'Enter') doRegister(); });
+
+    // 第三方登录（后端未开启 OAuth，如实提示，不再假装能登录）
+    on('googleBtn', 'click', function () {
+        uiAlert(T().modalTitle, T().modalDescGoogle);
+    });
+    on('githubBtn', 'click', function () {
+        uiAlert(T().modalTitle, T().modalDescGithub);
+    });
+
+    // 恢复上次语言
+    var savedLang = 'zh';
+    try { savedLang = localStorage.getItem('sq_lang') || 'zh'; } catch (e) {}
+    applyLang(savedLang);
+
+    // 已登录 → 直接进站（但必须服务端确认过身份）
+    (async function autoRedirect() {
+        try {
+            var s = await window.sb.auth.getSession();
+            if (!s.data || !s.data.session) {
+                localStorage.removeItem('sq_user_session');
+                return;
+            }
+            var p = await fetchMyProfileServer();
+            if (!p) return;
+            localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(p)));
+            window.location.replace('./posts.html');
+        } catch (e) {}
+    })();
+})();
+</script>
+</body>
+</html>

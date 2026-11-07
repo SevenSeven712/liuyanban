@@ -7,7 +7,8 @@
     <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>皮肤商店 · Seven戚</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <script src="common.js"></script>
 <link rel="stylesheet" href="bubbles.css" />
 <style>
@@ -349,6 +350,26 @@ document.getElementById('buyOk').addEventListener('click', async function(){
 });
 
 init();
+
+/* ★★ 服务端身份确认后再刷新权限 ★★
+   本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
+   只有 get_my_profile 返回的 is_admin 才会被采纳 */
+window.addEventListener('sq-user-ready', function (e) {
+  var u = e.detail && e.detail.user;
+  if (!u) return;
+  try { currentUser = u; } catch (err) { window.currentUser = u; }
+  var admin = (u.is_admin === true);
+  try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
+  window.isAdmin = admin;
+  ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
+    .forEach(function (fn) {
+      try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
+    });
+  var ap = document.getElementById('adminPanelBtn');
+  if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
+  var cc = document.getElementById('clearChatBtn');
+  if (cc) cc.style.display = admin ? 'inline-block' : 'none';
+});
 </script>
 </body>
 </html>

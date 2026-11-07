@@ -7,7 +7,8 @@
     <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 聊天群</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--success:#22c55e;--official-blue:#2b6cff;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
@@ -599,12 +600,34 @@ function updateBannedBanner(){
 }
 
 async function fetchChats(){
-  var res=await window.sb.from('chats').select('*, users(id, nickname, avatar_url, bubble_skin)').order('created_at',{ascending:true});
+  var res=await window.sb.from('chats').select('*').order('created_at',{ascending:true});
   if(res.error)throw res.error;
-  (res.data||[]).forEach(function(item){
-    if(item.users)usersCache[item.users.id]={nickname:item.users.nickname,avatar_url:item.users.avatar_url,bubble_skin:item.users.bubble_skin};
-  });
-  return res.data||[];
+  var data=res.data||[];
+  // 加固后 users 只允许读自己，作者资料改走 public_profiles 补全
+  try{
+    var pr=await window.sb.from('public_profiles').select('id, nickname, avatar_url');
+    if(!pr.error){
+      var map={};
+      (pr.data||[]).forEach(function(u){ map[u.id]=u; });
+      data.forEach(function(item){
+        if(item.user_id && map[item.user_id]){
+          var prev=usersCache[item.user_id]||{};
+          usersCache[item.user_id]={
+            nickname:map[item.user_id].nickname,
+            avatar_url:map[item.user_id].avatar_url,
+            bubble_skin:typeof prev.bubble_skin==='number'?prev.bubble_skin:0
+          };
+        }
+      });
+    }
+  }catch(e){}
+  // 补当前用户自己的气泡皮肤（自己可读 users）
+  if(currentUser&&currentUser.id&&typeof currentUser.bubble_skin==='number'){
+    var cu=usersCache[currentUser.id]||{};
+    cu.bubble_skin=currentUser.bubble_skin;
+    usersCache[currentUser.id]=cu;
+  }
+  return data;
 }
 async function addChat(userId,author,content,isOfficial,ip){
   var r=await window.sb.from('chats').insert([{user_id:userId,author:author,content:content,is_official:isOfficial,is_deleted:false,deleted_by:null,ip:ip}]);
@@ -1038,6 +1061,26 @@ window.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden)syncUser();
   });
+});
+
+/* ★★ 服务端身份确认后再刷新权限 ★★
+   本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
+   只有 get_my_profile 返回的 is_admin 才会被采纳 */
+window.addEventListener('sq-user-ready', function (e) {
+  var u = e.detail && e.detail.user;
+  if (!u) return;
+  try { currentUser = u; } catch (err) { window.currentUser = u; }
+  var admin = (u.is_admin === true);
+  try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
+  window.isAdmin = admin;
+  ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
+    .forEach(function (fn) {
+      try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
+    });
+  var ap = document.getElementById('adminPanelBtn');
+  if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
+  var cc = document.getElementById('clearChatBtn');
+  if (cc) cc.style.display = admin ? 'inline-block' : 'none';
 });
 </script>
 </body>

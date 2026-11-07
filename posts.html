@@ -7,8 +7,10 @@
     <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 帖子广场</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+<script src="./vendor/purify.min.js"></script>
+<script>window.DOMPurify||document.write('<script src="https://unpkg.com/dompurify@3/dist/purify.min.js"><\/script>');</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 :root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,0.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--danger-bg:#ffebee;--danger-text:#c62828;--official-blue:#2b6cff;--success:#66bb6a;--success-bg:#e8f5e9;--warning:#ffa726;--warning-bg:#fff3e0}
@@ -428,16 +430,47 @@ async function swapCategoryOrder(id1, id2) {
     await window.sb.from('categories').update({ sort_order: c2.sort_order }).eq('id', id1);
     await window.sb.from('categories').update({ sort_order: temp }).eq('id', id2);
 }
+// 加固后 users 表只允许读自己，作者昵称头像改从 public_profiles 视图补全
+var profilesMapCache = null;
+async function fetchProfilesMap(force) {
+    if (!force && profilesMapCache) return profilesMapCache;
+    var r = await window.sb.from('public_profiles').select('id, nickname, avatar_url');
+    if (r.error) throw r.error;
+    var map = {};
+    (r.data || []).forEach(function(u) { map[u.id] = u; });
+    profilesMapCache = map;
+    return map;
+}
+async function attachProfiles(rows, key, force) {
+    key = key || 'user_id';
+    if (!rows || !rows.length) return rows;
+    var map = await fetchProfilesMap(!!force);
+    rows.forEach(function(r) {
+        r.users = (r[key] && map[r[key]]) ? map[r[key]] : null;
+    });
+    return rows;
+}
 async function fetchPosts() {
-    var res = await window.sb.from('posts').select('*, users!posts_user_id_fkey (id, nickname, avatar_url)').order('created_at', { ascending: false });
+    var res = await window.sb.from('posts').select('*').order('created_at', { ascending: false });
     if (res.error) throw res.error;
-    return res.data || [];
+    var data = res.data || [];
+    try { await attachProfiles(data, 'user_id', true); } catch (e) { /* 降级：无昵称 */ }
+    return data;
 }
 async function fetchComments(postId) {
-    var res = await window.sb.from('post_comments').select('*, users!post_comments_user_id_fkey (id, nickname, avatar_url), reply_to:users!post_comments_reply_to_user_id_fkey (id, nickname)').eq('post_id', postId).order('created_at', { ascending: true });
+    var res = await window.sb.from('post_comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
     if (res.error) throw res.error;
     var list = res.data || [];
-    list.forEach(function(c){ c.reply_to_name = c.reply_to ? c.reply_to.nickname : ''; });
+    try {
+        var map = await fetchProfilesMap(false);
+        list.forEach(function(c){
+            c.users = (c.user_id && map[c.user_id]) ? map[c.user_id] : null;
+            c.reply_to = (c.reply_to_user_id && map[c.reply_to_user_id]) ? map[c.reply_to_user_id] : null;
+            c.reply_to_name = c.reply_to ? c.reply_to.nickname : '';
+        });
+    } catch (e) {
+        list.forEach(function(c){ c.reply_to_name = ''; });
+    }
     return list;
 }
 async function fetchAllCommentCounts() {
@@ -728,3 +761,366 @@ async function renderPosts() {
 
     list.querySelectorAll('.comment-count, .expand-link').forEach(function(el) {
         el.addEventListener('click', function(e) {
+            e.stopPropagation(); e.preventDefault();
+            var card = this.closest('.post-card');
+            if (card) openPostDetail(card.dataset.postid);
+        });
+    });
+
+    // 头像 → 迷你名片
+    list.querySelectorAll('.author-avatar').forEach(function(av) {
+        av.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showMiniCard(this, this.dataset.uid, this.dataset.name, this.dataset.avatar);
+        });
+    });
+
+    if (window.hidePageLoading) window.hidePageLoading();
+}
+
+// ============================================================
+// 删除帖子（带确认）
+// ============================================================
+async function deletePostById(postId) {
+    if (!postId) return;
+    showConfirm('删除帖子', '删除后不可恢复，确定要删除吗？', async function() {
+        try {
+            await deletePost(postId);
+            posts = posts.filter(function(p) { return p.id !== postId; });
+            renderPosts();
+            showToast('已删除');
+        } catch (e) {
+            showToast('删除失败：' + (e.message || '未知错误'));
+        }
+    });
+}
+
+// ============================================================
+// 帖子详情
+// ============================================================
+var currentDetailPost = null;
+
+async function openPostDetail(postId) {
+    var overlay = document.getElementById('detailOverlay');
+    var box = document.getElementById('detailContent');
+    if (!overlay || !box) return;
+    overlay.classList.add('active');
+    box.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载中...</div>';
+
+    var p = posts.find(function(x) { return x.id === postId; });
+    if (!p) {
+        var r = await window.sb.from('posts').select('*').eq('id', postId).single();
+        p = r.data;
+        if (p) { try { await attachProfiles([p], 'user_id', false); } catch (e) { /* 降级 */ } }
+    }
+    if (!p) { box.innerHTML = '<div class="empty-state">帖子不存在或已删除</div>'; return; }
+    currentDetailPost = p;
+
+    var user = p.users || null;
+    var name = user ? user.nickname : (p.author || '匿名');
+    var avatar = user ? (user.avatar_url || getUserAvatar(user)) : getUserAvatar({ nickname: name });
+    var time = new Date(p.created_at).toLocaleString('zh-CN');
+
+    var h = '<div class="post-card" style="margin:0;">';
+    h += '<div class="post-author">';
+    h += '<div class="avatar author-avatar" style="cursor:pointer;' + (avatar && avatar.startsWith('http') ? 'background-image:url(' + avatar + ');background-size:cover;background-position:center;' : '') + '">' + (avatar && !avatar.startsWith('http') ? name.charAt(0).toUpperCase() : '') + '</div>';
+    h += '<span class="name" style="cursor:pointer;" onclick="goUser(\'' + p.user_id + '\')">' + escapeHtml(name) + '</span>';
+    if (p.is_official) h += '<span class="official-tag">官方</span>';
+    h += roleTagHTML(p.user_id);
+    h += '<span class="time">' + time + '</span>';
+    h += '</div>';
+    if (p.title) h += '<div class="post-title">' + escapeHtml(p.title) + '</div>';
+    h += '<div class="post-content">' + renderPostContent(p) + '</div>';
+    h += '</div>';
+
+    h += '<div style="margin:18px 0 8px;font-weight:700;font-size:.9em;">评论</div>';
+    h += '<div id="detailCommentList"><div class="loading-state"><div class="spinner"></div>加载评论...</div></div>';
+
+    box.innerHTML = h;
+
+    try {
+        var comments = await fetchComments(postId);
+        var cl = document.getElementById('detailCommentList');
+        if (!cl) return;
+        if (!comments || !comments.length) {
+            cl.innerHTML = '<div class="empty-state">还没有评论，来说两句</div>';
+        } else {
+            var ch = '';
+            comments.forEach(function(c) {
+                var cu = c.users || null;
+                var cn = cu ? cu.nickname : (c.author || '匿名');
+                ch += '<div style="padding:10px 0;border-bottom:1px solid var(--border);">';
+                ch += '<div style="display:flex;justify-content:space-between;font-size:.78em;color:var(--text-muted);">';
+                ch += '<b>' + escapeHtml(cn) + '</b>';
+                ch += '<span>' + new Date(c.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</span>';
+                ch += '</div>';
+                ch += '<div style="font-size:.88em;margin-top:4px;line-height:1.5;">' + escapeHtml(c.content) + '</div>';
+                ch += '</div>';
+            });
+            cl.innerHTML = ch;
+        }
+    } catch (e) {
+        var cl2 = document.getElementById('detailCommentList');
+        if (cl2) cl2.innerHTML = '<div class="empty-state">评论加载失败</div>';
+    }
+}
+
+// ============================================================
+// 管理面板
+// 注意：面板只是入口，真正的权限判定在数据库（RLS + RPC）。
+// 前端这里做第一道拦截，避免普通用户误入。
+// ============================================================
+function openAdminPanel() {
+    if (!isAdminUser()) { showToast('无管理员权限'); return; }
+    document.getElementById('adminPanelOverlay').classList.add('active');
+    switchAdminTab('cat');
+}
+
+function switchAdminTab(tab) {
+    if (!isAdminUser()) { showToast('无管理员权限'); return; }
+
+    document.querySelectorAll('.admin-tab').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    var box = document.getElementById('adminPanelContent');
+    if (!box) return;
+    if (tab === 'cat') renderCatTab(box);
+    else if (tab === 'user') renderUserTab(box);
+    else if (tab === 'role') renderRoleTab(box);
+}
+
+function renderCatTab(box) {
+    var h = '<div style="display:flex;gap:8px;margin-bottom:12px;">';
+    h += '<button class="new-post-btn" id="addCatBtn" style="flex:1;">+ 新建分类</button>';
+    h += '</div><div id="catList">';
+    if (!categories.length) h += '<div class="empty-state">暂无分类</div>';
+    categories.forEach(function(c, i) {
+        h += '<div class="admin-cat-item">';
+        h += '<div class="cat-info"><b>' + escapeHtml(c.name) + '</b>';
+        if (c.is_public === false) h += '<span style="font-size:.65em;color:var(--danger);">不公开</span>';
+        h += '</div>';
+        h += '<div class="cat-actions">';
+        h += '<button data-act="up" data-id="' + c.id + '" data-i="' + i + '">↑</button>';
+        h += '<button data-act="down" data-id="' + c.id + '" data-i="' + i + '">↓</button>';
+        h += '<button data-act="rename" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">改名</button>';
+        h += '<button data-act="toggle" data-id="' + c.id + '" data-public="' + (c.is_public !== false) + '">' + (c.is_public !== false ? '设为隐藏' : '设为公开') + '</button>';
+        h += '<button data-act="del" data-id="' + c.id + '">删除</button>';
+        h += '</div></div>';
+    });
+    h += '</div>';
+    box.innerHTML = h;
+
+    document.getElementById('addCatBtn').onclick = function() {
+        showPrompt('新建分类', '输入分类名称', '例如：闲聊', async function(name) {
+            if (!name) return;
+            try {
+                await addCategory(name, true);
+                categories = await fetchCategories();
+                renderCategoryFilter();
+                switchAdminTab('cat');
+                showToast('已创建');
+            } catch (e) { showToast('创建失败：' + e.message); }
+        });
+    };
+
+    box.querySelectorAll('.cat-actions button').forEach(function(btn) {
+        btn.onclick = async function() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var act = this.dataset.act, id = this.dataset.id;
+            try {
+                if (act === 'up' || act === 'down') {
+                    var i = parseInt(this.dataset.i, 10);
+                    var j = act === 'up' ? i - 1 : i + 1;
+                    if (j < 0 || j >= categories.length) return;
+                    await swapCategoryOrder(categories[i].id, categories[j].id);
+                    categories = await fetchCategories();
+                } else if (act === 'rename') {
+                    var old = this.dataset.name;
+                    var self = this;
+                    showPrompt('重命名分类', '输入新名称', old, async function(nv) {
+                        if (!nv) return;
+                        await updateCategory(self.dataset.id, { name: nv });
+                        categories = await fetchCategories();
+                        renderCategoryFilter();
+                        switchAdminTab('cat');
+                    });
+                    return;
+                } else if (act === 'toggle') {
+                    var nowPublic = this.dataset.public === 'true';
+                    await updateCategory(id, { is_public: !nowPublic });
+                    categories = await fetchCategories();
+                } else if (act === 'del') {
+                    var cid = id;
+                    showConfirm('删除分类', '该分类下的帖子会变成「未分类」，确定删除？', async function() {
+                        await deleteCategory(cid);
+                        categories = await fetchCategories();
+                        renderCategoryFilter();
+                        switchAdminTab('cat');
+                    });
+                    return;
+                }
+                renderCategoryFilter();
+                switchAdminTab('cat');
+            } catch (e) { showToast('操作失败：' + (e.message || '')); }
+        };
+    });
+}
+
+async function renderUserTab(box) {
+    box.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载用户...</div>';
+    var users = [];
+    try { users = await fetchAllUsers(); } catch (e) {}
+    var h = '';
+    if (!users.length) h = '<div class="empty-state">暂无用户（或 admin_list_users 函数未配置）</div>';
+    users.forEach(function(u) {
+        var nick = u.nickname || '未命名';
+        var isBanned = u.banned_until && new Date(u.banned_until) > new Date();
+        h += '<div class="admin-user-card">';
+        h += '<div class="user-avatar">' + escapeHtml(nick.charAt(0).toUpperCase()) + '</div>';
+        h += '<div class="user-info"><div class="name-row"><span>' + escapeHtml(nick) + '</span>';
+        h += '<span class="role-badge" style="background:' + (u.is_admin ? '#e57373' : '#8aaa9a') + '">' + (u.is_admin ? '管理员' : '用户') + '</span>';
+        if (isBanned) h += '<span class="role-badge" style="background:#c62828">已封禁</span>';
+        h += '</div><div style="font-size:.7em;color:var(--text-muted)">' + escapeHtml(u.custom_uid || u.phone || u.id || '') + '</div></div>';
+        h += '<div class="user-actions">';
+        if (isBanned) h += '<button class="btn-role" data-act="unban" data-id="' + u.id + '">解封</button>';
+        else h += '<button class="btn-role" data-act="ban" data-id="' + u.id + '">封禁</button>';
+        h += '</div></div>';
+    });
+    box.innerHTML = h;
+
+    box.querySelectorAll('button[data-act]').forEach(function(btn) {
+        btn.onclick = function() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var id = this.dataset.id;
+            if (this.dataset.act === 'ban') {
+                showPrompt('封禁用户', '请输入封禁天数（如 7）', '7', async function(days) {
+                    var n = parseInt(days, 10);
+                    if (!n || n <= 0) { showToast('天数无效'); return; }
+                    try {
+                        var until = new Date(Date.now() + n * 86400000).toISOString();
+                        await banUser(id, '违反社区规范', until);
+                        showToast('已封禁 ' + n + ' 天');
+                        switchAdminTab('user');
+                    } catch (e) { showToast('封禁失败：' + (e.message || '')); }
+                }, 'number');
+            } else {
+                (async function() {
+                    try {
+                        await unbanUser(id);
+                        showToast('已解封');
+                        switchAdminTab('user');
+                    } catch (e) { showToast('操作失败：' + (e.message || '')); }
+                })();
+            }
+        };
+    });
+}
+
+async function renderRoleTab(box) {
+    box.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载身份...</div>';
+    var roles = [];
+    try { await loadGlobalRoles(); roles = await fetchUserRoles(); } catch (e) {}
+    var h = '<div style="font-size:.75em;color:var(--text-muted);margin-bottom:10px;">为用户设置展示身份（如「元老」「活跃达人」）</div>';
+    if (!roles.length) h += '<div class="empty-state">暂无身份数据</div>';
+    roles.forEach(function(r) {
+        h += '<div class="admin-role-item">';
+        h += '<div class="role-info"><span style="width:10px;height:10px;border-radius:50%;background:' + (r.role_color || '#8aaa9a') + ';display:inline-block;"></span>';
+        h += '<b>' + escapeHtml(r.role_name || '') + '</b>';
+        h += '<span style="font-size:.7em;color:var(--text-muted)">' + escapeHtml(r.user_id || '') + '</span></div>';
+        h += '<div class="role-actions"><button data-act="remove" data-uid="' + r.user_id + '">移除</button></div>';
+        h += '</div>';
+    });
+    box.innerHTML = h;
+
+    box.querySelectorAll('button[data-act="remove"]').forEach(function(btn) {
+        btn.onclick = async function() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            try {
+                await window.sb.rpc('admin_remove_role', { p_user_id: this.dataset.uid });
+                showToast('已移除');
+                switchAdminTab('role');
+            } catch (e) { showToast('操作失败：' + (e.message || '')); }
+        };
+    });
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+(async function init() {
+    renderHeader('帖子广场', 'posts');
+    renderFooter('posts');
+
+    try {
+        categories = await fetchCategories();
+    } catch (e) {
+        categories = [];
+    }
+    renderCategoryFilter();
+
+    try {
+        posts = await fetchPosts();
+    } catch (e) {
+        posts = [];
+        document.getElementById('postList').innerHTML = '<div class="empty-state">加载失败：' + escapeHtml(e.message || '网络异常') + '</div>';
+        return;
+    }
+
+    try { commentCountMap = await fetchAllCommentCounts() || {}; } catch (e) { commentCountMap = {}; }
+    try { await loadGlobalRoles(); } catch (e) {}
+
+    await renderPosts();
+
+    // ★ 身份以服务端为准：确认后再决定是否显示管理入口
+    var trusted = await whenUserReady();
+    if (trusted && trusted.id) {
+        currentUser = trusted;
+        isAdmin = trusted.is_admin === true;
+    } else if (!trusted) {
+        isAdmin = false;
+    }
+    var adminBtn = document.getElementById('adminPanelBtn');
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    if (isAdmin) await renderPosts();
+
+    // 详情面板关闭
+    var closeDetail = document.getElementById('closeDetail');
+    if (closeDetail) closeDetail.onclick = function() {
+        document.getElementById('detailOverlay').classList.remove('active');
+    };
+    var closeAdmin = document.getElementById('closeAdminPanel');
+    if (closeAdmin) closeAdmin.onclick = function() {
+        document.getElementById('adminPanelOverlay').classList.remove('active');
+    };
+
+    // 发表评论
+    var sendBtn = document.getElementById('detailSendCommentBtn');
+    if (sendBtn) {
+        sendBtn.onclick = async function() {
+            var input = document.getElementById('detailCommentInput');
+            var text = input.value.trim();
+            if (!text) return;
+            if (!currentUser || !currentUser.id) { showToast('请先登录'); return; }
+            if (currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
+                showToast('账号已被封禁，无法评论');
+                return;
+            }
+            sendBtn.disabled = true;
+            try {
+                await addComment(currentDetailPost.id, currentUser.nickname || '用户', currentUser.id, text);
+                input.value = '';
+                showToast('评论成功');
+                commentCountMap[currentDetailPost.id] = (commentCountMap[currentDetailPost.id] || 0) + 1;
+                await renderPosts();
+                openPostDetail(currentDetailPost.id);
+            } catch (e) {
+                showToast('评论失败：' + (e.message || ''));
+            } finally {
+                sendBtn.disabled = false;
+            }
+        };
+    }
+})();
+</script>
+</body>
+</html>

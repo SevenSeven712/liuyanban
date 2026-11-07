@@ -7,7 +7,8 @@
     <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>房间 · Seven戚</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
 :root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--danger-bg:#ffebee;--danger-text:#c62828;--warning:#ffa726;--official-blue:#2b6cff;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
@@ -545,4 +546,461 @@ body.pseudo-fs .room-body[data-theme="doudizhu"] #gameStage{background:#0b3d1e}
   <div class="room-body" id="roomBody">
     <div class="stage-wrap" id="stageWrap">
       <div id="micArea"></div>
-      <div class="game-stage" id="gameStage">
+      <div class="game-stage" id="gameStage">      <div class="game-topbar" id="gameTopbar" style="display:none;">
+        <span id="gameTopbarTitle" style="font-weight:700;font-size:.82em;">游戏</span>
+        <span style="flex:1"></span>
+        <button class="fs-btn" id="fsBtn" title="全屏">⛶</button>
+        <button class="fs-btn" id="exitGameBtn" style="font-size:.75em;padding:4px 10px;">退出</button>
+      </div>
+      <div class="game-content" id="gameContent">
+        <!-- 未开始：大厅 -->
+        <div class="game-lobby" id="gameLobby">
+          <div class="lobby-icon">
+            <svg viewBox="0 0 48 48" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="12" width="36" height="24" rx="4"/><path d="M18 24h6M21 21v6"/><circle cx="32" cy="22" r="2"/><circle cx="36" cy="27" r="2"/>
+            </svg>
+          </div>
+          <div class="lobby-title">还没有开始游戏</div>
+          <div class="lobby-desc">和朋友一起开一局，输赢都算热闹</div>
+          <button class="lobby-btn start" id="pickGameBtn">选择游戏</button>
+          <div class="lobby-hint" id="roomHint">房间内的玩家都可以发起对局</div>
+        </div>
+
+        <!-- 五子棋 -->
+        <div class="gomoku-wrap" id="gomokuWrap" style="display:none;">
+          <div class="gomoku-status" id="gomokuStatus"></div>
+          <div class="gpm-players" id="gomokuPlayers"></div>
+          <div class="gomoku-board" id="gomokuBoard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-panel">
+    <div class="room-messages" id="roomMessages"></div>
+    <div class="room-input-area">
+      <input type="text" id="roomInput" placeholder="说点什么…" maxlength="200" />
+      <button class="game-btn" id="gameDrawerBtn">游戏</button>
+      <button class="send-btn" id="roomSendBtn">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏抽屉 -->
+<div class="game-drawer" id="gameDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">选择游戏</div>
+  <div class="game-grid">
+    <div class="game-card" data-game="gomoku">
+      <div class="game-card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+      <div class="game-card-name">五子棋</div>
+      <div class="game-card-desc">实时联机对弈</div>
+    </div>
+    <div class="game-card" data-game="doudizhu">
+      <div class="game-card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="16" rx="2"/><path d="M9 2h10a2 2 0 0 1 2 2v14"/><path d="M9 9h6M9 13h4"/></svg></div>
+      <div class="game-card-name">斗地主</div>
+      <div class="game-card-desc">三人成局</div>
+    </div>
+    <div class="game-card" data-game="draw">
+      <div class="game-card-icon"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="game-card-name">你画我猜</div>
+      <div class="game-card-desc">即将上线</div>
+    </div>
+    <div class="game-card" data-game="spy">
+      <div class="game-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg></div>
+      <div class="game-card-name">谁是卧底</div>
+      <div class="game-card-desc">即将上线</div>
+    </div>
+  </div>
+</div>
+
+<!-- 成员抽屉 -->
+<div class="member-drawer" id="memberDrawer">
+  <div class="member-head">
+    <span style="font-weight:700;">房间成员</span>
+    <button id="memberCloseBtn" style="border:none;background:none;font-size:1.1em;cursor:pointer;color:var(--text-muted);">×</button>
+  </div>
+  <div class="member-body" id="memberBody"></div>
+</div>
+
+<!-- 房间设置 -->
+<div class="gprefs-overlay" id="roomSettings">
+  <div class="gprefs-box">
+    <h3>房间设置</h3>
+    <div class="gprefs-item">
+      <span>消息提醒音</span>
+      <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input" id="soundToggle" />
+        <span class="toggle-label"></span>
+      </label>
+    </div>
+    <div class="gprefs-item">
+      <span>进入房间自动开麦</span>
+      <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input" id="autoMicToggle" />
+        <span class="toggle-label"></span>
+      </label>
+    </div>
+    <div class="gprefs-hint">麦克风音频暂未接入实时语音服务，当前仅同步「开麦 / 闭麦」状态。</div>
+    <button class="gprefs-close" id="gprefsCloseBtn">完成</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="./common.js"></script>
+<script src="./gomoku.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var user = getSessionUser();
+  if (!user || !user.id) { location.replace('./index.html'); return; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var currentRoom = null;
+  var roomChannel = null;
+  var rooms = [];
+  var localOnly = false;   // rooms 表不可用时退回本地模式
+  var isHost = false;
+
+  function toast(msg) {
+    var t = $('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(window.__rmToast);
+    window.__rmToast = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  function esc(s) {
+    if (!s && s !== 0) return '';
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ============================================================
+     房间列表
+     ============================================================ */
+  function localRooms() {
+    try { return JSON.parse(localStorage.getItem('sq_local_rooms') || '[]'); } catch (e) { return []; }
+  }
+  function saveLocalRooms(list) {
+    try { localStorage.setItem('sq_local_rooms', JSON.stringify(list)); } catch (e) {}
+  }
+
+  async function loadRooms() {
+    var list = [];
+    try {
+      var r = await window.sb.from('rooms').select('*').order('created_at', { ascending: false }).limit(50);
+      if (!r.error && r.data) {
+        list = r.data;
+      } else {
+        localOnly = true;
+        list = localRooms();
+      }
+    } catch (e) {
+      localOnly = true;
+      list = localRooms();
+    }
+    rooms = list;
+    renderRooms();
+  }
+
+  function renderRooms() {
+    var grid = $('roomGrid');
+    if (!grid) return;
+    if (!rooms.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">还没有房间，点右上角「创建」开一个</div>';
+      return;
+    }
+    var h = '';
+    rooms.forEach(function (r) {
+      h += '<div class="room-card" data-id="' + esc(r.id) + '">';
+      if (r.is_official) h += '<span class="room-card-badge">官方</span>';
+      h += '<div class="room-card-icon"><svg viewBox="0 0 48 48"><path d="M8 20v8a4 4 0 0 0 4 4h4l10 8V8L16 16h-4a4 4 0 0 0-4 4z"/><path d="M32 18a8 8 0 0 1 0 12"/></svg></div>';
+      h += '<div class="room-card-name">' + esc(r.name || r.title || '未命名房间') + '</div>';
+      h += '<div class="room-card-meta">' + (r.member_count != null ? (r.member_count + ' 人在线') : '点击进入') + '</div>';
+      h += '</div>';
+    });
+    grid.innerHTML = h;
+    grid.querySelectorAll('.room-card').forEach(function (card) {
+      card.onclick = function () { enterRoom(this.dataset.id); };
+    });
+  }
+
+  async function createRoom() {
+    var name = prompt('房间名称', user.nickname ? (user.nickname + ' 的房间') : '新房间');
+    if (!name) return;
+    var room = {
+      id: 'r_' + Date.now().toString(36),
+      name: name.slice(0, 20),
+      owner_id: user.id,
+      created_at: new Date().toISOString(),
+      member_count: 1
+    };
+    try {
+      var r = await window.sb.from('rooms').insert([{ name: room.name, owner_id: user.id }]).select();
+      if (!r.error && r.data && r.data[0]) room = r.data[0];
+      else { localOnly = true; }
+    } catch (e) { localOnly = true; }
+
+    if (localOnly) {
+      var list = localRooms();
+      list.unshift(room);
+      saveLocalRooms(list);
+    }
+    await loadRooms();
+    enterRoom(room.id);
+  }
+
+  /* ============================================================
+     进入 / 退出房间
+     ============================================================ */
+  async function enterRoom(roomId) {
+    var room = rooms.find(function (r) { return String(r.id) === String(roomId); });
+    if (!room) return;
+    currentRoom = room;
+    isHost = (room.owner_id === user.id);
+
+    $('roomTitle').textContent = room.name || '房间';
+    $('listView').classList.add('hidden');
+    $('detailView').classList.add('open');
+    $('createRoomBtn').style.display = 'none';
+    $('roomSettingsBtn').style.display = 'block';
+
+    renderMicSeats();
+    renderMembers();
+    $('roomMessages').innerHTML = '';
+
+    subscribeRoom(roomId);
+    loadRoomMessages(roomId);
+    resetGameStage();
+  }
+
+  function exitRoom() {
+    if (roomChannel) { try { window.sb.removeChannel(roomChannel); } catch (e) {} roomChannel = null; }
+    currentRoom = null;
+    $('detailView').classList.remove('open');
+    $('listView').classList.remove('hidden');
+    $('roomSettingsBtn').style.display = 'none';
+  }
+
+  /* ============================================================
+     麦克风座位（状态同步，不含音频流）
+     ============================================================ */
+  var micState = {};   // userId -> { name, on }
+
+  function renderMicSeats() {
+    var area = $('micArea');
+    if (!area) return;
+    var seats = [];
+    for (var i = 0; i < 8; i++) seats.push(null);
+    seats[0] = { id: user.id, name: user.nickname || '我', on: !!micState[user.id] };
+
+    var h = '<div class="mic-panel"><div class="mic-head"><span class="mic-title">麦位</span>';
+    h += '<span class="mic-mode">' + (localOnly ? '本地房间' : '实时房间') + '</span></div>';
+    h += '<div class="mic-seats">';
+    seats.forEach(function (s, idx) {
+      if (s) {
+        h += '<div class="mic-seat on"><div class="mic-avatar">' + esc((s.name || 'U').charAt(0).toUpperCase()) + '</div>';
+        h += '<div class="mic-name">' + esc(s.name) + '</div>';
+        h += '</div>';
+      } else {
+        h += '<div class="mic-seat"><div class="mic-avatar mic-off">+</div><div class="mic-name">空位</div></div>';
+      }
+    });
+    h += '</div>';
+    h += '<div class="mic-actions">';
+    h += '<button class="mic-btn" id="micToggleBtn">' + (micState[user.id] ? '闭麦' : '开麦') + '</button>';
+    h += '<button class="mic-btn" id="leaveRoomBtn">离开房间</button>';
+    h += '</div></div>';
+    area.innerHTML = h;
+
+    $('micToggleBtn').onclick = function () {
+      micState[user.id] = !micState[user.id];
+      renderMicSeats();
+      toast(micState[user.id] ? '已开麦（仅状态）' : '已闭麦');
+    };
+    $('leaveRoomBtn').onclick = exitRoom;
+  }
+
+  function renderMembers() {
+    var box = $('memberBody');
+    if (!box) return;
+    var list = [{ id: user.id, name: user.nickname || '我', host: isHost }];
+    var h = '';
+    list.forEach(function (m) {
+      h += '<div class="member-row"><div class="rm-avatar">' + esc((m.name || 'U').charAt(0).toUpperCase()) + '</div>';
+      h += '<span style="flex:1;font-size:.86em;">' + esc(m.name) + (m.host ? '（房主）' : '') + '</span></div>';
+    });
+    box.innerHTML = h;
+    $('memberBtnCount').textContent = String(list.length);
+  }
+
+  /* ============================================================
+     房间聊天
+     ============================================================ */
+  function appendMessage(m) {
+    var box = $('roomMessages');
+    if (!box) return;
+    var self = m.user_id === user.id;
+    var div = document.createElement('div');
+    div.className = 'rm-msg' + (self ? ' self' : '');
+    div.innerHTML =
+      '<div class="rm-avatar">' + esc((m.name || 'U').charAt(0).toUpperCase()) + '</div>' +
+      '<div><div class="rm-name">' + esc(m.name || '') + '</div>' +
+      '<div class="rm-bubble"><div class="rm-text">' + esc(m.content || '') + '</div></div></div>';
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function loadRoomMessages(roomId) {
+    var rows = [];
+    try {
+      var r = await window.sb.from('room_messages').select('*')
+        .eq('room_id', roomId).order('created_at').limit(200);
+      if (!r.error) rows = r.data || [];
+    } catch (e) {}
+    rows.forEach(function (m) {
+      appendMessage({ user_id: m.user_id, name: m.nickname || m.name, content: m.content });
+    });
+  }
+
+  function subscribeRoom(roomId) {
+    if (localOnly) return;
+    try {
+      roomChannel = window.sb.channel('room-' + roomId)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'room_messages', filter: 'room_id=eq.' + roomId
+        }, function (payload) {
+          var m = payload.new || {};
+          if (m.user_id === user.id) return;
+          appendMessage({ user_id: m.user_id, name: m.nickname || m.name, content: m.content });
+          if (getSoundEnabled()) playReminderSound();
+        })
+        .subscribe();
+    } catch (e) {}
+  }
+
+  async function sendMessage() {
+    var input = $('roomInput');
+    var text = (input.value || '').trim();
+    if (!text) return;
+    if (!currentRoom) { toast('请先进入房间'); return; }
+    input.value = '';
+    appendMessage({ user_id: user.id, name: user.nickname || '我', content: text });
+
+    try {
+      await window.sb.from('room_messages').insert([{
+        room_id: currentRoom.id,
+        user_id: user.id,
+        nickname: user.nickname || '用户',
+        content: text
+      }]);
+    } catch (e) {}
+  }
+
+  /* ============================================================
+     游戏舞台
+     ============================================================ */
+  function resetGameStage() {
+    $('gameStage').classList.remove('active');
+    $('gameTopbar').style.display = 'none';
+    $('gameLobby').style.display = 'flex';
+    $('gomokuWrap').style.display = 'none';
+    $('roomBody').removeAttribute('data-theme');
+  }
+
+  function closeGameDrawer() { $('gameDrawer').classList.remove('open'); }
+
+  async function startGame(game) {
+    closeGameDrawer();
+    if (!currentRoom) { toast('请先进入房间'); return; }
+
+    if (game === 'gomoku') {
+      $('gameStage').classList.add('active');
+      $('gameTopbar').style.display = 'flex';
+      $('gameTopbarTitle').textContent = '五子棋';
+      $('gameLobby').style.display = 'none';
+      $('gomokuWrap').style.display = 'block';
+      $('roomBody').setAttribute('data-theme', 'gomoku');
+      try {
+        await window.Gomoku.open({
+          roomId: String(currentRoom.id),
+          sb: window.sb,
+          user: user,
+          onClose: function () { resetGameStage(); }
+        });
+      } catch (e) {
+        toast('五子棋加载失败：' + (e.message || ''));
+      }
+      return;
+    }
+
+    if (game === 'doudizhu') {
+      // 斗地主是独立页面（自带完整逻辑），直接新窗口打开更稳
+      window.open('./doudizhu.html?room=' + encodeURIComponent(currentRoom.id), '_blank');
+      return;
+    }
+
+    toast('该游戏即将上线');
+  }
+
+  /* ============================================================
+     事件绑定
+     ============================================================ */
+  $('createRoomBtn').onclick = createRoom;
+  $('detailBackBtn').onclick = exitRoom;
+  $('roomSendBtn').onclick = sendMessage;
+  $('roomInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendMessage(); });
+  $('gameDrawerBtn').onclick = function () { $('gameDrawer').classList.toggle('open'); };
+  $('pickGameBtn').onclick = function () { $('gameDrawer').classList.add('open'); };
+  document.querySelectorAll('.game-card').forEach(function (c) {
+    c.onclick = function () { startGame(this.dataset.game); };
+  });
+  $('exitGameBtn').onclick = function () {
+    try { window.Gomoku.close(); } catch (e) {}
+    resetGameStage();
+  };
+  $('fsBtn').onclick = function () {
+    var el = $('gameStage');
+    if (!document.fullscreenElement) { if (el.requestFullscreen) el.requestFullscreen(); }
+    else { document.exitFullscreen(); }
+  };
+  $('memberBtn').onclick = function () { $('memberDrawer').classList.add('open'); };
+  $('memberCloseBtn').onclick = function () { $('memberDrawer').classList.remove('open'); };
+  $('roomSettingsBtn').onclick = function () { $('roomSettings').classList.add('open'); };
+  $('gprefsCloseBtn').onclick = function () { $('roomSettings').classList.remove('open'); };
+  $('soundToggle').checked = getSoundEnabled();
+  $('soundToggle').onchange = function () {
+    localStorage.setItem('sq_sound_enabled', this.checked ? 'true' : 'false');
+  };
+  $('autoMicToggle').checked = localStorage.getItem('sq_auto_mic') === 'true';
+  $('autoMicToggle').onchange = function () {
+    localStorage.setItem('sq_auto_mic', this.checked ? 'true' : 'false');
+  };
+
+  /* ============================================================
+     初始化
+     ============================================================ */
+  (async function init() {
+    if (window.hidePageLoading) window.hidePageLoading();
+    await loadRooms();
+
+    // 只有登录用户能建房（服务端 RLS 还会再校验一次）
+    $('createRoomBtn').style.display = 'block';
+
+    // 支持 ?room=xxx 直接进入
+    var params = new URLSearchParams(location.search);
+    var rid = params.get('room');
+    if (rid) {
+      await loadRooms();
+      enterRoom(rid);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
