@@ -10,7 +10,6 @@
 <script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <script>
-  // 提前给 common.js 发信号，让它不要弹自带的开屏，这里由本页面接管开屏
   sessionStorage.setItem('sq_boot_shown', '1');
 </script>
 
@@ -25,41 +24,19 @@
 }
 html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
 
-/* ===== 1. 开屏动画 (全屏黑底) ===== */
-#bootScreen {
-    position: fixed; inset: 0; z-index: 99999; background: #000;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.6s ease; opacity: 1;
-}
+/* 1. 开屏动画 */
+#bootScreen { position: fixed; inset: 0; z-index: 99999; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; opacity: 1; }
 #bootScreen.hide { opacity: 0; pointer-events: none; }
-.boot-inner { position: relative; width: 160px; height: 60px; display: flex; align-items: center; justify-content: center; }
-.boot-loader {
-    position: absolute; inset: 0; z-index: 1;
-    background-color: transparent;
-    -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px);
-    mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px);
-}
-.boot-loader::after {
-    content: ""; position: absolute; inset: 0;
-    background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);
-    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%);
-    mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%);
-    animation: boot-transform 2s infinite alternate, boot-opacity 3s infinite;
-}
-@keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
+.boot-inner { position: relative; width: 100%; max-width: 600px; height: 160px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.boot-loader { position: absolute; inset: 0; z-index: 1; background-color: transparent; -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); }
+.boot-loader::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%); -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); animation: boot-transform 2s infinite alternate, boot-opacity 3s infinite; }
+@keyframes boot-transform { 0% { transform: translate(-60%); } 100% { transform: translate(60%); } }
 @keyframes boot-opacity { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
-.boot-text {
-    position: relative; z-index: 2; color: #fff; font-size: 1.2em; font-weight: 900; letter-spacing: 2px;
-    text-shadow: 0 0 10px #fff; animation: textPulse 1.5s infinite alternate;
-}
-@keyframes textPulse { 0% { opacity: 0.5; } 100% { opacity: 1; text-shadow: 0 0 20px #fff, 0 0 30px var(--primary); } }
+.boot-text { position: relative; z-index: 2; color: #fff; font-size: clamp(2rem, 8vw, 3.5rem); font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 20px rgba(255,255,255,0.8); animation: textPulse 1.5s infinite alternate; }
+@keyframes textPulse { 0% { opacity: 0.6; } 100% { opacity: 1; text-shadow: 0 0 30px #fff, 0 0 40px var(--primary); } }
 
-/* ===== 2. 引导页 (四页) ===== */
-#introScreen {
-    position: fixed; inset: 0; z-index: 9000; background: #fff;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 0.4s ease; opacity: 1;
-}
+/* 2. 引导页 */
+#introScreen { position: fixed; inset: 0; z-index: 9000; background: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease; opacity: 1; }
 #introScreen.hide { opacity: 0; pointer-events: none; }
 .intro-slide { display: none; text-align: center; padding: 20px; width: 100%; max-width: 400px; }
 .intro-slide.active { display: block; animation: fadeIn 0.5s ease; }
@@ -73,13 +50,8 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .intro-btn { background: linear-gradient(135deg, #4caf50, #2e7d32); color: #fff; border: none; padding: 16px 48px; font-size: 1.05em; font-weight: 700; border-radius: 99px; cursor: pointer; min-width: 220px; box-shadow: 0 10px 25px rgba(46,125,50,0.3); }
 .skip-btn { background: none; border: none; color: #8aaa9a; font-size: 0.85em; margin-top: 16px; cursor: pointer; }
 
-/* ===== 3. 登录/注册层 ===== */
-#authScreen {
-    position: fixed; inset: 0; z-index: 8000; background: var(--bg);
-    display: none; align-items: center; justify-content: center; padding: 20px;
-    background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%), radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
-    transition: opacity 0.4s ease; opacity: 1; overflow-y: auto;
-}
+/* 3. 登录层 */
+#authScreen { position: fixed; inset: 0; z-index: 8000; background: var(--bg); display: none; align-items: center; justify-content: center; padding: 20px; background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%), radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%); transition: opacity 0.4s ease; opacity: 1; overflow-y: auto; }
 #authScreen.hide { opacity: 0; pointer-events: none; }
 .login-card { width: 23em; max-width: 92vw; background: #fff; border-radius: 16px; padding: 2.2em 2em; border: 1px solid #c8e0c8; box-shadow: 0 8px 32px rgba(46,125,50,0.12); }
 .login-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5em; }
@@ -99,11 +71,17 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .login-error { color: #c62828; font-size: 0.78em; text-align: center; min-height: 1.5em; margin-top: 0.2em; }
 .auth-card { display: none; }
 .auth-card.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* 第三方登录 UI */
+.oauth-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.oauth-btn { flex: 1; padding: 10px; border: 1.5px solid #c8e0c8; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85em; font-weight: 700; color: #1e3a2e; cursor: pointer; font-family: inherit; }
+.oauth-btn:hover { background: #f5faf5; }
+.oauth-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 0.75em; color: #8aaa9a; }
+.oauth-divider div { flex: 1; height: 1px; background: #c8e0c8; }
 </style>
 </head>
 <body>
 
-<!-- 1. 开屏动画 -->
 <div id="bootScreen">
     <div class="boot-inner">
         <div class="boot-loader"></div>
@@ -111,7 +89,6 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
     </div>
 </div>
 
-<!-- 2. 引导页 -->
 <div id="introScreen">
     <div id="introSlide0" class="intro-slide active">
         <div class="intro-icon"><svg viewBox="0 0 64 64" width="48" height="48" fill="none"><path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="rgba(255,255,255,0.9)"/></svg></div>
@@ -144,7 +121,6 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
     <button id="introSkipBtn" class="skip-btn">跳过，直接进入 →</button>
 </div>
 
-<!-- 3. 登录注册页 -->
 <div id="authScreen">
     <div class="login-card">
         <div class="login-header"><div class="login-logo"><span>Seven</span>戚</div></div>
@@ -152,6 +128,15 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
         <div id="loginCard" class="auth-card active">
             <div class="login-title"><span>欢迎回来</span><span>登录以继续</span></div>
             <div class="login-form">
+                <div class="oauth-row">
+                    <button class="oauth-btn" onclick="alert('Google 登录暂未配置，请使用邮箱登录')">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Google
+                    </button>
+                    <button class="oauth-btn" onclick="alert('Github 登录暂未配置，请使用邮箱登录')">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#24292e"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> Github
+                    </button>
+                </div>
+                <div class="oauth-divider"><div></div><span>或</span><div></div></div>
                 <div class="field-group"><label>邮箱账号</label><input type="email" id="loginEmail" placeholder="请输入真实邮箱" /></div>
                 <div class="field-group"><label>密码</label><input type="password" id="loginPassword" placeholder="请输入密码" /></div>
                 <button class="login-continue" id="loginBtn">登录</button>
@@ -176,16 +161,10 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 </div>
 
 <script>
-// ============================================================
-// 1. Supabase 初始化 (兜底)
-// ============================================================
 var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
 if (!window.sb) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ============================================================
-// 2. 档案操作
-// ============================================================
 async function fetchMyProfileServer() {
     try {
         var r = await window.sb.rpc('get_my_profile');
@@ -207,7 +186,6 @@ async function ensureProfileFromAuth(nickname) {
         var me = s && s.data && s.data.user;
         if (!me) return null;
         var nick = nickname || (me.user_metadata && me.user_metadata.nickname) || (me.email || '').split('@')[0];
-        
         var ip = '0.0.0.0';
         try { var res = await fetch('https://api.ipify.org?format=json'); ip = (await res.json()).ip; } catch(e) {}
         
@@ -226,9 +204,6 @@ function saveLocalSession(profile) {
     localStorage.setItem('sq_user_session', JSON.stringify(o));
 }
 
-// ============================================================
-// 3. 登录注册逻辑
-// ============================================================
 async function doLogin() {
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value;
@@ -243,7 +218,6 @@ async function doLogin() {
         var profile = await fetchMyProfileServer() || await ensureProfileFromAuth();
         if (!profile) throw new Error('档案补建失败');
         
-        // 管理员拦截
         if (profile.is_admin === true) {
             var code = prompt('【管理员验证】请输入 6 位验证码：');
             if(!code) throw new Error('必须输入验证码');
@@ -270,10 +244,16 @@ async function doRegister() {
     errEl.textContent = '注册中...';
     try {
         var res = await window.sb.auth.signUp({ email, password: pwd, options: { data: { nickname: nickname } } });
-        if (res.error) throw new Error(res.error.message);
+        
+        if (res.error) {
+            var msg = res.error.message;
+            if (msg.includes('rate limit')) throw new Error('后端邮箱发送数量已达上限，需要明日再进行注册。');
+            if (msg.includes('already registered')) throw new Error('该邮箱已注册');
+            throw new Error(msg);
+        }
         
         if (!res.data.session) {
-            alert('注册成功，请去邮箱查收验证邮件后再登录。');
+            alert('注册成功，请去邮箱查收验证邮件后再登录。\n(注：如未收到邮件，可能已触发限流)');
             switchCard('login');
             document.getElementById('loginEmail').value = email;
             return;
@@ -294,11 +274,7 @@ function switchCard(which) {
     document.getElementById('registerError').textContent = '';
 }
 
-// ============================================================
-// 4. 核心：开屏 -> 静默判定 -> 分流
-// ============================================================
 (async function init() {
-    // 按钮绑定
     document.getElementById('toRegisterBtn').onclick = () => switchCard('register');
     document.getElementById('toLoginBtn').onclick = () => switchCard('login');
     document.getElementById('loginBtn').onclick = doLogin;
@@ -306,7 +282,6 @@ function switchCard(which) {
     document.getElementById('loginPassword').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
     document.getElementById('regPassword2').addEventListener('keydown', e => e.key === 'Enter' && doRegister());
 
-    // 引导页按钮逻辑
     var currentSlide = 0;
     var totalSlides = 4;
     function updateSlide(idx) {
@@ -326,14 +301,13 @@ function switchCard(which) {
         document.getElementById('introScreen').classList.add('hide');
         setTimeout(() => {
             document.getElementById('introScreen').style.display = 'none';
-            document.getElementById('authScreen').style.display = 'flex';
+            window.location.href = './messages.html'; // 引导结束去留言板
         }, 400);
     }
 
-    // 计时器：保证开屏动画至少显示 1.8 秒
+    // 保证开屏动画至少显示 1.8 秒
     var minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
     
-    // 静默检查登录状态
     var authPromise = (async function() {
         try {
             var s = await window.sb.auth.getSession();
@@ -345,26 +319,24 @@ function switchCard(which) {
         return 'GUEST';
     })();
 
-    // 等待两边都完成
     var results = await Promise.all([minTimePromise, authPromise]);
     var status = results[1];
 
-    // 隐藏开屏
     document.getElementById('bootScreen').classList.add('hide');
     setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 600);
 
-    // 分流
     if (status === 'AUTHED') {
-        // 已登录，去主页
         window.location.replace('./posts.html');
     } else {
-        // 未登录
-        if (!localStorage.getItem('seven_intro_shown_v5')) {
-            // 第一次来，显示引导
+        var isLoginIntent = new URLSearchParams(location.search).get('login');
+        var hasSeenIntro = localStorage.getItem('seven_intro_shown_v5');
+        
+        if (isLoginIntent) {
+            document.getElementById('authScreen').style.display = 'flex';
+        } else if (!hasSeenIntro) {
             document.getElementById('introScreen').style.display = 'flex';
         } else {
-            // 来过，显示登录框
-            document.getElementById('authScreen').style.display = 'flex';
+            window.location.replace('./messages.html'); // 默认进入留言板
         }
     }
 })();

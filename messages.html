@@ -114,10 +114,53 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 var currentUser = getSessionUser();
 var isAdmin = currentUser && currentUser.is_admin === true;
 
-// 渲染头部/底部
-renderHeader('留言板', 'messages');
+// 动态渲染头部（修复状态不同步）
+function updateHeaderUI() {
+    var headerContainer = document.getElementById('header-container');
+    var u = currentUser || {};
+    var name = u.nickname || '用户';
+    var has = u.avatar_url && String(u.avatar_url).indexOf('http') === 0;
+    
+    var userAreaHtml = '';
+    if (currentUser && currentUser.id) {
+        userAreaHtml = `
+            <div class="user-area" onclick="window.location.href='./user.html'">
+                <div class="avatar" style="${has ? 'background-image:url(\'' + safeUrl(u.avatar_url) + '\');background-size:cover;background-position:center;' : ''}">
+                    ${has ? '' : escapeHtml(name.charAt(0).toUpperCase())}
+                </div>
+                <span class="user-name">${escapeHtml(name)}</span>
+            </div>
+        `;
+    } else {
+        userAreaHtml = `
+            <div class="user-area" style="background:var(--primary);color:#fff;border-radius:99px;padding:6px 16px;font-weight:700;font-size:0.85em;box-shadow:0 4px 12px rgba(46,125,50,0.25);cursor:pointer;" onclick="window.location.href='./index.html?login=1'">
+                登录 / 注册
+            </div>
+        `;
+    }
+
+    headerContainer.innerHTML = `
+        <div class="app-header">
+            <div class="brand" onclick="window.location.href='./posts.html'">
+                Seven<span>戚</span><small>· 留言板</small>
+            </div>
+            ${userAreaHtml}
+        </div>
+    `;
+}
+
+updateHeaderUI();
 renderFooter('messages');
-if(isAdmin) document.getElementById('clearChatBtn').style.display = 'inline-block'; // 如果有用到
+
+// 监听身份确认
+window.addEventListener('sq-user-ready', function(e) {
+    if (e.detail && e.detail.user) {
+        currentUser = e.detail.user;
+        isAdmin = currentUser.is_admin === true;
+        updateHeaderUI();
+        loadMessages();
+    }
+});
 
 function showToast(msg) {
     var t = document.getElementById('toast');
@@ -132,18 +175,14 @@ function escapeHtml(s) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
 }
+function safeUrl(u){if(!u)return '';var s=String(u).trim();if(!/^https?:\/\//.test(s))return '';if(/[()'"<>;]/.test(s))return '';return escapeHtml(s);}
 
 var messages = [];
 var currentParentId = null;
 
-// ==========================================
-// 1. 拉取留言
-// ==========================================
 async function loadMessages() {
     var list = document.getElementById('messageList');
-    list.innerHTML = '<div class="loading-state">加载中...</div>';
     try {
-        // 如果是管理员，可以把未审核的也拉出来（视你的新后端策略而定，这里默认只拉审核通过的）
         var res = await window.sb.from('messages').select('*').order('created_at', { ascending: false });
         if(res.error) throw res.error;
         messages = res.data || [];
@@ -153,9 +192,6 @@ async function loadMessages() {
     }
 }
 
-// ==========================================
-// 2. 渲染留言
-// ==========================================
 function renderMessages() {
     var list = document.getElementById('messageList');
     if(!messages.length) {
@@ -166,7 +202,6 @@ function renderMessages() {
     messages.filter(m => !m.parent_id).forEach(function(m) {
         var isOfficial = m.is_official || m.name === 'Seven戚';
         var timeStr = new Date(m.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        
         var delBtn = isAdmin ? '<button class="del-btn" data-id="'+m.id+'">删除</button>' : '';
 
         html += '<div class="msg">';
@@ -186,7 +221,6 @@ function renderMessages() {
     });
     list.innerHTML = html;
 
-    // 绑定事件
     list.querySelectorAll('.comment-btn').forEach(btn => {
         btn.onclick = function() { openComment(this.dataset.id); };
     });
@@ -201,26 +235,29 @@ function renderMessages() {
     });
 }
 
-// ==========================================
-// 3. 发送留言
-// ==========================================
 document.getElementById('sendMsgBtn').onclick = async function() {
     var input = document.getElementById('msgInput');
     var text = input.value.trim();
     if(!text) return showToast('请输入内容');
     
-    if(currentUser && currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
+    if(!currentUser) {
+        showToast('请先登录后留言');
+        setTimeout(()=> window.location.href='./index.html?login=1', 1000);
+        return;
+    }
+    if(currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
         return showToast('账号被封禁，无法留言');
     }
 
     var btn = this;
     btn.disabled = true;
     try {
-        var name = currentUser ? currentUser.nickname : '神秘游客' + Math.floor(Math.random()*1000);
+        var name = currentUser.nickname;
         var ip = window.sqClientGeo ? window.sqClientGeo.ip : '0.0.0.0';
-        // 这里不传 user_id，用普通 insert 或按新后端要求，如果后端强制拦截防刷，这里会报错
+        
+        // 这里假设后端支持直接插入，或者有强制防刷拦截
         var res = await window.sb.from('messages').insert([{
-            name: name, text: text, ip: ip, is_official: false
+            name: name, text: text, ip: ip, is_official: false, user_id: currentUser.id
         }]);
         
         if(res.error) throw res.error;
@@ -238,9 +275,6 @@ document.getElementById('sendMsgBtn').onclick = async function() {
     }
 };
 
-// ==========================================
-// 4. 评论系统
-// ==========================================
 function openComment(parentId) {
     currentParentId = parentId;
     document.getElementById('commentOverlay').classList.add('active');
@@ -278,13 +312,17 @@ document.getElementById('sendCommentBtn').onclick = async function() {
     var input = document.getElementById('commentInput');
     var text = input.value.trim();
     if(!text) return;
-    if(!currentUser) return showToast('请先登录后评论');
+    if(!currentUser) {
+        showToast('请先登录后评论');
+        setTimeout(()=> window.location.href='./index.html?login=1', 1000);
+        return;
+    }
     
     var btn = this;
     btn.disabled = true;
     try {
         var res = await window.sb.from('messages').insert([{
-            name: currentUser.nickname, text: text, parent_id: currentParentId
+            name: currentUser.nickname, text: text, parent_id: currentParentId, user_id: currentUser.id
         }]);
         if(res.error) throw res.error;
         input.value = '';
@@ -296,9 +334,6 @@ document.getElementById('sendCommentBtn').onclick = async function() {
     }
 };
 
-// ==========================================
-// 5. 启动
-// ==========================================
 loadMessages();
 </script>
 </body>
