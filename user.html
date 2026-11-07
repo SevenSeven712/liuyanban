@@ -540,7 +540,8 @@ document.getElementById('editAvatarInput').onchange = async function(e){
   try{
     showToast('上传中...');
     var ext = (file.name.split('.').pop() || 'png').toLowerCase();
-    var path = 'avatars/' + currentUser.id + '/profile_' + Date.now() + '.' + ext;
+    // 去掉前缀 avatars/，直接用 用户ID 开头
+    var path = currentUser.id + '/profile_' + Date.now() + '.' + ext;
     var up = await window.sb.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: false });
     if (up.error) throw up.error;
     var url = window.sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;

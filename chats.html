@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -7,11 +8,15 @@
     <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 聊天群</title>
+<script>
+    // 聊天功能已临时关闭，强制跳转回帖子广场
+    window.location.replace('./posts.html');
+</script>
 <script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
-:root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--success:#22c55e;--official-blue:#2b6cff;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--success:#22c55e;--official-blue:#2b6cff;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
 html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
 #mainApp{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
 .app-header{flex-shrink:0;padding:12px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:56px;z-index:50;gap:8px}
@@ -273,8 +278,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .empty-online-title{font-size:.98em;font-weight:700;color:var(--text);margin-bottom:6px}
 .empty-online-sub{font-size:.78em;color:var(--text-light);line-height:1.6}
 @media (max-width:480px){.app-header{padding:10px 12px}.chat-messages{padding:12px 12px 4px}.fixed-input-area{padding:8px 12px calc(8px + var(--safe-b))}.pill-bar{padding:8px 12px 0}.row{max-width:90%}.user-area .user-name{max-width:54px;font-size:.72em}}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+:-webkit-scrollbar{width:4px;height:4px}
+:-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 </style>
 </head>
 <body>
@@ -377,8 +382,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 /* ============================================================
    基础
 ============================================================ */
-var SUPABASE_URL="https://ulvhuqtpdafspbdvkogs.supabase.co";
-var SUPABASE_ANON_KEY="sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
+var SUPABASE_URL="https://ljbxeuqnlxiffvbnwepv.supabase.co";
+var SUPABASE_ANON_KEY="sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
 window.sb=window.sb||window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2600)}
@@ -549,23 +554,6 @@ function initPresence(){
       payload.newPresences.forEach(function(p){
         var uid=p.user_id||'';
         if(!uid)return;
-        onlineUsers[uid]={id:uid,nickname:p.nickname||'用户',avatar_url:p.avatar_url||'',online_at:p.online_at||''};
-      });
-      scheduleRender();
-    }
-  });
-
-  // 有人离开
-  onlineChannel.on('presence',{event:'leave'},function(payload){
-    if(payload&&payload.leftPresences){
-      payload.leftPresences.forEach(function(p){
-        var uid=p.user_id||'';
-        if(uid&&onlineUsers[uid])delete onlineUsers[uid];
-      });
-      scheduleRender();
-    }
-  });
-
   onlineChannel.subscribe(function(status){
     if(status==='SUBSCRIBED'){
       onlineChannel.track({
@@ -575,224 +563,38 @@ function initPresence(){
         online_at:new Date().toISOString()
       });
     }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-      // 断线后 3 秒重连
       setTimeout(initPresence,3000);
     }
   });
 }
 
-/* ============================================================
-   聊天
-============================================================ */
-var chats=[],chatsLoading=false,usersCache={};
-
-function isUserBanned(){if(!currentUser||!currentUser.banned_until)return false;return new Date(currentUser.banned_until)>new Date()}
-function updateBannedBanner(){
-  var b=document.getElementById('bannedBanner'),d=document.getElementById('bannedUntilDisplay'),i=document.getElementById('chatInput'),s=document.getElementById('sendChatBtn');
-  if(isUserBanned()){
-    b.classList.add('active');
-    d.textContent=new Date(currentUser.banned_until).toLocaleString('zh-CN',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    i.disabled=true;i.placeholder='账号已被封禁，无法发送消息';s.disabled=true;
-  }else{
-    b.classList.remove('active');
-    i.disabled=false;i.placeholder='说点什么…';s.disabled=false;
-  }
-}
-
-async function fetchChats(){
-  var res=await window.sb.from('chats').select('*').order('created_at',{ascending:true});
-  if(res.error)throw res.error;
-  var data=res.data||[];
-  // 加固后 users 只允许读自己，作者资料改走 public_profiles 补全
-  try{
-    var pr=await window.sb.from('public_profiles').select('id, nickname, avatar_url');
-    if(!pr.error){
-      var map={};
-      (pr.data||[]).forEach(function(u){ map[u.id]=u; });
-      data.forEach(function(item){
-        if(item.user_id && map[item.user_id]){
-          var prev=usersCache[item.user_id]||{};
-          usersCache[item.user_id]={
-            nickname:map[item.user_id].nickname,
-            avatar_url:map[item.user_id].avatar_url,
-            bubble_skin:typeof prev.bubble_skin==='number'?prev.bubble_skin:0
-          };
-        }
-      });
-    }
-  }catch(e){}
-  // 补当前用户自己的气泡皮肤（自己可读 users）
-  if(currentUser&&currentUser.id&&typeof currentUser.bubble_skin==='number'){
-    var cu=usersCache[currentUser.id]||{};
-    cu.bubble_skin=currentUser.bubble_skin;
-    usersCache[currentUser.id]=cu;
-  }
-  return data;
-}
 async function addChat(userId,author,content,isOfficial,ip){
   var r=await window.sb.from('chats').insert([{user_id:userId,author:author,content:content,is_official:isOfficial,is_deleted:false,deleted_by:null,ip:ip}]);
-  if(r.error)throw r.error;return r.data;
+  if(r.error){
+    if(r.error.code === 'P0001' || r.error.message.includes('封禁')) {
+        showToast(r.error.message);
+        throw new Error(r.error.message);
+    }
+    if(r.error.code === '42501') {
+        showToast('账号已被封禁，无法发送消息');
+        throw new Error('账号已被封禁');
+    }
+    throw r.error;
+  }
+  return r.data;
 }
+
 async function revokeChat(id,author,revoker,isSelf){
   var nc=isSelf?author+' 撤回了一条消息':author+' 的消息被 '+revoker+' 撤回了';
   var r=await window.sb.from('chats').update({is_deleted:true,content:nc,deleted_by:revoker}).eq('id',id);
   if(r.error)throw r.error;
 }
+
 async function clearAllChats(){
   if(!isAdmin){showToast('权限不足');return}
   showConfirm('清空聊天','确定要删除所有聊天消息吗？此操作不可恢复！',async function(){
     try{var r=await window.sb.from('chats').delete().not('id','is',null);if(r.error)throw r.error;showToast('所有聊天消息已清空');await loadAllChats()}catch(e){showToast('清空失败：'+e.message)}
   });
-}
-function formatTimeDivider(date){
-  var now=new Date(),d=new Date(date);
-  var sy=d.getFullYear()===now.getFullYear();
-  var sd=sy&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
-  var hm=d.toTimeString().slice(0,5);
-  if(sd)return hm;
-  if(sy)return(d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
-  return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
-}
-function shouldShowTimeDivider(p,c){if(!p)return true;return(new Date(c)-new Date(p))/60000>30}
-
-function renderChat(){
-  var container=document.getElementById('chatMessages');
-  if(chatsLoading){container.innerHTML='<div class="loading-state"><div class="spinner"></div><div>正在加载聊天内容...</div></div>';return}
-  if(!chats.length){container.innerHTML='<div class="empty-state"><div class="big"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>还没有聊天消息，来打个招呼吧！</div>';return}
-  // 合并聊天消息 + 红包，按时间排序
-  var merged=[];
-  chats.forEach(function(c){ merged.push({ kind:'chat', t:new Date(c.created_at).getTime(), c:c }); });
-  (crpState.list||[]).forEach(function(p){ merged.push({ kind:'rp', t:new Date(p.created_at).getTime(), p:p }); });
-  merged.sort(function(a,b){ return a.t - b.t; });
-
-  var html='',prev=null;
-  var rcIcon='<svg class="rc-icon" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9"/></svg>';
-
-  merged.forEach(function(item){
-    var created = item.kind==='chat' ? item.c.created_at : item.p.created_at;
-    if(shouldShowTimeDivider(prev, created)) html+='<div class="time-divider"><span>'+formatTimeDivider(created)+'</span></div>';
-    prev = created;
-
-    if(item.kind==='rp'){
-      var p=item.p;
-      var rpSelf = currentUser && p.sender_id===currentUser.id;
-      var mine = crpState.myGrabs[p.id];
-      var finished = p.remaining_count<=0;
-      var isEx = !!p.target_user_id;
-      var rpCls = (isEx?'exclusive ':'') + (mine!==undefined?'grabbed':(finished?'done':''));
-      var sub='', amtHtml='';
-      if(mine!==undefined){ sub = isEx?'专属红包 · 你已领取':'你已领取 · 看看手气'; amtHtml='<div class="rp-amt">'+mine+' 币</div>'; }
-      else if(finished){ sub='手慢了，红包已领完'; }
-      else if(isEx){ sub = (p.target_user_id===currentUser.id)?'专属红包 · 点击领取':'专属红包（非指定人无法领取）'; }
-      else { sub='剩余 '+p.remaining_count+'/'+p.count+' 份'; }
-      var rpUi = usersCache[p.sender_id]||null;
-      var rpName = rpUi?rpUi.nickname:p.sender_name;
-      var rpAu = rpUi?rpUi.avatar_url:null;
-      var skinId = rpSelf?((currentUser&&currentUser.bubble_skin)||0):((rpUi&&rpUi.bubble_skin)||0);
-      var skinCls = 'b'+(skinId>=0&&skinId<=44?skinId:0);
-      var avCls = 'avatar'+(rpSelf?' self-av':'');
-      var av = (rpAu&&String(rpAu).indexOf('http')===0)?'<div class="'+avCls+'" style="background-image:url(\''+safeUrl(rpAu)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls+'">'+escapeHtml(String(rpName||'U').charAt(0).toUpperCase())+'</div>';
-      html+='<div class="row '+(rpSelf?'self':'other')+' '+skinCls+'" data-rp="'+p.id+'">'+av+
-        '<div class="bubble-wrap"><div class="uname">'+escapeHtml(rpName||'')+'</div>'+
-        '<div class="rp-card '+rpCls+'" data-rp="'+p.id+'">'+
-          '<div class="rp-top"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="3" y="2" width="18" height="20" rx="2" style="fill:#fff;stroke:none"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2c-2.5 1.5-5.5 2.5-9 2.5S5.5 8.5 3 7V5Z" style="fill:#ffe082;stroke:none"/><circle cx="12" cy="15" r="2.5" style="fill:#e53935;stroke:none"/><rect x="11.2" y="14.2" width="1.6" height="1.6" style="fill:#fff;stroke:none"/></svg>'+
-          (isEx?'专属红包':'红包')+'</div>'+ amtHtml +
-          '<div class="rp-sub">'+sub+'</div>'+
-        '</div></div></div>';
-      return;
-    }
-
-    var c=item.c;
-    var isSelf=currentUser&&c.user_id===currentUser.id;
-    var isOfficial=c.is_official||c.author==='Seven戚';
-    var isDeleted=c.is_deleted===true;
-    var ui=usersCache[c.user_id]||null;
-    var dn=ui?ui.nickname:c.author,au=ui?ui.avatar_url:null;
-    var badge=isOfficial?'<span class="official-badge">官方</span>':'';
-    if(isDeleted){
-      var txt=c.content||'';
-      var m=txt.match(/^(.*?) 的消息被 (.*?) 撤回了$/);
-      if(m)html+='<div class="sys-recall">'+rcIcon+'<span class="deleted-by">'+escapeHtml(m[1])+'</span> 的消息被 <span class="deleted-by">'+escapeHtml(m[2])+'</span> 撤回了</div>';
-      else if(txt.indexOf('撤回了一条消息')>=0){var n=txt.replace(' 撤回了一条消息','');html+='<div class="sys-recall">'+rcIcon+'<span class="deleted-by">'+escapeHtml(n)+'</span> 撤回了一条消息</div>'}
-      else html+='<div class="sys-recall">'+rcIcon+escapeHtml(txt)+'</div>';
-      return;
-    }
-    var skinId2=0;
-    if(isSelf){ skinId2=(currentUser&&currentUser.bubble_skin)||0; }
-    else { skinId2=(ui&&ui.bubble_skin)||0; }
-    var skinCls2='b'+(skinId2>=0&&skinId2<=44?skinId2:0);
-    var avCls2='avatar'+(isSelf?' self-av':'');
-    var av2=(au&&String(au).indexOf('http')===0)?'<div class="'+avCls2+'" style="background-image:url(\''+safeUrl(au)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls2+'">'+escapeHtml(String(dn).charAt(0).toUpperCase())+'</div>';
-    var ipHtml = '';
-    if (isAdmin && c.ip) {
-      ipHtml = '<div class="msg-ip" style="color:#2b6cff;background:#e3f2fd;border:1px solid #bbdefb;padding:2px 6px;border-radius:4px;display:inline-block;">📍 '+escapeHtml(c.ip)+'</div>';
-    }
-    html+='<div class="row '+(isSelf?'self':'other')+' '+skinCls2+'" data-id="'+c.id+'" data-author="'+escapeHtml(c.author)+'" data-self="'+isSelf+'">'+av2+'<div class="bubble-wrap"><div class="uname">'+escapeHtml(dn)+badge+'</div><div class="bubble">'+escapeHtml(c.content)+'</div>'+ipHtml+'</div></div>';
-  });
-  container.innerHTML=html;
-  container.scrollTop=container.scrollHeight;
-  // 红包卡片点击领取
-  container.querySelectorAll('.rp-card').forEach(function(el){
-    el.addEventListener('click',function(e){ e.stopPropagation(); openChatRedPacket(this.dataset.rp); });
-  });
-  container.querySelectorAll('.row').forEach(function(el){
-    if(el.dataset.rp) return; // 红包行不参与撤回/举报菜单
-    el.addEventListener('contextmenu',function(e){
-      e.preventDefault();
-      showChatCtxMenu(e.clientX,e.clientY,this.dataset.id,this.dataset.author,this.dataset.self==='true',this.querySelector('.bubble')?this.querySelector('.bubble').textContent:'');
-    });
-    var timer=null;
-    el.addEventListener('touchstart',function(e){
-      var self=this;
-      timer=setTimeout(function(){
-        if(navigator.vibrate)navigator.vibrate(45);
-        showChatCtxMenu(e.touches[0].clientX,e.touches[0].clientY,self.dataset.id,self.dataset.author,self.dataset.self==='true',self.querySelector('.bubble')?self.querySelector('.bubble').textContent:'');
-        timer=null;
-      },600);
-    },{passive:true});
-    el.addEventListener('touchend',function(){if(timer){clearTimeout(timer);timer=null}});
-    el.addEventListener('touchmove',function(){if(timer){clearTimeout(timer);timer=null}});
-  });
-}
-
-function showChatCtxMenu(x,y,id,author,isSelf,contentText){
-  var old=document.getElementById('chatCtxMenu');if(old)old.remove();
-  var menu=document.createElement('div');menu.id='chatCtxMenu';menu.className='chat-ctx-menu';
-  menu.style.left=Math.min(x,window.innerWidth-160)+'px';
-  menu.style.top=Math.min(y,window.innerHeight-140)+'px';
-  var html='';
-  if(isAdmin||isSelf)html+='<div class="chat-ctx-item danger" data-action="revoke">'+svgIcon('undo',16)+' 撤回</div>';
-  if(!isSelf)html+='<div class="chat-ctx-item" data-action="report">'+svgIcon('flag',16)+' 举报</div>';
-  menu.innerHTML=html;
-  document.body.appendChild(menu);
-  menu.querySelectorAll('.chat-ctx-item').forEach(function(item){
-    item.onclick=function(){
-      var a=this.dataset.action;menu.remove();
-      if(a==='revoke'){
-        if(!isAdmin&&!isSelf){showToast('您只能撤回自己的消息');return}
-        showConfirm('撤回消息','确定撤回此消息吗？',function(){
-          revokeChat(id,author,currentUser.nickname,isSelf)
-            .then(function(){showToast('消息已撤回');return loadAllChats()})
-            .catch(function(e){showToast('撤回失败：'+e.message)});
-        });
-      }else if(a==='report'){
-        reportChat(id,author,contentText);
-      }
-    };
-  });
-  setTimeout(function(){
-    document.addEventListener('click',function close(e){
-      if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',close)}
-    });
-  },10);
-}
-
-async function reportChat(contentId,author,snapshot){
-  try{
-    var res=await window.sb.from('public_users').select('id').eq('nickname',author).single();
-    if(res.error||!res.data){showToast('无法找到该用户');return}
-    openReportDialog(res.data.id,'chat',contentId,snapshot);
-  }catch(e){showToast('举报失败：'+e.message)}
 }
 
 function sendChat(){
@@ -804,283 +606,48 @@ function sendChat(){
   btn.disabled=true;btn.innerHTML='发送中...';
   var isOfficial=currentUser.nickname==='Seven戚'||isAuthorMode;
   var ipText = window.sqClientGeo ? (window.sqClientGeo.ip + ' · ' + window.sqClientGeo.location) : '';
+  
   addChat(currentUser.id,currentUser.nickname,content,isOfficial,ipText)
     .then(function(){
       input.value='';
       loadAllChats();
       showToast('消息已发送');
     })
-    .catch(function(e){
-      showToast('发送失败：'+e.message);
-    })
-    .finally(function(){
-      btn.disabled=false;
-      btn.innerHTML=orig;
-    });
+    .catch(function(e){ showToast('发送失败：'+e.message); })
+    .finally(function(){ btn.disabled=false; btn.innerHTML=orig; });
 }
+
 async function loadAllChats(){
   chatsLoading=true;renderChat();
-  try{await syncMySkin();chats=await fetchChats()}
-  catch(e){console.error('加载聊天失败:',e);showToast('聊天加载失败')}
-  finally{chatsLoading=false;renderChat()}
+  try{ await syncMySkin(); chats=await fetchChats() }
+  catch(e){ console.error('加载聊天失败:',e); showToast('聊天加载失败') }
+  finally{ chatsLoading=false; renderChat() }
 }
 
-/* ============================================================
-   聊天群红包
-============================================================ */
-var crpState = { list: [], myGrabs: {}, channel: null };
-
-async function loadChatRedPackets(){
-  try{
-    var res = await window.sb.from('red_packets')
-      .select('*')
-      .eq('scope', 'chat')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if(res.error) throw res.error;
-    crpState.list = res.data || [];
-    await loadChatMyGrabs();
-    renderChatRedPackets();
-  }catch(e){ crpState.list = []; renderChatRedPackets(); }
-}
-
-async function loadChatMyGrabs(){
-  crpState.myGrabs = {};
-  if(!crpState.list.length) return;
-  try{
-    var ids = crpState.list.map(function(p){ return p.id; });
-    var res = await window.sb.from('red_packet_grabs')
-      .select('packet_id, amount')
-      .eq('user_id', currentUser.id)
-      .in('packet_id', ids);
-    (res.data || []).forEach(function(g){ crpState.myGrabs[g.packet_id] = g.amount; });
-  }catch(e){}
-}
-
-function renderChatRedPackets(){
-  // 红包已并入聊天消息流，统一由 renderChat 渲染
-  renderChat();
-}
-
-async function openChatRedPacket(packetId){
-  var p = crpState.list.find(function(x){ return String(x.id) === String(packetId); });
-  if(!p) return;
-  var mine = crpState.myGrabs[p.id];
-  if(mine === undefined && p.remaining_count > 0 && p.sender_id !== currentUser.id){
-    await grabChatRedPacket(p.id);
-    p = crpState.list.find(function(x){ return String(x.id) === String(packetId); }) || p;
-    mine = crpState.myGrabs[p.id];
-  }
-  showChatRedPacketDetail(p, mine);
-}
-
-async function grabChatRedPacket(packetId){
-  try{
-    var res = await window.sb.rpc('grab_red_packet', { p_packet_id: packetId });
-    if(res.error) throw res.error;
-    var d = res.data;
-    if(d && d.ok){
-      showToast('手气不错，抢到 ' + d.amount + ' 币！');
-      try{ var u = await window.sb.rpc('get_my_profile'); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
-      await loadChatRedPackets();
-    } else {
-      showToast((d && d.message) || '领取失败');
-      await loadChatRedPackets();
-    }
-  }catch(e){ showToast('领取失败：' + e.message); }
-}
-
-async function showChatRedPacketDetail(p, myAmount){
-  var body = document.getElementById('rpDetailBody');
-  body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载中…</div>';
-  openChatRpDetail();
-  try{
-    var res = await window.sb.from('red_packet_grabs')
-      .select('*').eq('packet_id', p.id).order('amount', { ascending: false });
-    var rows = res.data || [];
-    var html = '<div style="text-align:center;margin-bottom:18px;">' +
-      '<div style="font-size:.8em;color:var(--text-muted);">' + escapeHtml(p.sender_name || '匿名') + (p.target_user_id ? ' 的专属红包' : ' 的红包') + '</div>' +
-      '<div style="font-size:1.6em;font-weight:900;color:var(--primary);margin-top:4px;">' + p.total + ' 币</div>' +
-      '<div style="font-size:.75em;color:var(--text-light);margin-top:4px;">共 ' + p.count + ' 份 · 已领 ' + rows.length + ' 份</div>';
-    if(myAmount !== undefined) html += '<div style="margin-top:10px;font-size:.85em;font-weight:700;color:var(--primary);">你领到 ' + myAmount + ' 币</div>';
-    html += '</div>';
-    if(rows.length){
-      html += '<div style="font-size:.72em;font-weight:700;color:var(--text-muted);margin-bottom:8px;">领取排行榜</div>';
-      html += rows.map(function(g, i){
-        var noCls = i === 0 ? 'top1' : '';
-        return '<div class="rp-rank-item"><div class="rr-left"><span class="rr-no ' + noCls + '">' + (i+1) + '</span><span>' + escapeHtml(g.user_name || '用户') + '</span></div><span class="rr-amt">' + g.amount + ' 币</span></div>';
-      }).join('');
-      if(rows[0]) html += '<div style="font-size:.72em;color:var(--text-light);margin-top:8px;text-align:center;">🏆 手气最佳：' + escapeHtml(rows[0].user_name || '用户') + '（' + rows[0].amount + ' 币）</div>';
-    } else {
-      html += '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">还没有人领取</div>';
-    }
-    body.innerHTML = html;
-  }catch(e){
-    body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载失败：' + escapeHtml(e.message) + '</div>';
-  }
-}
-
-var crpType = 'group';
-function openChatRpSheet(){
-  if(isUserBanned()){ showToast('账号已被封禁'); return; }
-  crpType = 'group';
-  document.getElementById('crpTotal').value = '';
-  document.getElementById('crpCount').value = '';
-  syncCrpTypeUI();
-  buildCrpTargetOptions();
-  document.getElementById('rpBackdrop').classList.add('open');
-  document.getElementById('rpSheet').classList.add('open');
-}
-function closeChatRpSheet(){
-  document.getElementById('rpBackdrop').classList.remove('open');
-  document.getElementById('rpSheet').classList.remove('open');
-}
-function syncCrpTypeUI(){
-  document.querySelectorAll('.rp-type').forEach(function(b){ b.classList.toggle('active', b.dataset.t === crpType); });
-  document.getElementById('crpCountField').style.display = crpType === 'group' ? 'block' : 'none';
-  document.getElementById('crpTargetField').style.display = crpType === 'exclusive' ? 'block' : 'none';
-}
-function buildCrpTargetOptions(){
-  var sel = document.getElementById('crpTarget');
-  var opts = ['<option value="">请选择在线用户</option>'];
-  Object.keys(onlineUsers).forEach(function(k){
-    var u = onlineUsers[k];
-    if(u.id === currentUser.id) return;
-    opts.push('<option value="' + u.id + '">' + escapeHtml(u.nickname || '用户') + '</option>');
-  });
-  sel.innerHTML = opts.join('');
-}
-async function sendChatRedPacket(){
-  var total = parseInt(document.getElementById('crpTotal').value, 10);
-  if(!total || total < 1){ showToast('请输入红包总积分'); return; }
-  var count, target = null;
-  if(crpType === 'exclusive'){
-    target = document.getElementById('crpTarget').value;
-    if(!target){ showToast('请选择指定领取人'); return; }
-    count = 1;
-  } else {
-    count = parseInt(document.getElementById('crpCount').value, 10);
-    if(!count || count < 2){ showToast('份数至少 2 份'); return; }
-    if(count > total){ showToast('份数不能超过总积分'); return; }
-  }
-  var btn = document.getElementById('crpSendBtn');
-  btn.disabled = true;
-  try{
-    var res = await window.sb.rpc('send_red_packet', {
-      p_room_id: null,
-      p_total: total,
-      p_count: count,
-      p_scope: 'chat',
-      p_target_user_id: target
-    });
-    if(res.error) throw res.error;
-    var d = res.data;
-    if(!d || !d.ok){ showToast((d && d.message) || '发送失败'); btn.disabled = false; return; }
-    if(d.balance !== undefined){ currentUser.coins = d.balance; setSessionUser(currentUser); }
-    closeChatRpSheet();
-    showToast('红包已发出');
-    await loadChatRedPackets();
-  }catch(e){ showToast('发送失败：' + e.message); }
-  btn.disabled = false;
-}
-function openChatRpDetail(){
-  document.getElementById('rpDetailBackdrop').classList.add('open');
-  document.getElementById('rpDetailSheet').classList.add('open');
-}
-function closeChatRpDetail(){
-  document.getElementById('rpDetailBackdrop').classList.remove('open');
-  document.getElementById('rpDetailSheet').classList.remove('open');
-}
-
-
-/* ============================================================
-   事件绑定
-============================================================ */
+// 事件绑定
 document.getElementById('sendChatBtn').addEventListener('click',sendChat);
 document.getElementById('chatInput').addEventListener('keydown',function(e){
   if(e.key==='Enter')sendChat();
 });
 document.getElementById('clearChatBtn').addEventListener('click',clearAllChats);
-document.getElementById('chatRedPacketBtn').addEventListener('click',openChatRpSheet);
-document.getElementById('rpBackdrop').addEventListener('click',closeChatRpSheet);
-document.getElementById('crpSendBtn').addEventListener('click',sendChatRedPacket);
-document.getElementById('rpDetailBackdrop').addEventListener('click',closeChatRpDetail);
-document.getElementById('rpDetailClose').addEventListener('click',closeChatRpDetail);
-document.querySelectorAll('.rp-type').forEach(function(b){
-  b.addEventListener('click',function(){ crpType = this.dataset.t; syncCrpTypeUI(); });
-});
-document.addEventListener('gesturestart',function(e){e.preventDefault()});
 
-/* ============================================================
-   初始化
-============================================================ */
+// 初始化
 window.addEventListener('DOMContentLoaded',function(){
-  // 底部导航
   if(typeof renderFooter==='function')renderFooter('chats');
-  else console.error('renderFooter 未定义，检查 common.js');
-
   if(isAdmin)document.getElementById('clearChatBtn').style.display='inline-block';
-
   updateBannedBanner();
   loadAllChats();
-  loadChatRedPackets();
-  initPresence();  // ★ 启动在线用户
-
+  initPresence();
   if(currentUser&&currentUser.id){
     updateLastChatRead(currentUser.id).then(function(){
       if(typeof updateChatBadge==='function')updateChatBadge();
     });
   }
-
-  // 全局聊天实时订阅
   window.sb.channel('chats-page-realtime-'+Date.now())
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'chats'},function(){loadAllChats()})
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'chats'},function(){loadAllChats()})
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'chats'},function(){loadAllChats()})
     .subscribe();
-
-  // 聊天群红包实时订阅（scope=chat）
-  crpState.channel = window.sb.channel('chats-rp-'+Date.now())
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(){loadChatRedPackets()})
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(p){
-      var i = crpState.list.findIndex(function(x){ return x.id === p.new.id; });
-      if(i >= 0){ crpState.list[i] = p.new; renderChatRedPackets(); } else { loadChatRedPackets(); }
-    })
-    .subscribe();
-
-  // 会话同步
-  function syncUser(){
-    var s=getSessionUser();
-    if(s&&s.id){
-      if(!currentUser||currentUser.id!==s.id||currentUser.avatar_url!==s.avatar_url||currentUser.nickname!==s.nickname){
-        location.reload();
-      }
-    }
-  }
-  window.addEventListener('focus',syncUser);
-  document.addEventListener('visibilitychange',function(){
-    if(!document.hidden)syncUser();
-  });
-});
-
-/* ★★ 服务端身份确认后再刷新权限 ★★
-   本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
-   只有 get_my_profile 返回的 is_admin 才会被采纳 */
-window.addEventListener('sq-user-ready', function (e) {
-  var u = e.detail && e.detail.user;
-  if (!u) return;
-  try { currentUser = u; } catch (err) { window.currentUser = u; }
-  var admin = (u.is_admin === true);
-  try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
-  window.isAdmin = admin;
-  ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
-    .forEach(function (fn) {
-      try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
-    });
-  var ap = document.getElementById('adminPanelBtn');
-  if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
-  var cc = document.getElementById('clearChatBtn');
-  if (cc) cc.style.display = admin ? 'inline-block' : 'none';
 });
 </script>
 </body>

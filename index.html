@@ -7,8 +7,16 @@
 <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>通行证 · Seven戚社区</title>
-<script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+<script src="./vendor/supabase.js"></script>
+<script src="./common.js"></script>
+<script>
+    // 终极保底：如果在 common.js 里没初始化成功，这里强行接管
+    if (!window.sb) {
+        window.sb = window.supabase.createClient("https://ljbxeuqnlxiffvbnwepv.supabase.co", "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP");
+    }
+</script>
+
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -689,15 +697,15 @@ box-shadow: 0 0 25px var(--primary-glow);
 <div></div>
 </div>
 <div class="field-group">
-<label id="phoneLabel">手机号 / UID</label>
-<input type="text" id="loginPhone" placeholder="手机号或自定义UID" maxlength="11" oninput="checkUidLive(this.value, true)" />
+<label id="phoneLabel">真实邮箱</label>
+<input type="text" id="loginPhone" placeholder="请输入真实邮箱（或老版UID）" maxlength="50" oninput="checkUidLive(this.value, true)" />
 <div id="loginPhoneHint" class="field-hint"></div>
 </div>
 <div class="field-group">
 <label id="passwordLabel">密码</label>
 <input type="password" id="loginPassword" placeholder="请输入密码" />
 </div>
-<button class="login-continue" id="loginBtn">
+<button class="login-continue" id="loginBtn" onclick="window.doLoginFinal()">
 <span id="loginBtnText">登录</span>
 <svg class="icon" viewBox="0 0 24 24">
 <path d="m6 17 5-5-5-5"/>
@@ -708,7 +716,7 @@ box-shadow: 0 0 25px var(--primary-glow);
 </div>
 <div class="login-footer">
 <span id="noAccountText">没有账号？</span>
-<button class="switch-link" id="toRegisterBtn">去注册</button>
+<button class="switch-link" id="toRegisterBtn" onclick="document.getElementById('loginCard').classList.remove('active'); document.getElementById('registerCard').classList.add('active');">去注册</button>
 </div>
 </div>
 
@@ -734,8 +742,8 @@ box-shadow: 0 0 25px var(--primary-glow);
 <input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
 </div>
 <div class="field-group">
-<label id="regPhoneLabel">自定义UID</label>
-<input type="text" id="regPhone" placeholder="例如：abc12345" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,''); checkUidLive(this.value)" />
+<label id="regPhoneLabel">真实邮箱 (用于接收验证码)</label>
+<input type="text" id="regPhone" placeholder="例如：123456@qq.com" maxlength="50" oninput="checkUidLive(this.value)" />
 <div id="regPhoneHint" class="field-hint"></div>
 </div>
 <div class="field-group">
@@ -746,7 +754,7 @@ box-shadow: 0 0 25px var(--primary-glow);
 <label id="regPass2Label">确认密码</label>
 <input type="password" id="regPassword2" placeholder="请再次输入密码" />
 </div>
-<button class="login-continue" id="registerBtn">
+<button class="login-continue" id="registerBtn" onclick="window.doRegisterFinal()">
 <span id="registerBtnText">注册</span>
 <svg class="icon" viewBox="0 0 24 24">
 <path d="m6 17 5-5-5-5"/>
@@ -757,7 +765,7 @@ box-shadow: 0 0 25px var(--primary-glow);
 </div>
 <div class="login-footer">
 <span id="hasAccountText">已有账号？</span>
-<button class="switch-link" id="toLoginBtn">去登录</button>
+<button class="switch-link" id="toLoginBtn" onclick="document.getElementById('registerCard').classList.remove('active'); document.getElementById('loginCard').classList.add('active');">去登录</button>
 </div>
 </div>
 </div>
@@ -781,764 +789,142 @@ box-shadow: 0 0 25px var(--primary-glow);
 </div>
 </div>
 
+
 <script>
 // ============================================================
-// Supabase 配置
+// 终极版：原生无依赖的登录、注册、邮箱校验逻辑
 // ============================================================
-var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
-var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
-window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var allowedDomains = /@(qq|163|126|sina|sohu|yeah|aliyun|foxmail|139|189|21cn|vip\.sina|vip\.163|188)\.(com|cn|net)$/i;
 
-// ============================================================
-// 设备 ID 相关
-// ============================================================
-var MAX_ACCOUNTS_PER_DEVICE = 2;
-
-function getDeviceId() {
-var id = localStorage.getItem('sq_device_id');
-if (!id) {
-if (window.crypto && crypto.randomUUID) {
-id = 'dev_' + crypto.randomUUID();
-} else {
-id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-}
-localStorage.setItem('sq_device_id', id);
-}
-return id;
-}
-
-async function getDeviceRegisterCount(deviceId) {
-try {
-var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
-if (res.error) throw res.error;
-return res.data || 0;
-} catch (e) {
-console.warn('设备检测失败:', e);
-return 0;
-}
-}
-
-async function recordDeviceRegistration(deviceId, userId, phone) {
-try {
-await window.sb.rpc('record_device_registration', {
-p_device_id: deviceId,
-p_user_id: userId,
-p_phone: phone
-});
-} catch (e) {
-console.warn('设备记录写入失败:', e);
-}
-}
-
-async function refreshDeviceHint() {
-var hintEl = document.getElementById('deviceHint');
-var textEl = document.getElementById('deviceHintText');
-var t = T();
-var deviceId = getDeviceId();
-var count = await getDeviceRegisterCount(deviceId);
-var remain = MAX_ACCOUNTS_PER_DEVICE - count;
-
-if (remain <= 0) {
-hintEl.classList.add('warn');
-textEl.textContent = t.deviceLimitReached.replace('{n}', MAX_ACCOUNTS_PER_DEVICE);
-document.getElementById('registerBtn').disabled = true;
-} else {
-hintEl.classList.remove('warn');
-textEl.textContent = t.deviceHintLeft.replace('{n}', remain).replace('{total}', MAX_ACCOUNTS_PER_DEVICE);
-}
-}
-
-// ============================================================
-// 多语言
-// ============================================================
-var LANGS = {
-zh: {
-loginMainTitle: '欢迎回来',
-loginSubTitle: '登录以继续',
-registerMainTitle: '创建账户',
-registerSubTitle: '加入 Seven戚 社区',
-phoneLabel: '手机号 / UID',
-phonePh: '请输入手机号或自定义UID',
-passwordLabel: '密码',
-passwordPh: '请输入密码',
-regNickLabel: '昵称',
-regNickPh: '请输入昵称',
-regPhoneLabel: '自定义UID',
-regPhonePh: '5-10位数字加字母组合',
-regPassLabel: '密码',
-regPassPh: '请设置密码（至少6位）',
-regPass2Label: '确认密码',
-regPass2Ph: '请再次输入密码',
-loginBtnText: '登录',
-registerBtnText: '注册',
-orText: '或',
-noAccountText: '没有账号？',
-toRegisterBtn: '去注册',
-hasAccountText: '已有账号？',
-toLoginBtn: '去登录',
-googleText: 'Google',
-githubText: 'Github',
-modalTitle: '无法登录',
-modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
-modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
-fillAll: '请填写完整信息',
-badPhone: '格式不对哦：手机号需11位纯数字，UID需5-10位字母+数字组合',
-    uidPureNum: '请不要只填数字，UID必须带字母（例如：abc123）',
-    uidPureLetter: '请不要只填字母，UID必须带数字（例如：123abc）',
-    uidTooShort: 'UID至少要有5位哦',
-    uidValid: '✅ 格式正确',
-shortPwd: '密码至少6位',
-pwdMismatch: '两次密码不一致',
-nicknameTaken: '该昵称不可用，请使用其他名称',
-phoneExists: '该账号已注册',
-loginSuccess: '登录成功！',
-registerSuccess: '注册成功，请登录',
-logging: '登录中...',
-registering: '注册中...',
-loginFail: '账号未注册或密码错误',
-deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
-deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
-deviceLimitTitle: '设备已达上限',
-deviceLimitFeedbackBtn: '去反馈说明情况',
-deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请提交反馈说明原因，管理员会尽快处理。',
-netError: '网络异常，请检查网络后重试'
-},
-en: {
-loginMainTitle: 'Welcome back',
-loginSubTitle: 'Sign in to continue',
-registerMainTitle: 'Create account',
-registerSubTitle: 'Join Seven Qi Community',
-phoneLabel: 'Phone / UID',
-phonePh: 'Enter phone or custom UID',
-passwordLabel: 'Password',
-passwordPh: 'Enter password',
-regNickLabel: 'Nickname',
-regNickPh: 'Enter nickname',
-regPhoneLabel: 'Custom UID',
-regPhonePh: '5-10 chars (letters & numbers)',
-regPassLabel: 'Password',
-regPassPh: 'At least 6 characters',
-regPass2Label: 'Confirm password',
-regPass2Ph: 'Re-enter password',
-loginBtnText: 'Login',
-registerBtnText: 'Register',
-orText: 'OR',
-noAccountText: "Don't have an account?",
-toRegisterBtn: 'Sign up',
-hasAccountText: 'Already have an account?',
-toLoginBtn: 'Log in',
-googleText: 'Google',
-githubText: 'Github',
-modalTitle: 'Login Unavailable',
-modalDescGoogle: "Where'd you come from? You got a Google account?",
-modalDescGithub: "Where'd you come from? You got a Github account?",
-fillAll: 'Please fill in all fields',
-badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 letters+numbers',
-    uidPureNum: 'UID cannot be pure numbers, please add letters',
-    uidPureLetter: 'UID cannot be pure letters, please add numbers',
-    uidTooShort: 'UID must be at least 5 characters',
-    uidValid: '✅ Valid format',
-shortPwd: 'Password must be at least 6 characters',
-pwdMismatch: 'Passwords do not match',
-nicknameTaken: 'This nickname is unavailable',
-phoneExists: 'Account already registered',
-loginSuccess: 'Login successful!',
-registerSuccess: 'Registered, please log in',
-logging: 'Logging in...',
-registering: 'Registering...',
-loginFail: 'Account not registered or wrong password',
-deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
-deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
-deviceLimitTitle: 'Device Limit Reached',
-deviceLimitFeedbackBtn: 'Submit feedback',
-deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nIf you need an exception, please submit feedback and an admin will review it.',
-netError: 'Network error, please check your connection and try again'
-}
-};
-var currentLang = 'zh';
-
-// ============================================================
-// 首次访问引导页逻辑
-// ============================================================
-function initFirstVisitIntro() {
-    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v2');
-    if (hasSeenIntro) return; // 如果不是第一次访问，直接退出，显示登录框
-    
-    var introOverlay = document.getElementById('introOverlay');
-    var bootOverlay = document.getElementById('bootOverlay');
-    var bootText = document.getElementById('bootText');
-    var introBtn = document.getElementById('introBtn');
-    var introBtnText = document.getElementById('introBtnText');
-    var skipBtn = document.getElementById('skipBtn');
-    var dots = document.querySelectorAll('.dot');
-    var slides = document.querySelectorAll('.slide');
-    var currentSlide = 0;
-    var totalSlides = slides.length;
-
-    if (!introOverlay) return;
-    
-    // 显示遮罩层
-    introOverlay.style.display = 'flex';
-    
-    // 初始化启动文字
-    if (bootText) {
-        const text = 'Seven戚  出品';
-        const chars = text.split('');
-        chars.forEach((c, i) => {
-            const span = document.createElement('span');
-            span.className = 'boot-letter';
-            span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
-            span.textContent = c;
-            bootText.appendChild(span);
-        });
-    }
-
-    // 初始第一页动画
-    setTimeout(() => {
-        if(slides[0]) {
-            slides[0].classList.add('active');
-            dots[0].classList.add('active');
-        }
-    }, 100);
-
-    const goToSlide = (idx) => {
-        if(slides[currentSlide]) slides[currentSlide].classList.remove('active');
-        if(dots[currentSlide]) dots[currentSlide].classList.remove('active');
-        currentSlide = idx;
-        if(slides[currentSlide]) slides[currentSlide].classList.add('active');
-        if(dots[currentSlide]) dots[currentSlide].classList.add('active');
-        if (currentSlide === totalSlides - 1) {
-            if(introBtnText) introBtnText.textContent = '开启体验';
-        } else {
-            if(introBtnText) introBtnText.textContent = '下一步';
-        }
-    };
-
-    const finishIntro = () => {
-        // 记录已展示过，以后不再弹
-        localStorage.setItem('seven_intro_shown_v2', '1');
-        
-        introOverlay.style.opacity = '0';
-        setTimeout(() => { 
-            introOverlay.style.display = 'none'; 
-            if (!bootOverlay) return;
-            bootOverlay.style.display = 'flex';
-
-            // 启动动画 2 秒后淡出（原来 4 秒太长，且脚本出错会一直黑屏）
-            var done = false;
-            function endBoot() {
-                if (done) return;
-                done = true;
-                bootOverlay.classList.add('fade-out');
-                setTimeout(() => { bootOverlay.style.display = 'none'; }, 600);
-            }
-            setTimeout(endBoot, 2000);
-            setTimeout(endBoot, 5000);   // 兜底
-        }, 600);
-    };
-
-    if (introBtn) {
-        introBtn.onclick = function() {
-            if (currentSlide < totalSlides - 1) {
-                goToSlide(currentSlide + 1);
-            } else {
-                finishIntro();
-            }
-        };
-    }
-
-    if (skipBtn) {
-        skipBtn.onclick = finishIntro;
-    }
-}
-document.addEventListener('DOMContentLoaded', initFirstVisitIntro);
-
-var currentLang = 'zh';
-function T() { return LANGS[currentLang]; }
-
-
-/* ============================================================
-   ★ 账号 → 邮箱映射（唯一需要按后端实际情况修改的地方）
-   Supabase Auth 在本项目只开启了「邮箱」登录，
-   而用户习惯用 手机号 / 自定义 UID 登录，
-   因此注册时后端会把账号写成 `${账号}@${AUTH_DOMAIN}`。
-   若你的数据库用的是别的域名，只改这一行即可。
-   ============================================================ */
-var AUTH_DOMAIN = '@sevenqi.local';
-
-// 登录时会依次尝试这些域名，命中即通过。
-// 如果你在数据库里用的不是第一个，把真实域名放到第一位即可。
-var AUTH_DOMAIN_CANDIDATES = [AUTH_DOMAIN, '@sevenqi.com', '@sevenqi.app', '@sevenqi.cn', '@sq.local'];
-
-function accountToEmail(account, domain) {
-    var a = String(account || '').trim().toLowerCase();
-    if (!a) return '';
-    if (a.indexOf('@') > -1) return a;      // 用户直接输了完整邮箱
-    return a + (domain || AUTH_DOMAIN);
-}
-
-/* ============================================================
-   多语言应用
-   ============================================================ */
-function applyLang(lang) {
-    currentLang = lang;
-    var t = T();
-    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-
-    document.querySelectorAll('.lang-btn').forEach(function (b) {
-        b.classList.toggle('active', b.dataset.lang === lang);
-    });
-
-    function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-    function setPh(id, v) { var el = document.getElementById(id); if (el) el.placeholder = v; }
-
-    setText('loginMainTitle', t.loginMainTitle);
-    setText('loginSubTitle', t.loginSubTitle);
-    setText('phoneLabel', t.phoneLabel);
-    setText('passwordLabel', t.passwordLabel);
-    setPh('loginPhone', t.phonePh);
-    setPh('loginPassword', t.passwordPh);
-    setText('loginBtnText', t.loginBtnText);
-    setText('orText', t.orText);
-    setText('noAccountText', t.noAccountText);
-    setText('toRegisterBtn', t.toRegisterBtn);
-    setText('googleText', t.googleText);
-    setText('githubText', t.githubText);
-
-    setText('registerMainTitle', t.registerMainTitle);
-    setText('registerSubTitle', t.registerSubTitle);
-    setText('regNickLabel', t.regNickLabel);
-    setText('regPhoneLabel', t.regPhoneLabel);
-    setText('regPassLabel', t.regPassLabel);
-    setText('regPass2Label', t.regPass2Label);
-    setPh('regNick', t.regNickPh);
-    setPh('regPhone', t.regPhonePh);
-    setPh('regPassword', t.regPassPh);
-    setPh('regPassword2', t.regPass2Ph);
-    setText('registerBtnText', t.registerBtnText);
-    setText('hasAccountText', t.hasAccountText);
-    setText('toLoginBtn', t.toLoginBtn);
-
-    try { localStorage.setItem('sq_lang', lang); } catch (e) {}
-}
-
-function setLang(lang) {
-    applyLang(lang);
-    var t = T();
-    var hint = document.getElementById('loginPhoneHint');
-    if (hint && hint.dataset.state === 'error') hint.textContent = t.badPhone;
-}
-
-/* ============================================================
-   账号格式实时校验（登录 / 注册共用）
-   ============================================================ */
-function checkUidLive(value, isLogin) {
-    var t = T();
+window.checkUidLive = function(value, isLogin) {
     var hint = document.getElementById(isLogin ? 'loginPhoneHint' : 'regPhoneHint');
-    if (!hint) return true;
-
+    if (!hint) return false;
     var v = String(value || '').trim();
-    hint.className = 'field-hint';
-
-    if (!v) {
-        hint.textContent = '';
-        hint.dataset.state = '';
+    if (!v) { hint.textContent = ''; return false; }
+    
+    if (!v.includes('@')) {
+        if (isLogin) { hint.textContent = ''; return true; } 
+        hint.className = 'field-hint error'; hint.textContent = '必须填写真实邮箱'; return false;
+    }
+    
+    if (!allowedDomains.test(v)) {
+        hint.className = 'field-hint error';
+        hint.textContent = '仅支持国内常见邮箱（QQ、163等）';
         return false;
     }
-
-    if (isLogin) {
-        // 登录：手机号 11 位纯数字，或 5-10 位字母+数字，或邮箱
-        var ok = /^1\d{10}$/.test(v) || /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-        if (!ok) {
-            hint.classList.add('error');
-            hint.textContent = t.badPhone;
-            hint.dataset.state = 'error';
-            return false;
-        }
-        hint.textContent = '';
-        hint.dataset.state = '';
-        return true;
-    }
-
-    // 注册：必须是 5-10 位、字母+数字组合
-    if (/^\d+$/.test(v)) {
-        hint.classList.add('error'); hint.textContent = t.uidPureNum; hint.dataset.state = 'error'; return false;
-    }
-    if (/^[a-zA-Z]+$/.test(v)) {
-        hint.classList.add('error'); hint.textContent = t.uidPureLetter; hint.dataset.state = 'error'; return false;
-    }
-    if (v.length < 5) {
-        hint.classList.add('error'); hint.textContent = t.uidTooShort; hint.dataset.state = 'error'; return false;
-    }
-    if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v)) {
-        hint.classList.add('error'); hint.textContent = t.badPhone; hint.dataset.state = 'error'; return false;
-    }
-    hint.classList.add('success');
-    hint.textContent = t.uidValid;
-    hint.dataset.state = 'success';
+    
+    hint.className = 'field-hint success';
+    hint.textContent = '✅ 邮箱格式正确';
     return true;
-}
+};
 
-/* ============================================================
-   卡片切换 / 提示
-   ============================================================ */
-function showCard(which) {
-    ['loginCard', 'registerCard'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.toggle('active', id === which + 'Card');
-    });
-    var le = document.getElementById('loginError');
-    var re = document.getElementById('registerError');
-    if (le) le.textContent = '';
-    if (re) re.textContent = '';
-    if (which === 'register') refreshDeviceHint();
-}
-
-var _toastTimer = null;
-function toast(msg) {
-    var el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
-}
-
-function uiAlert(title, body, opts) {
-    opts = opts || {};
-    var overlay = document.getElementById('uiModal');
-    if (!overlay) { alert(title + '\n' + body); return; }
-    document.getElementById('uiModalTitle').textContent = title || '提示';
-    document.getElementById('uiModalBody').textContent = body || '';
-    var primary = document.getElementById('uiModalBtn');
-    var secondary = document.getElementById('uiModalSecondaryBtn');
-
-    if (opts.secondaryText) {
-        secondary.style.display = '';
-        secondary.textContent = opts.secondaryText;
-        secondary.onclick = function () {
-            overlay.classList.remove('active');
-            if (opts.onSecondary) opts.onSecondary();
-        };
-    } else {
-        secondary.style.display = 'none';
-    }
-    primary.textContent = opts.okText || '知道了';
-    primary.onclick = function () {
-        overlay.classList.remove('active');
-        if (opts.onOk) opts.onOk();
-    };
-    overlay.classList.add('active');
-}
-
-/* ============================================================
-   登录
-   ============================================================ */
-async function doLogin() {
-    var t = T();
+window.doLoginFinal = async function() {
     var account = document.getElementById('loginPhone').value.trim();
     var password = document.getElementById('loginPassword').value;
     var errEl = document.getElementById('loginError');
     var btn = document.getElementById('loginBtn');
     var btnText = document.getElementById('loginBtnText');
-
+    
     errEl.textContent = '';
-
-    if (!account || !password) { errEl.textContent = t.fillAll; return; }
-    if (!checkUidLive(account, true)) { errEl.textContent = t.badPhone; return; }
-    if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
-
+    if (!account || !password) { errEl.textContent = '请填写完整信息'; return; }
+    if (account.includes('@') && !allowedDomains.test(account)) { errEl.textContent = '仅支持国内邮箱登录'; return; }
+    
     btn.disabled = true;
-    btnText.textContent = t.logging;
-
+    if (btnText) btnText.textContent = '登录中...';
+    
     try {
-        // 账号 → 邮箱：依次尝试候选域名，避免因域名约定不一致而登录不了
-        var candidates = account.indexOf('@') > -1 ? [account] : AUTH_DOMAIN_CANDIDATES;
-        var res = null;
-        for (var ci = 0; ci < candidates.length; ci++) {
-            res = await window.sb.auth.signInWithPassword({
-                email: accountToEmail(account, candidates[ci]),
-                password: password
-            });
-            if (!res.error) break;
-            // 只有「账号密码不对」才值得换域名重试；网络错误等直接跳出
-            if (!/invalid login credentials/i.test(String(res.error.message || ''))) break;
-        }
-
-        if (res.error) {
-            var msg = String(res.error.message || '');
-            if (/invalid login credentials/i.test(msg)) {
-                errEl.textContent = t.loginFail;
-            } else if (/email not confirmed/i.test(msg)) {
-                errEl.textContent = '邮箱尚未验证，请联系管理员';
-            } else {
-                errEl.textContent = msg || t.netError;
-            }
-            btn.disabled = false;
-            btnText.textContent = t.loginBtnText;
-            return;
-        }
-
-        // 登录成功：立刻从服务端拉取真实档案（is_admin / 封禁状态一律以服务端为准）
+        var email = account.includes('@') ? account : account + '@sevenqi.local';
+        var res = await window.sb.auth.signInWithPassword({ email: email, password: password });
+        if (res.error) { errEl.textContent = '账号或密码错误'; btn.disabled = false; if(btnText) btnText.textContent='登录'; return; }
+        
         var profile = null;
-        try { profile = await fetchMyProfileServer(); } catch (e) {}
-
+        var r = await window.sb.rpc('get_my_profile');
+        if (!r.error && r.data) profile = Array.isArray(r.data) ? r.data[0] : r.data;
+        
         if (!profile) {
-            // Auth 有用户但档案缺失 —— 补建一条，避免进站后白屏
-            profile = await ensureProfileFromAuth();
+            // 如果 Auth 里有账号，但 users 表没档案，强行补建！
+            if (btnText) btnText.textContent = '建档中...';
+            var meta = res.data.user.user_metadata || {};
+            var nick = meta.nickname || email.split('@')[0];
+            await window.sb.rpc('register_profile', { p_nickname: nick, p_uid: email, p_ip: '0.0.0.0' });
+            var r2 = await window.sb.rpc('get_my_profile');
+            if (!r2.error && r2.data) profile = Array.isArray(r2.data) ? r2.data[0] : r2.data;
         }
-        if (!profile) {
-            await window.sb.auth.signOut();
-            errEl.textContent = '账号档案不存在，请联系管理员';
-            btn.disabled = false;
-            btnText.textContent = t.loginBtnText;
-            return;
+        
+        if (!profile) { await window.sb.auth.signOut(); errEl.textContent = '建档失败，请联系管理员'; btn.disabled = false; if(btnText) btnText.textContent='登录'; return; }
+        
+        if (profile.is_admin === true) {
+            if (btnText) btnText.textContent = '验证中...';
+            var otpRes = await window.sb.rpc('generate_admin_otp', { p_email: profile.email });
+            if (otpRes.error) throw new Error(otpRes.error.message);
+            
+            if (otpRes.data && otpRes.data.ok) {
+                alert('【测试阶段】管理员验证码：' + otpRes.data.code);
+                var inputCode = prompt('请输入管理员验证码：');
+                if (!inputCode) throw new Error('已取消登录');
+                
+                var verifyRes = await window.sb.rpc('verify_admin_otp', { p_email: profile.email, p_code: inputCode });
+                if (verifyRes.error || !verifyRes.data.ok) throw new Error('验证码错误');
+            }
         }
-
-        localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(profile)));
+        
+        localStorage.setItem('sq_user_session', JSON.stringify(profile));
         if (window.sqTrust) { window.sqTrust.user = profile; window.sqTrust.ready = true; }
-
-        toast(t.loginSuccess);
-        setTimeout(function () { window.location.href = './posts.html'; }, 500);
-
+        window.location.href = './posts.html';
+        
     } catch (e) {
-        errEl.textContent = (e && e.message) || t.netError;
+        errEl.textContent = (e && e.message) || '网络错误';
         btn.disabled = false;
-        btnText.textContent = t.loginBtnText;
+        if (btnText) btnText.textContent = '登录';
     }
-}
+};
 
-/* ============================================================
-   注册
-   ============================================================ */
-async function doRegister() {
-    var t = T();
+window.doRegisterFinal = async function() {
     var nickname = document.getElementById('regNick').value.trim();
-    var uid = document.getElementById('regPhone').value.trim();
+    var email = document.getElementById('regPhone').value.trim();
     var pwd = document.getElementById('regPassword').value;
     var pwd2 = document.getElementById('regPassword2').value;
     var errEl = document.getElementById('registerError');
     var btn = document.getElementById('registerBtn');
     var btnText = document.getElementById('registerBtnText');
-
+    
     errEl.textContent = '';
-
-    if (!nickname || !uid || !pwd || !pwd2) { errEl.textContent = t.fillAll; return; }
-    if (nickname.length < 2) { errEl.textContent = '昵称至少 2 个字'; return; }
-    if (!checkUidLive(uid, false)) { errEl.textContent = t.badPhone; return; }
-    if (pwd.length < 6) { errEl.textContent = t.shortPwd; return; }
-    if (pwd !== pwd2) { errEl.textContent = t.pwdMismatch; return; }
-
+    if (!nickname || !email || !pwd || !pwd2) { errEl.textContent = '请填写完整信息'; return; }
+    if (!allowedDomains.test(email)) { errEl.textContent = '仅支持国内邮箱注册（QQ、163等）'; return; }
+    if (pwd.length < 6) { errEl.textContent = '密码至少6位'; return; }
+    if (pwd !== pwd2) { errEl.textContent = '两次密码不一致'; return; }
+    
     btn.disabled = true;
-    btnText.textContent = t.registering;
-
+    if (btnText) btnText.textContent = '注册中...';
+    
     try {
-        // 设备注册数（服务端判定，前端只做提示）
-        var deviceId = getDeviceId();
-        var used = await getDeviceRegisterCount(deviceId);
-        if (used >= MAX_ACCOUNTS_PER_DEVICE) {
-            btn.disabled = true;
-            btnText.textContent = t.registerBtnText;
-            uiAlert(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), {
-                secondaryText: t.deviceLimitFeedbackBtn,
-                onSecondary: function () { window.location.href = './messages.html'; }
-            });
+        var res = await window.sb.auth.signUp({ email: email, password: pwd, options: { data: { nickname: nickname, custom_uid: email } } });
+        if (res.error) { errEl.textContent = res.error.message; throw new Error('__handled__'); }
+        
+        if (!res.data.session) {
+            alert('注册成功！请前往邮箱点击验证链接激活账号。');
+            document.getElementById('registerCard').classList.remove('active');
+            document.getElementById('loginCard').classList.add('active');
             return;
         }
-
-        // 昵称 / UID 是否已被占用（服务端查，RPC 不存在时静默跳过）
-        var exists = await checkAccountAvailable(uid, nickname);
-        if (exists.uidTaken) { errEl.textContent = t.phoneExists; throw new Error(t.phoneExists); }
-        if (exists.nickTaken) { errEl.textContent = t.nicknameTaken; throw new Error(t.nicknameTaken); }
-
-        var email = accountToEmail(uid);
-        var res = await window.sb.auth.signUp({
-            email: email,
-            password: pwd,
-            options: { data: { nickname: nickname, custom_uid: uid } }
-        });
-
-        if (res.error) {
-            var msg = String(res.error.message || '');
-            if (/already registered|already exists/i.test(msg)) {
-                errEl.textContent = t.phoneExists;
-            } else if (/password/i.test(msg)) {
-                errEl.textContent = /weak/i.test(msg) ? '密码太简单，请更换更复杂的密码' : msg;
-            } else {
-                errEl.textContent = msg || t.netError;
-            }
-            throw new Error('__handled__');
-        }
-
-        // 自动确认已开启时 signUp 会直接返回会话
-        if (!res.data.session) {
-            // 兜底：尝试用刚注册的账号登录一次
-            var again = await window.sb.auth.signInWithPassword({ email: email, password: pwd });
-            if (again.error) {
-                uiAlert('注册成功', '账号已创建，请返回登录。', { onOk: function () { showCard('login'); } });
-                return;
-            }
-        }
-
-        await ensureProfileFromAuth(nickname, uid);
-        await recordDeviceRegistration(deviceId, null, uid);
+        
+        var ipText = '0.0.0.0'; 
+        try { var ipRes = await fetch("https://api.ipify.org?format=json"); var ipData = await ipRes.json(); if (ipData && ipData.ip) ipText = ipData.ip; } catch(e) {}
+        
+        await window.sb.rpc('register_profile', { p_nickname: nickname, p_uid: email, p_ip: ipText });
         await window.sb.auth.signOut();
-
-        toast(t.registerSuccess);
-        showCard('login');
-        document.getElementById('loginPhone').value = uid;
-        document.getElementById('loginPassword').value = '';
-
+        
+        alert('注册成功，请登录！');
+        document.getElementById('registerCard').classList.remove('active');
+        document.getElementById('loginCard').classList.add('active');
+        
     } catch (e) {
-        if (e && e.message !== '__handled__') {
-            errEl.textContent = (e && e.message) || t.netError;
-        }
+        if (e && e.message !== '__handled__') errEl.textContent = (e && e.message) || '网络错误';
     } finally {
         btn.disabled = false;
-        btnText.textContent = t.registerBtnText;
+        if (btnText) btnText.textContent = '注册';
     }
-}
-
-/* ============================================================
-   服务端档案读取 / 创建
-   —— 权限字段（is_admin、封禁、余额）只能来自这里，不能来自 localStorage
-   ============================================================ */
-async function fetchMyProfileServer() {
-    if (!window.sb) return null;
-
-    // 1) 优先走 RPC（推荐，数据库里配好 SECURITY DEFINER 函数）
-    try {
-        var r = await window.sb.rpc('get_my_profile');
-        if (!r.error && r.data) return Array.isArray(r.data) ? r.data[0] : r.data;
-    } catch (e) {}
-
-    // 2) 退化：读自己的 users 行（受 RLS 保护，只能读到本人）
-    try {
-        var s = await window.sb.auth.getUser();
-        var me = s && s.data && s.data.user;
-        if (!me) return null;
-        var q = await window.sb.from('users')
-            .select('id, nickname, avatar_url, custom_uid, phone, created_at, banned_until, banned_reason, is_admin, coins')
-            .eq('id', me.id).maybeSingle();
-        if (!q.error && q.data) return q.data;
-    } catch (e) {}
-
-    return null;
-}
-
-function sanitizeLocalUser(u) {
-    if (!u) return null;
-    var o = {};
-    var allow = ['id', 'nickname', 'avatar_url', 'custom_uid', 'phone', 'created_at',
-                 'banned_until', 'banned_reason', 'is_admin', 'role', 'role_color',
-                 'is_official', 'coins', 'signature'];
-    allow.forEach(function (k) { if (u[k] !== undefined) o[k] = u[k]; });
-    // 记录服务端签名时间，便于判断缓存是否过期
-    o.__verified_at = Date.now();
-    return o;
-}
-
-async function ensureProfileFromAuth(nickname, uid) {
-    try {
-        var s = await window.sb.auth.getUser();
-        var me = s && s.data && s.data.user;
-        if (!me) return null;
-
-        var meta = me.user_metadata || {};
-        var nick = nickname || meta.nickname || (me.email || '').split('@')[0] || '新用户';
-        var myUid = uid || meta.custom_uid || (me.email || '').split('@')[0] || null;
-
-        // 1) RPC 建档
-        try {
-            var r = await window.sb.rpc('register_profile', { p_nickname: nick, p_uid: myUid });
-            if (!r.error) {
-                var p = await fetchMyProfileServer();
-                if (p) return p;
-            }
-        } catch (e) {}
-
-        // 2) 直接插表兜底
-        try {
-            var ins = await window.sb.from('users')
-                .insert([{ id: me.id, nickname: nick, custom_uid: myUid }])
-                .select();
-            if (!ins.error && ins.data && ins.data[0]) return ins.data[0];
-        } catch (e) {}
-
-        // 3) 也许是触发器已建好，再读一次
-        return await fetchMyProfileServer();
-    } catch (e) {
-        return null;
-    }
-}
-
-async function checkAccountAvailable(uid, nickname) {
-    var out = { uidTaken: false, nickTaken: false };
-    try {
-        var r = await window.sb.rpc('check_account_available', { p_uid: uid, p_nickname: nickname });
-        if (!r.error && r.data) {
-            out.uidTaken = !!r.data.uid_taken;
-            out.nickTaken = !!r.data.nick_taken;
-        }
-    } catch (e) {}
-    return out;
-}
-
-/* ============================================================
-   事件绑定
-   ============================================================ */
-(function bindIndexEvents() {
-    function on(id, ev, fn) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener(ev, fn);
-    }
-
-    // 语言
-    document.querySelectorAll('.lang-btn').forEach(function (b) {
-        b.addEventListener('click', function () { setLang(b.dataset.lang); });
-    });
-
-    // 卡片切换
-    on('toRegisterBtn', 'click', function () { showCard('register'); });
-    on('toLoginBtn', 'click', function () { showCard('login'); });
-
-    // 登录 / 注册
-    on('loginBtn', 'click', doLogin);
-    on('registerBtn', 'click', doRegister);
-
-    // 回车提交
-    on('loginPassword', 'keydown', function (e) { if (e.key === 'Enter') doLogin(); });
-    on('loginPhone', 'keydown', function (e) { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
-    on('regPassword2', 'keydown', function (e) { if (e.key === 'Enter') doRegister(); });
-
-    // 第三方登录（后端未开启 OAuth，如实提示，不再假装能登录）
-    on('googleBtn', 'click', function () {
-        uiAlert(T().modalTitle, T().modalDescGoogle);
-    });
-    on('githubBtn', 'click', function () {
-        uiAlert(T().modalTitle, T().modalDescGithub);
-    });
-
-    // 恢复上次语言
-    var savedLang = 'zh';
-    try { savedLang = localStorage.getItem('sq_lang') || 'zh'; } catch (e) {}
-    applyLang(savedLang);
-
-    // 已登录 → 直接进站（但必须服务端确认过身份）
-    (async function autoRedirect() {
-        try {
-            var s = await window.sb.auth.getSession();
-            if (!s.data || !s.data.session) {
-                localStorage.removeItem('sq_user_session');
-                return;
-            }
-            var p = await fetchMyProfileServer();
-            if (!p) return;
-            localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(p)));
-            window.location.replace('./posts.html');
-        } catch (e) {}
-    })();
-})();
+};
 </script>
 </body>
 </html>
