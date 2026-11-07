@@ -9,395 +9,188 @@
 <title>通行证 · Seven戚社区</title>
 <script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+<script>
+  // 提前给 common.js 发信号，让它不要弹自带的开屏，这里由本页面接管开屏
+  sessionStorage.setItem('sq_boot_shown', '1');
+</script>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 :root {
---bg: #f5faf5;
---bg-card: #ffffff;
---bg-input: #eaf3ea;
---border: #c8e0c8;
---text: #1e3a2e;
---text-muted: #5a7a6a;
---text-light: #8aaa9a;
---primary: #2e7d32;
---primary-light: #4caf50;
---primary-glow: rgba(46, 125, 50, 0.25);
---primary-bg: #e8f5e9;
---shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
---danger: #e57373;
---danger-bg: #ffebee;
---radius: 16px;
---radius-sm: 10px;
+--bg: #f5faf5; --bg-card: #ffffff; --bg-input: #eaf3ea; --border: #c8e0c8;
+--text: #1e3a2e; --text-muted: #5a7a6a; --primary: #2e7d32; --primary-light: #4caf50;
+--primary-glow: rgba(46, 125, 50, 0.25); --primary-bg: #e8f5e9;
+--shadow: 0 8px 32px rgba(46, 125, 50, 0.12); --radius: 16px; --radius-sm: 10px;
 --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
 }
-html, body {
-height: 100%;
-font-family: var(--font);
-background: var(--bg);
-background-image:
-radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
-radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
-color: var(--text);
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 20px;
-overflow: hidden;
-}
-.login-card {
-width: 23em;
-max-width: 92vw;
-max-height: 92vh;
-overflow-y: auto;
-background: var(--bg-card);
-border-radius: var(--radius);
-padding: 2.2em 2em;
-position: relative;
-border: 1px solid var(--border);
-box-shadow: var(--shadow);
--webkit-overflow-scrolling: touch;
-}
-.login-card::-webkit-scrollbar { width: 4px; }
-.login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-.login-card::after {
-content: "";
-position: absolute;
-inset: 0;
-border-radius: var(--radius);
-background-image:
-linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
-linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
-background-size: 2em 2em;
-opacity: 0.6;
-pointer-events: none;
-z-index: 0;
-}
-.login-card::before {
-content: "";
-position: absolute;
-inset: 0;
-border-radius: var(--radius);
-background: linear-gradient(115deg, transparent 0%, transparent 40%, rgba(46, 125, 50, 0.03) 45%, rgba(46, 125, 50, 0.10) 50%, rgba(46, 125, 50, 0.03) 55%, transparent 60%, transparent 100%);
-pointer-events: none;
-z-index: 1;
-animation: sweep 6s ease-in-out infinite;
-}
-@keyframes sweep {
-0%, 100% { background-position: 100% 100%; }
-50% { background-position: 0% 0%; }
-}
-.login-card > * { position: relative; z-index: 2; }
+html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
 
+/* ===== 1. 开屏动画 (全屏黑底) ===== */
+#bootScreen {
+    position: fixed; inset: 0; z-index: 99999; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease; opacity: 1;
+}
+#bootScreen.hide { opacity: 0; pointer-events: none; }
+.boot-inner { position: relative; width: 160px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.boot-loader {
+    position: absolute; inset: 0; z-index: 1;
+    background-color: transparent;
+    -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px);
+    mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px);
+}
+.boot-loader::after {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%);
+    mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%);
+    animation: boot-transform 2s infinite alternate, boot-opacity 3s infinite;
+}
+@keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
+@keyframes boot-opacity { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
+.boot-text {
+    position: relative; z-index: 2; color: #fff; font-size: 1.2em; font-weight: 900; letter-spacing: 2px;
+    text-shadow: 0 0 10px #fff; animation: textPulse 1.5s infinite alternate;
+}
+@keyframes textPulse { 0% { opacity: 0.5; } 100% { opacity: 1; text-shadow: 0 0 20px #fff, 0 0 30px var(--primary); } }
+
+/* ===== 2. 引导页 (四页) ===== */
+#introScreen {
+    position: fixed; inset: 0; z-index: 9000; background: #fff;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease; opacity: 1;
+}
+#introScreen.hide { opacity: 0; pointer-events: none; }
+.intro-slide { display: none; text-align: center; padding: 20px; width: 100%; max-width: 400px; }
+.intro-slide.active { display: block; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.intro-icon { width: 96px; height: 96px; border-radius: 28px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #4caf50, #2e7d32); box-shadow: 0 12px 32px rgba(46,125,50,0.2); }
+.intro-title { font-size: 1.8em; font-weight: 900; margin-bottom: 12px; color: #1e3a2e; }
+.intro-desc { font-size: 0.95em; color: #5a7a6a; line-height: 1.7; margin-bottom: 40px; }
+.intro-dots { display: flex; gap: 8px; margin-bottom: 24px; }
+.intro-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(46,125,50,0.2); transition: all 0.4s; }
+.intro-dots .dot.active { width: 28px; border-radius: 4px; background: #2e7d32; }
+.intro-btn { background: linear-gradient(135deg, #4caf50, #2e7d32); color: #fff; border: none; padding: 16px 48px; font-size: 1.05em; font-weight: 700; border-radius: 99px; cursor: pointer; min-width: 220px; box-shadow: 0 10px 25px rgba(46,125,50,0.3); }
+.skip-btn { background: none; border: none; color: #8aaa9a; font-size: 0.85em; margin-top: 16px; cursor: pointer; }
+
+/* ===== 3. 登录/注册层 ===== */
+#authScreen {
+    position: fixed; inset: 0; z-index: 8000; background: var(--bg);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+    background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%), radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
+    transition: opacity 0.4s ease; opacity: 1; overflow-y: auto;
+}
+#authScreen.hide { opacity: 0; pointer-events: none; }
+.login-card { width: 23em; max-width: 92vw; background: #fff; border-radius: 16px; padding: 2.2em 2em; border: 1px solid #c8e0c8; box-shadow: 0 8px 32px rgba(46,125,50,0.12); }
 .login-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5em; }
-.login-logo { font-weight: 900; font-size: 1.35em; color: var(--text); letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.35em; }
-.login-logo span { color: var(--primary); }
-.login-logo svg { width: 1.3em; height: 1.3em; stroke: var(--primary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px var(--primary-glow)); }
-.lang-switch { display: flex; gap: 0.3em; }
-.lang-btn { background: transparent; border: 1.5px solid var(--border); color: var(--text-muted); padding: 0.2em 0.7em; border-radius: 99px; font-size: 0.65em; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-.lang-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 20px var(--primary-glow); }
-
-.login-title { font-size: 1.4em; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 1em; }
-.login-title span { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.55em; margin-top: 0.2em; }
+.login-logo { font-weight: 900; font-size: 1.35em; color: #1e3a2e; display: flex; align-items: center; gap: 0.35em; }
+.login-logo span { color: #2e7d32; }
+.login-title { font-size: 1.4em; font-weight: 700; text-align: center; margin-bottom: 1em; }
+.login-title span { display: block; font-weight: 400; color: #5a7a6a; font-size: 0.55em; margin-top: 0.2em; }
 .login-form { display: flex; flex-direction: column; gap: 0.9em; }
-
-.field-hint { font-size: 0.75em; margin-top: 4px; height: 1em; transition: color 0.2s; }
-.field-hint.error { color: #e57373; }
-.field-hint.success { color: #2e7d32; }
-
 .field-group { display: flex; flex-direction: column; gap: 0.35em; }
-.field-group label { font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.field-group input { width: 100%; padding: 0.8em 1em; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); color: var(--text); font-size: 0.95em; font-weight: 600; outline: none; transition: border-color 0.3s, box-shadow 0.3s; font-family: inherit; }
-.field-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
-.field-group input::placeholder { color: var(--text-light); }
-
-.separator { display: flex; align-items: center; gap: 0.6em; color: var(--text-muted); font-size: 0.75em; margin: 0.2em 0; }
-.separator div { flex: 1; height: 1px; background: var(--border); }
-
-.login-continue { width: 100%; padding: 0.85em; border-radius: var(--radius-sm); border: 2px solid var(--primary); background: var(--primary); color: #fff; font-weight: 700; font-size: 0.95em; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5em; font-family: inherit; margin-top: 0.3em; }
-.login-continue:hover { background: var(--primary-light); border-color: var(--primary-light); box-shadow: 0 0 30px var(--primary-glow); transform: translateY(-1px); }
-.login-continue:disabled { opacity: 0.5; pointer-events: none; }
-.login-continue .icon { width: 1.2em; height: 1.2em; stroke: currentColor; stroke-width: 2.5; fill: none; }
-
-.login-footer { text-align: center; margin-top: 1.1em; font-size: 0.82em; color: var(--text-muted); }
-.login-footer .switch-link { color: var(--primary); font-weight: 700; cursor: pointer; border: none; background: none; font-family: inherit; font-size: inherit; padding: 0 4px; text-decoration: underline; text-underline-offset: 3px; }
-.login-footer .switch-link:hover { color: var(--primary-light); }
+.field-group label { font-size: 0.7em; font-weight: 600; color: #5a7a6a; }
+.field-group input { width: 100%; padding: 0.8em 1em; border-radius: 10px; border: 2px solid #c8e0c8; background: #eaf3ea; font-size: 0.95em; outline: none; transition: all 0.2s; }
+.field-group input:focus { border-color: #2e7d32; box-shadow: 0 0 0 4px rgba(46,125,50,0.1); }
+.login-continue { width: 100%; padding: 0.85em; border-radius: 10px; border: none; background: #2e7d32; color: #fff; font-weight: 700; font-size: 0.95em; cursor: pointer; margin-top: 0.3em; transition: all 0.2s; }
+.login-continue:hover { background: #4caf50; transform: translateY(-1px); }
+.login-footer { text-align: center; margin-top: 1.1em; font-size: 0.82em; color: #5a7a6a; }
+.login-footer .switch-link { color: #2e7d32; font-weight: 700; cursor: pointer; border: none; background: none; padding: 0 4px; text-decoration: underline; }
 .login-error { color: #c62828; font-size: 0.78em; text-align: center; min-height: 1.5em; margin-top: 0.2em; }
-
-.device-hint { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--primary-bg); border: 1px solid var(--border); font-size: 0.75em; color: var(--text-muted); line-height: 1.5; }
-.device-hint svg { width: 16px; height: 16px; flex-shrink: 0; stroke: var(--primary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
-.device-hint.warn { background: var(--danger-bg); border-color: #ffcdd2; color: #c62828; }
-.device-hint.warn svg { stroke: #c62828; }
-
 .auth-card { display: none; }
-.auth-card.active { display: block; animation: fadeIn 0.35s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-#toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 0.7em 1.6em; border-radius: 2em; font-weight: 600; font-size: 0.85em; opacity: 0; transition: all 0.4s ease; z-index: 300; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 6px; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(30, 58, 46, 0.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease; }
-.modal-overlay.active { display: flex; opacity: 1; }
-.modal-box { background: var(--bg-card); border-radius: var(--radius); max-width: 400px; width: 100%; padding: 2em; box-shadow: var(--shadow); border: 1px solid var(--border); text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.modal-overlay.active .modal-box { transform: scale(1); }
-.modal-box .modal-icon { width: 64px; height: 64px; margin: 0 auto 0.4em; border-radius: 50%; background: var(--primary-bg); display: grid; place-items: center; color: var(--primary); }
-.modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
-.modal-box .modal-icon svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.modal-box .modal-title { font-size: 1.25em; font-weight: 900; color: var(--text); margin-bottom: 0.4em; }
-.modal-box .modal-body { font-size: 0.95em; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.4em; white-space: pre-line; }
-.modal-box .modal-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-.modal-box .modal-actions .btn-secondary { padding: 0.6em 1.4em; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.95em; cursor: pointer; font-family: inherit; transition: background 0.2s, border-color 0.2s, color 0.2s; }
-.modal-box .modal-actions .btn-secondary:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
-.modal-box .modal-actions .btn-primary { padding: 0.6em 2em; border-radius: var(--radius-sm); border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.95em; cursor: pointer; font-family: inherit; transition: background 0.2s, box-shadow 0.2s; }
-.modal-box .modal-actions .btn-primary:hover { background: var(--primary-light); box-shadow: 0 0 25px var(--primary-glow); }
+.auth-card.active { display: block; animation: fadeIn 0.3s ease; }
 </style>
 </head>
 <body>
 
-<!-- 引导页 -->
-<div id="introOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%); flex-direction:column; align-items:center; justify-content:center; color:#1e3a2e; transition:opacity 0.8s ease; overflow:hidden;">
-    <div class="bg-orb bg-orb-1" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:350px; height:350px; background:rgba(76,175,80,0.25); top:-100px; left:-100px;"></div>
-    <div class="bg-orb bg-orb-2" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:450px; height:450px; background:rgba(46,125,50,0.15); bottom:-150px; right:-100px; animation-delay:-4s;"></div>
-
-    <div class="slides-wrap" style="position:relative; z-index:2; width:100%; max-width:420px; height:480px;">
-        <div class="slide" data-idx="0" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #4caf50, #2e7d32);">
-                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none"><path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="rgba(255,255,255,0.9)"/></svg>
-            </div>
-            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px;">社区广场</div>
-            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">帖子广场、实时聊天群、匿名留言板</div>
-        </div>
-
-        <div class="slide" data-idx="1" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #7c3aed, #db2777);">
-                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none"><path d="M22 24C16 24 12 30 12 38C12 44 16 48 20 48C24 48 26 46 28 42H36C38 46 40 48 44 48C48 48 52 44 52 38C52 30 48 24 42 24H22Z" fill="rgba(255,255,255,0.9)"/></svg>
-            </div>
-            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px;">互动游戏</div>
-            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">斗地主、五子棋、你画我猜</div>
-        </div>
-    </div>
-
-    <div class="intro-footer" style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:0 20px; margin-top:10px;">
-        <div class="dots" id="dots" style="display:flex; gap:8px; margin-bottom:24px;">
-            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-        </div>
-        <button id="introBtn" style="background:linear-gradient(135deg, #4caf50, #2e7d32); color:#fff; border:none; padding:16px 48px; font-size:1.05em; font-weight:700; border-radius:99px; cursor:pointer; box-shadow:0 10px 25px rgba(46,125,50,0.3); min-width:220px;">下一步</button>
-        <button id="skipBtn" style="background:none; border:none; color:#8aaa9a; font-size:0.85em; cursor:pointer; margin-top:16px; padding:6px 12px;">跳过，直接进入 →</button>
+<!-- 1. 开屏动画 -->
+<div id="bootScreen">
+    <div class="boot-inner">
+        <div class="boot-loader"></div>
+        <div class="boot-text">Seven戚 出品</div>
     </div>
 </div>
 
-<style>
-    @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
-    .slide .anim-item { opacity: 0; transform: translateY(-160px) scale(0.5); filter: blur(15px); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease; }
-    .slide.active { opacity: 1; pointer-events: auto; }
-    .slide.active .anim-item { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    .slide.active .delay-1 { transition-delay: 0.1s; }
-    .slide.active .delay-2 { transition-delay: 0.35s; }
-    .slide.active .delay-3 { transition-delay: 0.6s; }
-    .dot.active { width: 28px; border-radius: 4px; background: #2e7d32; }
-</style>
-
-<div class="login-card">
-<div class="login-header">
-<div class="login-logo">
-<svg viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-<span>Seven</span>戚
-</div>
-<div class="lang-switch">
-<button class="lang-btn active" data-lang="zh">中文</button>
-</div>
-</div>
-
-<!-- 登录卡片 -->
-<div id="loginCard" class="auth-card active">
-<div class="login-title">
-<span>欢迎回来</span>
-<span>登录以继续</span>
-</div>
-<div class="login-form">
-<div class="field-group">
-<label>邮箱账号</label>
-<input type="email" id="loginEmail" placeholder="请输入邮箱（如 qq/163）" />
-<div id="loginPhoneHint" class="field-hint"></div>
-</div>
-<div class="field-group">
-<label>密码</label>
-<input type="password" id="loginPassword" placeholder="请输入密码" />
-</div>
-<button class="login-continue" id="loginBtn">
-<span id="loginBtnText">登录</span>
-</button>
-<div class="login-error" id="loginError"></div>
-</div>
-<div class="login-footer">
-<span>没有账号？</span>
-<button class="switch-link" id="toRegisterBtn">去注册</button>
-</div>
+<!-- 2. 引导页 -->
+<div id="introScreen">
+    <div id="introSlide0" class="intro-slide active">
+        <div class="intro-icon"><svg viewBox="0 0 64 64" width="48" height="48" fill="none"><path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="rgba(255,255,255,0.9)"/></svg></div>
+        <div class="intro-title">社区广场</div>
+        <div class="intro-desc">帖子广场、实时聊天群、匿名留言板<br>发布动态，随便聊聊</div>
+    </div>
+    <div id="introSlide1" class="intro-slide">
+        <div class="intro-icon" style="background:linear-gradient(135deg,#7c3aed,#db2777);"><svg viewBox="0 0 64 64" width="48" height="48" fill="none"><path d="M22 24C16 24 12 30 12 38C12 44 16 48 20 48C24 48 26 46 28 42H36C38 46 40 48 44 48C48 48 52 44 52 38C52 30 48 24 42 24H22Z" fill="rgba(255,255,255,0.9)"/></svg></div>
+        <div class="intro-title">互动游戏</div>
+        <div class="intro-desc">开个房间，和朋友一起玩<br>斗地主、五子棋等</div>
+    </div>
+    <div id="introSlide2" class="intro-slide">
+        <div class="intro-icon" style="background:linear-gradient(135deg,#d4af37,#b8941f);"><svg viewBox="0 0 64 64" width="48" height="48" fill="none"><path d="M20 24H44L46 48C46.2 50.2 44.5 52 42.3 52H21.7C19.5 52 17.8 50.2 18 48L20 24Z" fill="rgba(255,255,255,0.9)"/></svg></div>
+        <div class="intro-title">皮肤商城</div>
+        <div class="intro-desc">45 款精美气泡皮肤任你挑<br>每日签到赚小七币</div>
+    </div>
+    <div id="introSlide3" class="intro-slide">
+        <div class="intro-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);"><svg viewBox="0 0 64 64" width="48" height="48" fill="none"><rect x="14" y="20" width="36" height="26" rx="4" fill="rgba(255,255,255,0.9)"/></svg></div>
+        <div class="intro-title">匿名留言板</div>
+        <div class="intro-desc">无需登录，随写随发<br>每天 3 条额度，安全审核</div>
+    </div>
+    
+    <div class="intro-dots" id="introDots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <button id="introNextBtn" class="intro-btn">下一步</button>
+    <button id="introSkipBtn" class="skip-btn">跳过，直接进入 →</button>
 </div>
 
-<!-- 注册卡片 -->
-<div id="registerCard" class="auth-card">
-<div class="login-title">
-<span>创建账户</span>
-<span>加入 Seven戚 社区</span>
-</div>
+<!-- 3. 登录注册页 -->
+<div id="authScreen">
+    <div class="login-card">
+        <div class="login-header"><div class="login-logo"><span>Seven</span>戚</div></div>
+        
+        <div id="loginCard" class="auth-card active">
+            <div class="login-title"><span>欢迎回来</span><span>登录以继续</span></div>
+            <div class="login-form">
+                <div class="field-group"><label>邮箱账号</label><input type="email" id="loginEmail" placeholder="请输入真实邮箱" /></div>
+                <div class="field-group"><label>密码</label><input type="password" id="loginPassword" placeholder="请输入密码" /></div>
+                <button class="login-continue" id="loginBtn">登录</button>
+                <div class="login-error" id="loginError"></div>
+            </div>
+            <div class="login-footer"><span>没有账号？</span><button class="switch-link" id="toRegisterBtn">去注册</button></div>
+        </div>
 
-<div class="login-form">
-<div class="field-group">
-<label>昵称</label>
-<input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
-</div>
-<div class="field-group">
-<label>邮箱账号</label>
-<input type="email" id="regEmail" placeholder="请输入真实邮箱（支持 QQ/163 等）" />
-</div>
-<div class="field-group">
-<label>密码</label>
-<input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
-</div>
-<div class="field-group">
-<label>确认密码</label>
-<input type="password" id="regPassword2" placeholder="请再次输入密码" />
-</div>
-<button class="login-continue" id="registerBtn">
-<span id="registerBtnText">注册</span>
-</button>
-<div class="login-error" id="registerError"></div>
-</div>
-<div class="login-footer">
-<span>已有账号？</span>
-<button class="switch-link" id="toLoginBtn">去登录</button>
-</div>
-</div>
-</div>
-
-<div id="toast"></div>
-
-<!-- 提示弹窗 -->
-<div class="modal-overlay" id="uiModal">
-<div class="modal-box">
-<div class="modal-icon" id="uiModalIconWrap">
-<svg viewBox="0 0 24 24"><path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/></svg>
-</div>
-<div class="modal-title" id="uiModalTitle">提示</div>
-<div class="modal-body" id="uiModalBody">内容</div>
-<div class="modal-actions">
-<button class="btn-primary" id="uiModalBtn">知道了</button>
-</div>
-</div>
+        <div id="registerCard" class="auth-card">
+            <div class="login-title"><span>创建账户</span><span>加入 Seven戚 社区</span></div>
+            <div class="login-form">
+                <div class="field-group"><label>昵称</label><input type="text" id="regNick" maxlength="12" placeholder="请输入昵称" /></div>
+                <div class="field-group"><label>邮箱账号</label><input type="email" id="regEmail" placeholder="请输入真实邮箱" /></div>
+                <div class="field-group"><label>密码</label><input type="password" id="regPassword" placeholder="密码至少6位" /></div>
+                <div class="field-group"><label>确认密码</label><input type="password" id="regPassword2" placeholder="再次输入密码" /></div>
+                <button class="login-continue" id="registerBtn">注册</button>
+                <div class="login-error" id="registerError"></div>
+            </div>
+            <div class="login-footer"><span>已有账号？</span><button class="switch-link" id="toLoginBtn">去登录</button></div>
+        </div>
+    </div>
 </div>
 
 <script>
 // ============================================================
-// 1. Supabase 初始化 (新项目配置)
+// 1. Supabase 初始化 (兜底)
 // ============================================================
 var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
-window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-function showToast(msg) {
-    var el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
-}
-
-function uiAlert(title, body) {
-    var overlay = document.getElementById('uiModal');
-    if (!overlay) { alert(title + '\n' + body); return; }
-    document.getElementById('uiModalTitle').textContent = title || '提示';
-    document.getElementById('uiModalBody').textContent = body || '';
-    overlay.classList.add('active');
-    document.getElementById('uiModalBtn').onclick = function () {
-        overlay.classList.remove('active');
-    };
-}
+if (!window.sb) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
-// 2. 设备限制
-// ============================================================
-var MAX_ACCOUNTS_PER_DEVICE = 2;
-function getDeviceId() {
-    var id = localStorage.getItem('sq_device_id');
-    if (!id) {
-        id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-        localStorage.setItem('sq_device_id', id);
-    }
-    return id;
-}
-async function getDeviceRegisterCount(deviceId) {
-    try {
-        var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
-        if (res.error) return 0;
-        return res.data || 0;
-    } catch (e) { return 0; }
-}
-
-// ============================================================
-// 3. 引导页逻辑
-// ============================================================
-function initFirstVisitIntro() {
-    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v3');
-    if (hasSeenIntro) return;
-    var introOverlay = document.getElementById('introOverlay');
-    if (!introOverlay) return;
-    introOverlay.style.display = 'flex';
-    
-    var introBtn = document.getElementById('introBtn');
-    var skipBtn = document.getElementById('skipBtn');
-    var dots = document.querySelectorAll('.dot');
-    var slides = document.querySelectorAll('.slide');
-    var currentSlide = 0;
-    var totalSlides = slides.length;
-
-    setTimeout(() => {
-        if(slides[0]) { slides[0].classList.add('active'); dots[0].classList.add('active'); }
-    }, 100);
-
-    const goToSlide = (idx) => {
-        if(slides[currentSlide]) slides[currentSlide].classList.remove('active');
-        if(dots[currentSlide]) dots[currentSlide].classList.remove('active');
-        currentSlide = idx;
-        if(slides[currentSlide]) slides[currentSlide].classList.add('active');
-        if(dots[currentSlide]) dots[currentSlide].classList.add('active');
-        if (currentSlide === totalSlides - 1) introBtn.textContent = '开启体验';
-        else introBtn.textContent = '下一步';
-    };
-
-    const finishIntro = () => {
-        localStorage.setItem('seven_intro_shown_v3', '1');
-        introOverlay.style.opacity = '0';
-        setTimeout(() => { introOverlay.style.display = 'none'; }, 600);
-    };
-
-    introBtn.onclick = function() {
-        if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
-        else finishIntro();
-    };
-    skipBtn.onclick = finishIntro;
-}
-
-function showCard(which) {
-    ['loginCard', 'registerCard'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.toggle('active', id === which + 'Card');
-    });
-    document.getElementById('loginError').textContent = '';
-    document.getElementById('registerError').textContent = '';
-}
-
-// ============================================================
-// 4. 核心：获取和校验用户档案
+// 2. 档案操作
 // ============================================================
 async function fetchMyProfileServer() {
     try {
         var r = await window.sb.rpc('get_my_profile');
         if (!r.error && r.data) return Array.isArray(r.data) ? r.data[0] : r.data;
     } catch (e) {}
-
     try {
         var s = await window.sb.auth.getUser();
         var me = s && s.data && s.data.user;
@@ -413,222 +206,167 @@ async function ensureProfileFromAuth(nickname) {
         var s = await window.sb.auth.getUser();
         var me = s && s.data && s.data.user;
         if (!me) return null;
-
-        var meta = me.user_metadata || {};
-        var nick = nickname || meta.nickname || (me.email || '').split('@')[0] || '新用户';
+        var nick = nickname || (me.user_metadata && me.user_metadata.nickname) || (me.email || '').split('@')[0];
         
-        // 尝试通过 RPC 注册档案（交接文档中提到后端有这个函数，传入 IP）
         var ip = '0.0.0.0';
-        try {
-            var geoRes = await fetch('https://api.ipify.org?format=json');
-            var geoData = await geoRes.json();
-            ip = geoData.ip || '0.0.0.0';
-        } catch(e) {}
-
-        // 调用后端注册档案 RPC
+        try { var res = await fetch('https://api.ipify.org?format=json'); ip = (await res.json()).ip; } catch(e) {}
+        
         var r = await window.sb.rpc('register_profile', { p_nickname: nick, p_ip: ip });
-        if (!r.error) {
-            return await fetchMyProfileServer();
-        }
-
-        // 退化：直接插表
+        if (!r.error) return await fetchMyProfileServer();
+        
         var ins = await window.sb.from('users').insert([{ id: me.id, nickname: nick, ip_address: ip }]).select();
-        if (!ins.error && ins.data && ins.data[0]) return ins.data[0];
-
+        if (!ins.error && ins.data[0]) return ins.data[0];
         return await fetchMyProfileServer();
-    } catch (e) { 
-        console.error('补建档案失败', e);
-        return null; 
-    }
+    } catch (e) { return null; }
 }
 
 function saveLocalSession(profile) {
     if (!profile) return;
-    var allow = ['id', 'nickname', 'avatar_url', 'is_admin', 'coins', 'banned_until', 'banned_reason'];
-    var o = {};
-    allow.forEach(function (k) { if (profile[k] !== undefined) o[k] = profile[k]; });
-    o.__verified_at = Date.now();
+    var o = {}; ['id', 'nickname', 'avatar_url', 'is_admin', 'coins', 'banned_until'].forEach(k => { if (profile[k] !== undefined) o[k] = profile[k]; });
     localStorage.setItem('sq_user_session', JSON.stringify(o));
 }
 
 // ============================================================
-// 5. 登录逻辑
+// 3. 登录注册逻辑
 // ============================================================
-function isValidEmail(email) {
-    // 强校验国内常用邮箱（QQ, 163, 126, 新浪, 搜狐, 阿里, 139 等），也允许其他正常邮箱以防误杀
-    return /^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$/.test(email);
-}
-
 async function doLogin() {
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value;
     var errEl = document.getElementById('loginError');
-    var btn = document.getElementById('loginBtn');
-    var btnText = document.getElementById('loginBtnText');
-
-    errEl.textContent = '';
-    if (!email || !password) { errEl.textContent = '请填写邮箱和密码'; return; }
-    if (!isValidEmail(email)) { errEl.textContent = '请输入正确的邮箱格式'; return; }
-    if (password.length < 6) { errEl.textContent = '密码至少6位'; return; }
-
-    btn.disabled = true;
-    btnText.textContent = '登录中...';
-
+    if (!email || !password) return errEl.textContent = '请填写邮箱和密码';
+    
+    errEl.textContent = '登录中...';
     try {
-        var res = await window.sb.auth.signInWithPassword({ email: email, password: password });
-        if (res.error) {
-            var msg = res.error.message;
-            if (msg.includes('Invalid login credentials')) throw new Error('账号未注册或密码错误');
-            throw new Error(msg);
-        }
-
-        // 登录成功，获取档案
-        var profile = await fetchMyProfileServer();
-        if (!profile) {
-            // 自动补建档案
-            profile = await ensureProfileFromAuth();
+        var res = await window.sb.auth.signInWithPassword({ email, password });
+        if (res.error) throw new Error('账号或密码错误');
+        
+        var profile = await fetchMyProfileServer() || await ensureProfileFromAuth();
+        if (!profile) throw new Error('档案补建失败');
+        
+        // 管理员拦截
+        if (profile.is_admin === true) {
+            var code = prompt('【管理员验证】请输入 6 位验证码：');
+            if(!code) throw new Error('必须输入验证码');
+            var v = await window.sb.rpc('verify_admin_otp', { p_code: code.trim() });
+            if (v.error || (v.data && !v.data.ok)) throw new Error('验证码错误');
         }
         
-        if (!profile) {
-            await window.sb.auth.signOut();
-            throw new Error('账号档案不存在且补建失败，请联系管理员');
-        }
-
-        // 管理员 OTP 验证
-        if (profile.is_admin === true) {
-            var otpCode = prompt('【管理员安全验证】\n请输入 6 位动态验证码（如未收到，请检查后端配置）：');
-            if (otpCode) {
-                // 尝试调用后端 RPC 进行校验
-                var vres = await window.sb.rpc('verify_admin_otp', { p_code: otpCode.trim() });
-                if (vres.error || (vres.data && vres.data.ok === false)) {
-                    await window.sb.auth.signOut();
-                    throw new Error('管理员验证码错误，登录已被拒绝');
-                }
-            } else {
-                await window.sb.auth.signOut();
-                throw new Error('必须输入管理员验证码');
-            }
-        }
-
         saveLocalSession(profile);
-        showToast('登录成功！');
-        setTimeout(function () { window.location.href = './posts.html'; }, 600);
-
-    } catch (e) {
-        errEl.textContent = e.message || '网络异常';
-        btn.disabled = false;
-        btnText.textContent = '登录';
-    }
+        document.getElementById('authScreen').classList.add('hide');
+        setTimeout(() => window.location.href = './posts.html', 400);
+    } catch (e) { errEl.textContent = e.message; }
 }
 
-// ============================================================
-// 6. 注册逻辑
-// ============================================================
 async function doRegister() {
     var nickname = document.getElementById('regNick').value.trim();
     var email = document.getElementById('regEmail').value.trim();
     var pwd = document.getElementById('regPassword').value;
     var pwd2 = document.getElementById('regPassword2').value;
     var errEl = document.getElementById('registerError');
-    var btn = document.getElementById('registerBtn');
-    var btnText = document.getElementById('registerBtnText');
-
-    errEl.textContent = '';
-    if (!nickname || !email || !pwd || !pwd2) { errEl.textContent = '请填写完整信息'; return; }
-    if (nickname.length < 2) { errEl.textContent = '昵称至少 2 个字'; return; }
-    if (!isValidEmail(email)) { errEl.textContent = '请输入正确的邮箱格式'; return; }
-    if (pwd.length < 6) { errEl.textContent = '密码至少6位'; return; }
-    if (pwd !== pwd2) { errEl.textContent = '两次密码不一致'; return; }
-
-    btn.disabled = true;
-    btnText.textContent = '注册中...';
-
+    
+    if (!nickname || !email || !pwd) return errEl.textContent = '请填写完整信息';
+    if (pwd !== pwd2) return errEl.textContent = '两次密码不一致';
+    
+    errEl.textContent = '注册中...';
     try {
-        var deviceId = getDeviceId();
-        var used = await getDeviceRegisterCount(deviceId);
-        if (used >= MAX_ACCOUNTS_PER_DEVICE) {
-            throw new Error('本设备注册账号已达上限');
-        }
-
-        var res = await window.sb.auth.signUp({
-            email: email,
-            password: pwd,
-            options: { data: { nickname: nickname } }
-        });
-
-        if (res.error) {
-            if (res.error.message.includes('already registered')) throw new Error('该邮箱已注册');
-            throw new Error(res.error.message);
-        }
-
-        // 如果 Supabase 开启了邮箱验证，这里不会有 session
+        var res = await window.sb.auth.signUp({ email, password: pwd, options: { data: { nickname: nickname } } });
+        if (res.error) throw new Error(res.error.message);
+        
         if (!res.data.session) {
-            uiAlert('注册成功', '账号已创建，请前往邮箱查收验证邮件后再登录。\n(注：如未收到邮件，可能需联系管理员在后台手动确认)');
-            showCard('login');
+            alert('注册成功，请去邮箱查收验证邮件后再登录。');
+            switchCard('login');
             document.getElementById('loginEmail').value = email;
-            document.getElementById('loginPassword').value = pwd;
             return;
         }
-
-        // 有 session，直接补建档案并登录
-        await ensureProfileFromAuth(nickname);
         
-        // 记录设备
-        try {
-            await window.sb.rpc('record_device_registration', { p_device_id: deviceId, p_user_id: null, p_phone: email });
-        } catch(e) {}
+        await ensureProfileFromAuth(nickname);
+        document.getElementById('authScreen').classList.add('hide');
+        setTimeout(() => window.location.href = './posts.html', 400);
+    } catch (e) { errEl.textContent = e.message; }
+}
 
-        showToast('注册成功，正在进入社区...');
-        setTimeout(function () { window.location.href = './posts.html'; }, 1000);
-
-    } catch (e) {
-        errEl.textContent = e.message || '网络异常';
-    } finally {
-        btn.disabled = false;
-        btnText.textContent = '注册';
-    }
+function switchCard(which) {
+    ['loginCard', 'registerCard'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === which + 'Card');
+    });
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('registerError').textContent = '';
 }
 
 // ============================================================
-// 7. 初始化与事件绑定
+// 4. 核心：开屏 -> 静默判定 -> 分流
 // ============================================================
-(function init() {
-    initFirstVisitIntro();
-
-    document.getElementById('toRegisterBtn').onclick = function () { showCard('register'); };
-    document.getElementById('toLoginBtn').onclick = function () { showCard('login'); };
-    
+(async function init() {
+    // 按钮绑定
+    document.getElementById('toRegisterBtn').onclick = () => switchCard('register');
+    document.getElementById('toLoginBtn').onclick = () => switchCard('login');
     document.getElementById('loginBtn').onclick = doLogin;
     document.getElementById('registerBtn').onclick = doRegister;
+    document.getElementById('loginPassword').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+    document.getElementById('regPassword2').addEventListener('keydown', e => e.key === 'Enter' && doRegister());
 
-    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') doLogin();
-    });
-    document.getElementById('loginEmail').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('loginPassword').focus();
-    });
-    document.getElementById('regPassword2').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') doRegister();
-    });
+    // 引导页按钮逻辑
+    var currentSlide = 0;
+    var totalSlides = 4;
+    function updateSlide(idx) {
+        currentSlide = idx;
+        document.querySelectorAll('.intro-slide').forEach((el, i) => el.classList.toggle('active', i === idx));
+        document.querySelectorAll('.intro-dots .dot').forEach((el, i) => el.classList.toggle('active', i === idx));
+        document.getElementById('introNextBtn').textContent = idx === totalSlides - 1 ? '开启体验' : '下一步';
+    }
+    document.getElementById('introNextBtn').onclick = function() {
+        if (currentSlide < totalSlides - 1) updateSlide(currentSlide + 1);
+        else finishIntro();
+    };
+    document.getElementById('introSkipBtn').onclick = finishIntro;
+    
+    function finishIntro() {
+        localStorage.setItem('seven_intro_shown_v5', '1');
+        document.getElementById('introScreen').classList.add('hide');
+        setTimeout(() => {
+            document.getElementById('introScreen').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'flex';
+        }, 400);
+    }
 
-    // 已登录自动跳转
-    (async function autoRedirect() {
+    // 计时器：保证开屏动画至少显示 1.8 秒
+    var minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
+    
+    // 静默检查登录状态
+    var authPromise = (async function() {
         try {
             var s = await window.sb.auth.getSession();
-            if (!s.data || !s.data.session) {
-                localStorage.removeItem('sq_user_session');
-                return;
+            if (s.data && s.data.session) {
+                var p = await fetchMyProfileServer() || await ensureProfileFromAuth();
+                if (p) { saveLocalSession(p); return 'AUTHED'; }
             }
-            var p = await fetchMyProfileServer();
-            if (!p) {
-                p = await ensureProfileFromAuth();
-            }
-            if (p) {
-                saveLocalSession(p);
-                window.location.replace('./posts.html');
-            }
-        } catch (e) {}
+        } catch(e) {}
+        return 'GUEST';
     })();
+
+    // 等待两边都完成
+    var results = await Promise.all([minTimePromise, authPromise]);
+    var status = results[1];
+
+    // 隐藏开屏
+    document.getElementById('bootScreen').classList.add('hide');
+    setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 600);
+
+    // 分流
+    if (status === 'AUTHED') {
+        // 已登录，去主页
+        window.location.replace('./posts.html');
+    } else {
+        // 未登录
+        if (!localStorage.getItem('seven_intro_shown_v5')) {
+            // 第一次来，显示引导
+            document.getElementById('introScreen').style.display = 'flex';
+        } else {
+            // 来过，显示登录框
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+    }
 })();
 </script>
 </body>
