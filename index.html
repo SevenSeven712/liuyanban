@@ -10,6 +10,7 @@
 <script src="./vendor/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
 <script>
+  // 阻止 common.js 自带的局部动画
   sessionStorage.setItem('sq_boot_shown', '1');
 </script>
 
@@ -24,18 +25,18 @@
 }
 html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
 
-/* 1. 开屏动画 */
-#bootScreen { position: fixed; inset: 0; z-index: 99999; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; opacity: 1; }
+/* ===== 1. 全屏开屏动画 ===== */
+#bootScreen { position: fixed; inset: 0; z-index: 99999; background: #000; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; opacity: 1; }
 #bootScreen.hide { opacity: 0; pointer-events: none; }
-.boot-inner { position: relative; width: 100%; max-width: 600px; height: 160px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.boot-loader { position: absolute; inset: 0; z-index: 1; background-color: transparent; -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); mask: repeating-linear-gradient(90deg, transparent 0, transparent 6px, black 7px, black 8px); }
+.boot-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.boot-loader { position: absolute; inset: 0; z-index: 1; background-color: transparent; -webkit-mask: repeating-linear-gradient(90deg, transparent 0, transparent 8px, black 9px, black 10px); mask: repeating-linear-gradient(90deg, transparent 0, transparent 8px, black 9px, black 10px); }
 .boot-loader::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%), radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%), radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%), radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%), radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%); -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); mask: radial-gradient(circle at 50% 50%, transparent 0%, transparent 10%, black 25%); animation: boot-transform 2s infinite alternate, boot-opacity 3s infinite; }
-@keyframes boot-transform { 0% { transform: translate(-60%); } 100% { transform: translate(60%); } }
+@keyframes boot-transform { 0% { transform: translate(-100%); } 100% { transform: translate(100%); } }
 @keyframes boot-opacity { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
-.boot-text { position: relative; z-index: 2; color: #fff; font-size: clamp(2rem, 8vw, 3.5rem); font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 20px rgba(255,255,255,0.8); animation: textPulse 1.5s infinite alternate; }
-@keyframes textPulse { 0% { opacity: 0.6; } 100% { opacity: 1; text-shadow: 0 0 30px #fff, 0 0 40px var(--primary); } }
+.boot-text { position: relative; z-index: 2; color: #fff; font-size: clamp(2.5rem, 10vw, 6rem); font-weight: 900; letter-spacing: 0.2em; text-shadow: 0 0 20px rgba(255,255,255,0.8); animation: textPulse 1.5s infinite alternate; }
+@keyframes textPulse { 0% { opacity: 0.6; } 100% { opacity: 1; text-shadow: 0 0 30px #fff, 0 0 60px var(--primary); } }
 
-/* 2. 引导页 */
+/* ===== 2. 引导页 ===== */
 #introScreen { position: fixed; inset: 0; z-index: 9000; background: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease; opacity: 1; }
 #introScreen.hide { opacity: 0; pointer-events: none; }
 .intro-slide { display: none; text-align: center; padding: 20px; width: 100%; max-width: 400px; }
@@ -50,7 +51,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .intro-btn { background: linear-gradient(135deg, #4caf50, #2e7d32); color: #fff; border: none; padding: 16px 48px; font-size: 1.05em; font-weight: 700; border-radius: 99px; cursor: pointer; min-width: 220px; box-shadow: 0 10px 25px rgba(46,125,50,0.3); }
 .skip-btn { background: none; border: none; color: #8aaa9a; font-size: 0.85em; margin-top: 16px; cursor: pointer; }
 
-/* 3. 登录/注册层 */
+/* ===== 3. 登录/注册层 ===== */
 #authScreen { position: fixed; inset: 0; z-index: 8000; background: var(--bg); display: none; align-items: center; justify-content: center; padding: 20px; background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%), radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%); transition: opacity 0.4s ease; opacity: 1; overflow-y: auto; }
 #authScreen.hide { opacity: 0; pointer-events: none; }
 .login-card { width: 23em; max-width: 92vw; background: #fff; border-radius: 16px; padding: 2.2em 2em; border: 1px solid #c8e0c8; box-shadow: 0 8px 32px rgba(46,125,50,0.12); }
@@ -71,13 +72,9 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .login-error { color: #c62828; font-size: 0.78em; text-align: center; min-height: 1.5em; margin-top: 0.2em; line-height: 1.4; }
 .auth-card { display: none; }
 .auth-card.active { display: block; animation: fadeIn 0.3s ease; }
-
-/* 实时校验提示 */
 .field-hint { font-size: 0.72em; margin-top: 4px; min-height: 1.2em; transition: color 0.2s; }
 .field-hint.error { color: #c62828; }
 .field-hint.success { color: #2e7d32; }
-
-/* 第三方登录 UI */
 .oauth-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .oauth-btn { flex: 1; padding: 10px; border: 1.5px solid #c8e0c8; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85em; font-weight: 700; color: #1e3a2e; cursor: pointer; font-family: inherit; }
 .oauth-btn:hover { background: #f5faf5; }
@@ -174,7 +171,6 @@ var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
 if (!window.sb) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 国内邮箱正则 (qq, 163, 126, sina, sohu, yeah, 139, 189, aliyun, foxmail, vip.qq)
 var DOMESTIC_EMAIL_REGEX = /^[a-zA-Z0-9_.-]+@(qq|vip\.qq|foxmail|163|126|yeah|sina|sohu|139|189|aliyun)\.(com|cn|net)$/i;
 
 async function fetchMyProfileServer() {
@@ -251,7 +247,7 @@ async function doRegister() {
     var errEl = document.getElementById('registerError');
     
     if (!nickname || !email || !pwd) return errEl.textContent = '请填写完整信息';
-    if (!DOMESTIC_EMAIL_REGEX.test(email)) return errEl.textContent = '请使用 QQ、163、126 等国内常用邮箱';
+    if (!DOMESTIC_EMAIL_REGEX.test(email)) return errEl.textContent = '仅支持 QQ、163、126 等国内常用邮箱';
     if (pwd !== pwd2) return errEl.textContent = '两次密码不一致';
     
     errEl.textContent = '注册中...';
@@ -292,6 +288,19 @@ function switchCard(which) {
 }
 
 (async function init() {
+    // 1. 判断当前会话是否已经展示过开屏
+    var isBootShown = sessionStorage.getItem('index_boot_shown');
+    var minTimePromise = Promise.resolve();
+    
+    if (isBootShown) {
+        document.getElementById('bootScreen').style.display = 'none';
+    } else {
+        sessionStorage.setItem('index_boot_shown', '1');
+        // 只有第一次进 index 且没展示过时才等 1.8 秒
+        minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
+    }
+
+    // 2. 绑定 UI 事件
     document.getElementById('toRegisterBtn').onclick = () => switchCard('register');
     document.getElementById('toLoginBtn').onclick = () => switchCard('login');
     document.getElementById('loginBtn').onclick = doLogin;
@@ -303,11 +312,7 @@ function switchCard(which) {
     document.getElementById('regEmail').addEventListener('input', function() {
         var val = this.value.trim();
         var hint = document.getElementById('regEmailHint');
-        if (!val) {
-            hint.textContent = '';
-            hint.className = 'field-hint';
-            return;
-        }
+        if (!val) { hint.textContent = ''; hint.className = 'field-hint'; return; }
         if (DOMESTIC_EMAIL_REGEX.test(val)) {
             hint.textContent = '✅ 邮箱格式正确';
             hint.className = 'field-hint success';
@@ -317,8 +322,7 @@ function switchCard(which) {
         }
     });
 
-    var currentSlide = 0;
-    var totalSlides = 4;
+    var currentSlide = 0, totalSlides = 4;
     function updateSlide(idx) {
         currentSlide = idx;
         document.querySelectorAll('.intro-slide').forEach((el, i) => el.classList.toggle('active', i === idx));
@@ -332,7 +336,7 @@ function switchCard(which) {
     document.getElementById('introSkipBtn').onclick = finishIntro;
     
     function finishIntro() {
-        localStorage.setItem('seven_intro_shown_v5', '1');
+        localStorage.setItem('seven_intro_shown_v6', '1');
         document.getElementById('introScreen').classList.add('hide');
         setTimeout(() => {
             document.getElementById('introScreen').style.display = 'none';
@@ -340,8 +344,7 @@ function switchCard(which) {
         }, 400);
     }
 
-    var minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
-    
+    // 3. 静默检查登录状态
     var authPromise = (async function() {
         try {
             var s = await window.sb.auth.getSession();
@@ -356,22 +359,38 @@ function switchCard(which) {
     var results = await Promise.all([minTimePromise, authPromise]);
     var status = results[1];
 
-    document.getElementById('bootScreen').classList.add('hide');
-    setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 600);
+    // 4. 隐藏开屏
+    if (!isBootShown) {
+        document.getElementById('bootScreen').classList.add('hide');
+        setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 800);
+    }
 
+    // 5. 路由分流逻辑
     if (status === 'AUTHED') {
         window.location.replace('./posts.html');
+        return;
+    }
+
+    // 未登录状态下的分流
+    var urlParams = new URLSearchParams(location.search);
+    var isLoginIntent = urlParams.get('login') === '1';
+    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v6');
+    
+    // 判断是不是从本站其他页面（如 user.html）因未登录被踢回来的
+    var isReferrerInternal = document.referrer && document.referrer.includes(window.location.host);
+
+    if (isLoginIntent) {
+        // 主动点了登录
+        document.getElementById('authScreen').style.display = 'flex';
+    } else if (isReferrerInternal) {
+        // 从其他受限页面被踢回来，直接显示登录框，绝不跳留言板，防止死循环
+        document.getElementById('authScreen').style.display = 'flex';
+    } else if (!hasSeenIntro) {
+        // 第一次直接输入域名访问，展示引导页
+        document.getElementById('introScreen').style.display = 'flex';
     } else {
-        var isLoginIntent = new URLSearchParams(location.search).get('login');
-        var hasSeenIntro = localStorage.getItem('seven_intro_shown_v5');
-        
-        if (isLoginIntent) {
-            document.getElementById('authScreen').style.display = 'flex';
-        } else if (!hasSeenIntro) {
-            document.getElementById('introScreen').style.display = 'flex';
-        } else {
-            window.location.replace('./messages.html');
-        }
+        // 已经有记录，且是直接访问，默认去留言板
+        window.location.replace('./messages.html');
     }
 })();
 </script>
