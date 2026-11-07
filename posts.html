@@ -966,6 +966,36 @@ function renderCatTab(box) {
     });
 }
 
+function toggleSelectAllUsers(cb) {
+    document.querySelectorAll('.admin-user-checkbox').forEach(function(c) { c.checked = cb.checked; });
+}
+
+async function adminBatchDeleteUsers() {
+    if (!isAdminUser()) { showToast('无管理员权限'); return; }
+    var selected = Array.from(document.querySelectorAll('.admin-user-checkbox:checked')).map(function(c) { return c.value; });
+    if (selected.length === 0) { showToast('请先勾选要删除的用户'); return; }
+    
+    showPrompt('危险操作', '即将永久删除选中的 ' + selected.length + ' 个账号及其所有数据！\n\n请输入你的管理员密码以确认：', '输入你的密码', async function(pwd) {
+        if (!pwd) { showToast('密码不能为空'); return; }
+        showToast('正在批量删除，请稍候...');
+        try {
+            var res = await window.sb.rpc('admin_batch_delete_users', {
+                p_target_ids: selected,
+                p_admin_password: pwd
+            });
+            if (res.error) throw res.error;
+            if (res.data && res.data.ok) {
+                showToast(res.data.message || '批量删除成功');
+                switchAdminTab('user'); // 刷新列表
+            } else {
+                showToast((res.data && res.data.message) || '删除失败');
+            }
+        } catch (e) {
+            showToast('删除失败：' + (e.message || '网络异常'));
+        }
+    }, 'password');
+}
+
 async function adminDeleteUser(userId, nickname) {
     if (!isAdminUser()) { showToast('无管理员权限'); return; }
     showPrompt('危险操作', '即将永久删除账号【' + nickname + '】及其所有数据！\n\n请输入你的管理员密码以确认：', '输入你的密码', async function(pwd) {
@@ -984,7 +1014,7 @@ async function adminDeleteUser(userId, nickname) {
                 showToast((res.data && res.data.message) || '删除失败');
             }
         } catch (e) {
-            showToast('删除失败：' + (e.message || '密码错误或网络异常'));
+            showToast('删除失败：' + (e.message || '网络异常'));
         }
     }, 'password');
 }
@@ -995,13 +1025,22 @@ async function renderUserTab(box) {
     try { users = await fetchAllUsers(); } catch (e) {}
     var h = '';
     if (!users.length) h = '<div class="empty-state">暂无用户（或 admin_list_users 函数未配置）</div>';
+    else {
+        h += '<div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">';
+        h += '<label style="font-size:0.85em; display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:bold;">';
+        h += '<input type="checkbox" id="adminSelectAll" onchange="toggleSelectAllUsers(this)" style="width:18px; height:18px;"> 全选';
+        h += '</label>';
+        h += '<button class="btn-role" style="background:#ffebee; color:#c62828; padding:6px 16px; border-radius:99px;" onclick="adminBatchDeleteUsers()">🗑️ 批量删除</button>';
+        h += '</div>';
+    }
     users.forEach(function(u) {
         var nick = u.nickname || '未命名';
         var isBanned = u.banned_until && new Date(u.banned_until) > new Date();
         var hasAvatar = u.avatar_url && String(u.avatar_url).indexOf('http') === 0;
         var avStyle = hasAvatar ? 'background-image:url(\'' + escapeHtml(u.avatar_url) + '\');background-size:cover;background-position:center;color:transparent;' : '';
         
-        h += '<div class="admin-user-card">';
+        h += '<div class="admin-user-card" style="position:relative; padding-left:38px;">';
+        h += '<input type="checkbox" class="admin-user-checkbox" value="' + u.id + '" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; height:18px; cursor:pointer;">';
         h += '<div class="user-avatar" style="' + avStyle + '">' + (hasAvatar ? '' : escapeHtml(nick.charAt(0).toUpperCase())) + '</div>';
         h += '<div class="user-info"><div class="name-row"><span>' + escapeHtml(nick) + '</span>';
         h += '<span class="role-badge" style="background:' + (u.is_admin ? '#e57373' : '#8aaa9a') + '">' + (u.is_admin ? '管理员' : '用户') + '</span>';
