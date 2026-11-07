@@ -2,9 +2,9 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-    <link rel="manifest" href="/liuyanban/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 聊天群</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -284,7 +284,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
   <div class="app-content">
     <div class="chat-messages" id="chatMessages"></div>
     <div class="pill-bar">
-      <button class="pill-btn" id="roomPillBtn" type="button" onclick="location.href='/liuyanban/room.html'">
+      <button class="pill-btn" id="roomPillBtn" type="button" onclick="location.href='./room.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
         </svg>
@@ -371,7 +371,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 
 <div id="toast"></div>
 
-<script src="/liuyanban/common.js"></script>
+<script src="./common.js"></script>
 <script>
 /* ============================================================
    基础
@@ -386,7 +386,7 @@ function safeUrl(u){if(!u)return '';var s=String(u).trim();if(!/^https?:\/\//.te
 function showConfirm(title,body,onOk){var m=document.getElementById('confirmModal');document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmBody').textContent=body;m.classList.add('active');var c=document.getElementById('confirmCancel'),o=document.getElementById('confirmOk');var cleanup=function(){m.classList.remove('active');c.onclick=null;o.onclick=null};c.onclick=cleanup;o.onclick=function(){if(onOk)onOk();cleanup()}}
 
 var currentUser=getSessionUser();
-if(!currentUser||!currentUser.id)window.location.href='/liuyanban/index.html';
+if(!currentUser||!currentUser.id)window.location.href='./index.html';
 var isAdmin=!!(currentUser&&currentUser.is_admin===true);
 // 拉取当前用户最新的气泡皮肤，更新缓存（保证自己发的消息用对皮肤）
 async function syncMySkin(){
@@ -411,7 +411,7 @@ var isAuthorMode=false;
     '<div class="app-header">'+
       '<div class="brand" id="brandBtn">Seven<span>戚</span><small>· 聊天群</small></div>'+
       '<div class="header-right">'+
-        '<div class="user-area" onclick="window.location.href=\'/liuyanban/profile.html\'">'+
+        '<div class="user-area" onclick="window.location.href=\'./profile.html\'">'+
           '<div class="avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(name.charAt(0).toUpperCase()))+'</div>'+
           '<span class="user-name">'+escapeHtml(name)+'</span>'+
         '</div>'+

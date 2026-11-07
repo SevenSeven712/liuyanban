@@ -1,17 +1,17 @@
 // Seven戚社区 Service Worker
 var CACHE_NAME = 'sevenqi-v1';
 var PRECACHE_URLS = [
-  '/liuyanban/index.html',
-  '/liuyanban/posts.html',
-  '/liuyanban/chats.html',
-  '/liuyanban/messages.html',
-  '/liuyanban/room.html',
-  '/liuyanban/profile.html',
-  '/liuyanban/shop.html',
-  '/liuyanban/common.js',
-  '/liuyanban/bubbles.css',
-  '/liuyanban/icon.svg',
-  '/liuyanban/manifest.json'
+  './index.html',
+  './posts.html',
+  './chats.html',
+  './messages.html',
+  './room.html',
+  './profile.html',
+  './shop.html',
+  './common.js',
+  './bubbles.css',
+  './icon.svg',
+  './manifest.json'
 ];
 
 self.addEventListener('install', function (e) {
@@ -38,7 +38,7 @@ self.addEventListener('activate', function (e) {
 // 这些路径一律不缓存（登录态/实时数据/上传）
 function isBypass(url) {
   return //(auth|rest|realtime|storage)/v1//.test(url.pathname) ||
-         url.pathname.indexOf('/liuyanban/api/') === 0;
+         url.pathname.indexOf('./api/') === 0;
 }
 
 self.addEventListener('fetch', function (e) {
@@ -62,7 +62,7 @@ self.addEventListener('fetch', function (e) {
         return res;
       }).catch(function () {
         return caches.match(req).then(function (hit) {
-          return hit || caches.match('/liuyanban/posts.html').then(function (p) {
+          return hit || caches.match('./posts.html').then(function (p) {
             return p || new Response('<h3 style="font-family:sans-serif;padding:24px">当前处于离线状态，请联网后重试</h3>', {
               status: 200,
               headers: { 'Content-Type': 'text/html; charset=utf-8' }
@@ -100,11 +100,11 @@ self.addEventListener('fetch', function (e) {
 
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
-  var url = (e.notification.data && e.notification.data.url) || '/liuyanban/chats.html';
+  var url = (e.notification.data && e.notification.data.url) || './chats.html';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {
-        if (list[i].url.indexOf('/liuyanban/') >= 0 && 'focus' in list[i]) return list[i].focus();
+        if (list[i].url.indexOf('./') >= 0 && 'focus' in list[i]) return list[i].focus();
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })

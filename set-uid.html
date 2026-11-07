@@ -64,11 +64,11 @@
         <div class="error" id="errMsg"></div>
     </div>
 
-    <script src="/liuyanban/common.js"></script>
+    <script src="./common.js"></script>
     <script>
         var user = getSessionUser();
-        if (!user || !user.id) window.location.href = '/liuyanban/index.html';
-        if (user.custom_uid) window.location.href = '/liuyanban/user.html';
+        if (!user || !user.id) window.location.href = './index.html';
+        if (user.custom_uid) window.location.href = './user.html';
 
         async function handleSubmit() {
             var uid = document.getElementById('uidInput').value.trim();
@@ -96,7 +96,7 @@
                 setSessionUser(user);
                 
                 showToast('设置成功！即将返回个人中心');
-                setTimeout(function() { window.location.href = '/liuyanban/user.html'; }, 1500);
+                setTimeout(function() { window.location.href = './user.html'; }, 1500);
 
             } catch (e) {
                 errEl.textContent = e.message || '网络异常，请重试';

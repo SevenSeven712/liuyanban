@@ -2,9 +2,9 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-    <link rel="manifest" href="/liuyanban/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Seven戚 · 用户主页</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -204,14 +204,14 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
   </div>
 </div>
 <div id="toast"></div>
-<script src="/liuyanban/common.js"></script>
+<script src="./common.js"></script>
 <script>
 
 // ============================================================
 // 用户主页
 // ============================================================
 var currentUser = getSessionUser();
-if (!currentUser || !currentUser.id) window.location.href = '/liuyanban/index.html';
+if (!currentUser || !currentUser.id) window.location.href = './index.html';
 
 var viewingUser = null;   // 被查看的用户
 var isSelf = false;
@@ -375,17 +375,17 @@ async function render(){
   if (isSelf) {
     var isAdmin = (currentUser && currentUser.is_admin === true);
     navHtml = '<div class="nav-grid">' +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=messages\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H5.17L4 17.17V4z"/></svg></div><div class="tx">消息中心</div></div>' +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=feedback\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="tx">反馈 Bug</div></div>' +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=about\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div class="tx">关于我们</div></div>' +
-      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=adminfeedback\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3h18v14H5l-2 2V3z"/><path d="M8 8h8M8 12h5"/></svg></div><div class="tx">反馈管理</div></div>' : '') +
-      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=sites\'"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="tx">网站管理</div></div>' : '') +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/shop.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="M9 13a3 3 0 0 0 6 0"/></svg></div><div class="tx">皮肤商店</div></div>' +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/assets.html\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg></div><div class="tx">我的资产</div></div>' +
-      '<div class="nav-cell" onclick="location.href=\'/liuyanban/activity.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 5.9 6.4.5-4.9 4.2 1.5 6.3L12 15.8 6.6 18.9l1.5-6.3L3.2 8.4l6.4-.5z"/></svg></div><div class="tx">活动</div></div>' +
-      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/profile.html?view=shopadmin\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="tx">商店管理</div></div>' : '') +
+      '<div class="nav-cell" onclick="location.href=\'./profile.html?view=messages\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H5.17L4 17.17V4z"/></svg></div><div class="tx">消息中心</div></div>' +
+      '<div class="nav-cell" onclick="location.href=\'./profile.html?view=feedback\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="tx">反馈 Bug</div></div>' +
+      '<div class="nav-cell" onclick="location.href=\'./profile.html?view=about\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div class="tx">关于我们</div></div>' +
+      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'./profile.html?view=adminfeedback\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3h18v14H5l-2 2V3z"/><path d="M8 8h8M8 12h5"/></svg></div><div class="tx">反馈管理</div></div>' : '') +
+      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'./profile.html?view=sites\'"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="tx">网站管理</div></div>' : '') +
+      '<div class="nav-cell" onclick="location.href=\'./shop.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="M9 13a3 3 0 0 0 6 0"/></svg></div><div class="tx">皮肤商店</div></div>' +
+      '<div class="nav-cell" onclick="location.href=\'./assets.html\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg></div><div class="tx">我的资产</div></div>' +
+      '<div class="nav-cell" onclick="location.href=\'./activity.html\'"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 5.9 6.4.5-4.9 4.2 1.5 6.3L12 15.8 6.6 18.9l1.5-6.3L3.2 8.4l6.4-.5z"/></svg></div><div class="tx">活动</div></div>' +
+      (isAdmin ? '<div class="nav-cell" onclick="location.href=\'./profile.html?view=shopadmin\'"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="tx">商店管理</div></div>' : '') +
       '<div class="nav-cell" onclick="installPWA()"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="tx">安装到桌面</div></div>' +
-      (viewingUser.phone && !viewingUser.custom_uid ? '<div class="nav-cell" onclick="location.href=\'/liuyanban/set-uid.html\'"><div class="ic" style="background:#ffebee;color:#e57373;border:2px solid #e57373;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></div><div class="tx" style="color:#e57373;font-weight:700;">更换手机号</div></div>' : '') +
+      (viewingUser.phone && !viewingUser.custom_uid ? '<div class="nav-cell" onclick="location.href=\'./set-uid.html\'"><div class="ic" style="background:#ffebee;color:#e57373;border:2px solid #e57373;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></div><div class="tx" style="color:#e57373;font-weight:700;">更换手机号</div></div>' : '') +
       '</div>';
   }
   // ===== 管理员查看他人时的资产区块 =====
@@ -449,7 +449,7 @@ async function render(){
   $('pageContent').innerHTML = hero + navHtml + adminHtml + postsHtml;
 }
 
-function goPost(id){ location.href = '/liuyanban/posts.html?post=' + id; }
+function goPost(id){ location.href = './posts.html?post=' + id; }
 window.goPost = goPost;
 async function toggleFollow(){
   if (isSelf) return;
@@ -521,12 +521,12 @@ async function doLogout(){
   if (typeof showConfirm === 'function') {
     showConfirm('退出登录', '确定要退出登录吗？', async function(){
       await clearSession();
-      location.href = '/liuyanban/index.html';
+      location.href = './index.html';
     });
   } else {
     if(confirm('确定要退出登录吗？')){
       await clearSession();
-      location.href = '/liuyanban/index.html';
+      location.href = './index.html';
     }
   }
 }
@@ -576,7 +576,7 @@ document.getElementById('editAvatarInput').onchange = async function(e){
 })();
 function goBackFromUser(){
   if (window.history.length > 1) window.history.back();
-  else location.href = '/liuyanban/posts.html';
+  else location.href = './posts.html';
 }
 window.goBackFromUser = goBackFromUser;
 

@@ -2,9 +2,9 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8" />
-    <link rel="manifest" href="/liuyanban/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>我的资产 · Seven戚</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -70,7 +70,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 <script>
 (function(){
   var currentUser = getSessionUser();
-  if (!currentUser || !currentUser.id) { window.location.href = '/liuyanban/index.html'; return; }
+  if (!currentUser || !currentUser.id) { window.location.href = './index.html'; return; }
 
   function fmtTime(t){
     var d = new Date(t);

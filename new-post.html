@@ -2,9 +2,9 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8" />
-    <link rel="manifest" href="/liuyanban/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="/liuyanban/icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Seven戚 · 发帖</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -303,7 +303,7 @@
             </div>
 
             <div class="actions">
-                <button class="btn-secondary" onclick="window.location.href='/liuyanban/posts.html'">取消</button>
+                <button class="btn-secondary" onclick="window.location.href='./posts.html'">取消</button>
                 <button class="btn-primary" id="submitPostBtn">发布</button>
             </div>
         </div>
@@ -330,7 +330,7 @@
 
     <div id="toast"></div>
 
-    <script src="/liuyanban/common.js"></script>
+    <script src="./common.js"></script>
     <script>
         renderHeader('发帖', 'posts');
 
@@ -356,7 +356,7 @@
 
         var currentUser = getSessionUser();
         if (!currentUser || !currentUser.id) {
-            window.location.href = '/liuyanban/index.html';
+            window.location.href = './index.html';
         }
         var isAdmin = (currentUser.is_admin === true);
 
@@ -579,7 +579,7 @@
 
                 showToast('帖子发布成功！');
                 setTimeout(() => {
-                    window.location.href = '/liuyanban/posts.html';
+                    window.location.href = './posts.html';
                 }, 1000);
             } catch (err) {
                 showToast('发布失败：' + err.message);

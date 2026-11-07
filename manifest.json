@@ -2,13 +2,13 @@
   "name": "Seven戚社区",
   "short_name": "Seven戚",
   "description": "Seven戚社区 · 帖子广场",
-  "start_url": "/liuyanban/posts.html",
-  "scope": "/liuyanban/",
+  "start_url": "./posts.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5faf5",
   "theme_color": "#2e7d32",
   "icons": [
-    { "src": "/liuyanban/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
