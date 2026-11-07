@@ -11,7 +11,7 @@
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-root {
+        :root {
             --bg: #f5faf5;
             --bg-card: #ffffff;
             --bg-input: #eaf3ea;
@@ -336,8 +336,8 @@ root {
         renderHeader('发帖', 'posts');
 
         // 强制初始化 Supabase 客户端
-        var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
-        var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
+        var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+        var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function showToast(msg) {
@@ -390,10 +390,8 @@ root {
         // 图片上传功能
         // ============================================================
         async function uploadImage(file) {
-            if (file.size > 5 * 1024 * 1024) { showToast('图片不能超过 5MB'); throw new Error('超过5MB'); }
             const fileExt = file.name.split('.').pop();
-            // 必须放在 用户ID 目录下，才能匹配后端的安全策略
-            const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+            const fileName = `posts/${Date.now()}.${fileExt}`;
             const { data, error } = await window.sb.storage.from('posts').upload(fileName, file);
             if (error) throw error;
             const { data: urlData } = window.sb.storage.from('posts').getPublicUrl(fileName);
@@ -616,7 +614,3 @@ window.addEventListener('sq-user-ready', function (e) {
 </script>
 </body>
 </html>
-
-(读完啦，一共 616 行)
-
-(已到文件末尾，共 622 行)

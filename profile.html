@@ -694,7 +694,6 @@
             } catch (e) { return []; }
         }
 
-
         // ============================================================
         // 全局状态
         // ============================================================
@@ -784,11 +783,40 @@
             }
         }
 
+        // 头像上传
+        async function uploadAvatar(file) {
+            if (!file || !currentUser) return;
+            if (file.size > 3 * 1024 * 1024) { showToast('图片不要超过 3MB'); return; }
+            if (!/^image\//.test(file.type)) { showToast('请选择图片文件'); return; }
+
+            showToast('上传中...');
+            try {
+                var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                var path = currentUser.id + '/' + Date.now() + '.' + ext;
+                var up = await window.sb.storage.from('avatars').upload(path, file, { upsert: true });
+                if (up.error) throw up.error;
+                var pub = window.sb.storage.from('avatars').getPublicUrl(path);
+                var url = pub.data && pub.data.publicUrl;
+                if (!url) throw new Error('获取图片地址失败');
+
+                var r = await window.sb.from('users').update({ avatar_url: url }).eq('id', currentUser.id);
+                if (r.error) throw r.error;
+
+                currentUser.avatar_url = url;
+                setSessionUser(currentUser);
+                updateHeader();
+                fillProfileForm();
+                showToast('头像已更新');
+            } catch (e) {
+                showToast('上传失败：' + (e.message || '存储桶 avatars 可能未创建'));
+            }
+        }
+
         // ============================================================
         // 消息中心
         // ============================================================
         function ntfIcon(type) {
-            var map = { comment: '💬', like: '👍', report: '🚩', feedback: '📮', system: '🔔', ban: '🚫' };
+            var map = { comment: '💬', like: '👍', report: '🚩', feedback: '📮', system: '🔔' };
             return map[type] || '🔔';
         }
 
@@ -797,7 +825,6 @@
             if (n.notification_type === 'comment' || n.type === 'comment') return '有人评论了你的帖子';
             if (n.type === 'report') return '你收到一条举报处理通知';
             if (n.type === 'feedback') return '你提交的反馈有了回复';
-            if (n.type === 'ban' || n.notification_type === 'ban') return '系统自动封禁通知（请查看详情）';
             return n.content || '你有一条新通知';
         }
 
@@ -865,26 +892,338 @@
         }
 
         // ============================================================
+        // 反馈
+        // ============================================================
+        async function loadSites() {
+            sitesCache = await safeSelect('sites', function (q) { return q.order('sort_order'); });
+            var grid = document.getElementById('siteGrid');
+            if (!grid) return;
+            if (!sitesCache.length) {
+                grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px 0;grid-column:1/-1;font-size:.8em;">暂无可反馈的网站</div>';
+                return;
+            }
+            var h = '';
+            sitesCache.forEach(function (s) {
+                h += '<div class="site-item" data-id="' + s.id + '" style="padding:8px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:.8em;cursor:pointer;">' + escapeHtml(s.name || s.title || '未命名') + '</div>';
+            });
+            grid.innerHTML = h;
+            grid.querySelectorAll('.site-item').forEach(function (el) {
+                el.onclick = function () {
+                    grid.querySelectorAll('.site-item').forEach(function (x) { x.style.borderColor = 'var(--border)'; x.style.background = ''; });
+                    this.style.borderColor = 'var(--primary)';
+                    this.style.background = 'var(--primary-bg)';
+                    selectedSiteId = this.dataset.id;
+                };
+            });
+        }
+
+        async function loadMyFeedback() {
+            var box = document.getElementById('myFeedbackList');
+            if (!box) return;
+            var rows = await safeSelect('feedback', function (q) {
+                return q.eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+            });
+            if (!rows.length) {
+                box.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:.85em;">还没有提交过反馈</div>';
+                return;
+            }
+            var h = '';
+            rows.forEach(function (f) {
+                h += '<div style="padding:10px 0;border-bottom:1px solid var(--border);">';
+                h += '<div style="display:flex;justify-content:space-between;font-size:.72em;color:var(--text-muted);">';
+                h += '<span>' + escapeHtml(f.site_name || f.site || '') + '</span>';
+                h += '<span>' + (f.created_at ? new Date(f.created_at).toLocaleDateString('zh-CN') : '') + '</span>';
+                h += '</div>';
+                h += '<div style="font-size:.85em;margin-top:4px;">' + escapeHtml(f.content || '') + '</div>';
+                if (f.reply) h += '<div style="font-size:.8em;margin-top:6px;padding:8px;background:var(--primary-bg);border-radius:8px;">官方回复：' + escapeHtml(f.reply) + '</div>';
+                h += '</div>';
+            });
+            box.innerHTML = h;
+        }
+
+        async function submitFeedback() {
+            if (!currentUser) { showToast('请先登录'); return; }
+            var content = (document.getElementById('fbContent').value || '').trim();
+            var contact = (document.getElementById('fbContact').value || '').trim();
+            if (!selectedSiteId) { showToast('请选择问题网站'); return; }
+            if (content.length < 5) { showToast('请把问题描述得再详细一点'); return; }
+
+            var btn = document.getElementById('fbSubmitBtn');
+            btn.disabled = true;
+            try {
+                var site = sitesCache.find(function (s) { return String(s.id) === String(selectedSiteId); });
+                var r = await window.sb.from('feedback').insert([{
+                    user_id: currentUser.id,
+                    site_id: selectedSiteId,
+                    site_name: site ? (site.name || site.title) : '',
+                    content: content,
+                    contact: contact,
+                    status: 'pending'
+                }]);
+                if (r.error) throw r.error;
+                document.getElementById('fbContent').value = '';
+                document.getElementById('fbContact').value = '';
+                selectedSiteId = null;
+                showToast('反馈已提交，感谢！');
+                loadMyFeedback();
+            } catch (e) {
+                showToast('提交失败：' + (e.message || ''));
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================================
+        // 管理员：反馈管理 / 网站管理 / 商店管理
+        // ============================================================
+        async function loadAdminFeedback() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var box = document.getElementById('adminFeedbackList');
+            if (!box) return;
+            var rows = await safeSelect('feedback', function (q) {
+                return q.order('created_at', { ascending: false }).limit(100);
+            });
+            if (!rows.length) {
+                box.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:.85em;">暂无反馈</div>';
+                return;
+            }
+            var h = '';
+            rows.forEach(function (f) {
+                h += '<div style="padding:12px 0;border-bottom:1px solid var(--border);">';
+                h += '<div style="display:flex;justify-content:space-between;font-size:.72em;color:var(--text-muted);">';
+                h += '<span>' + escapeHtml(f.site_name || f.site || '') + '</span>';
+                h += '<span>' + (f.created_at ? new Date(f.created_at).toLocaleString('zh-CN') : '') + '</span>';
+                h += '</div>';
+                h += '<div style="font-size:.86em;margin:5px 0;">' + escapeHtml(f.content || '') + '</div>';
+                if (f.contact) h += '<div style="font-size:.72em;color:var(--text-muted);">联系方式：' + escapeHtml(f.contact) + '</div>';
+                if (f.reply) h += '<div style="font-size:.8em;margin-top:6px;padding:8px;background:var(--primary-bg);border-radius:8px;">回复：' + escapeHtml(f.reply) + '</div>';
+                h += '<button class="fb-reply-btn" data-id="' + f.id + '" style="margin-top:8px;padding:5px 12px;border-radius:99px;border:1px solid var(--border);background:none;font-size:.72em;cursor:pointer;">回复</button>';
+                h += '</div>';
+            });
+            box.innerHTML = h;
+            box.querySelectorAll('.fb-reply-btn').forEach(function (btn) {
+                btn.onclick = function () { openReply(this.dataset.id); };
+            });
+        }
+
+        var replyTargetId = null;
+        function openReply(id) {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            replyTargetId = id;
+            var m = document.getElementById('replyModal');
+            if (m) { m.classList.add('active'); document.getElementById('replyText').value = ''; }
+        }
+
+        async function sendReply() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var text = (document.getElementById('replyText').value || '').trim();
+            if (!text) { showToast('回复内容不能为空'); return; }
+            try {
+                var r = await window.sb.from('feedback').update({ reply: text, status: 'replied' }).eq('id', replyTargetId);
+                if (r.error) throw r.error;
+                document.getElementById('replyModal').classList.remove('active');
+                showToast('已回复');
+                loadAdminFeedback();
+            } catch (e) { showToast('回复失败：' + (e.message || '')); }
+        }
+
+        async function loadAdminSites() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var box = document.getElementById('adminSitesList');
+            if (!box) return;
+            var rows = await safeSelect('sites', function (q) { return q.order('sort_order'); });
+            if (!rows.length) { box.innerHTML = '<div style="color:var(--text-muted);font-size:.85em;padding:10px 0;">暂无网站</div>'; return; }
+            var h = '';
+            rows.forEach(function (s) {
+                h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">';
+                h += '<span style="font-size:.85em;">' + escapeHtml(s.name || s.title || '') + '</span>';
+                h += '<button data-id="' + s.id + '" class="del-site" style="border:none;background:none;color:var(--danger);font-size:.75em;cursor:pointer;">删除</button>';
+                h += '</div>';
+            });
+            box.innerHTML = h;
+            box.querySelectorAll('.del-site').forEach(function (btn) {
+                btn.onclick = async function () {
+                    if (!isAdminUser()) return;
+                    var id = this.dataset.id;
+                    showConfirm('删除网站', '确定删除该网站？', async function () {
+                        try {
+                            await window.sb.from('sites').delete().eq('id', id);
+                            loadAdminSites();
+                            loadSites();
+                        } catch (e) { showToast('删除失败'); }
+                    });
+                };
+            });
+        }
+
+        async function addSite() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var input = document.getElementById('newSiteName');
+            var name = (input.value || '').trim();
+            if (!name) return;
+            try {
+                var r = await window.sb.from('sites').insert([{ name: name }]);
+                if (r.error) throw r.error;
+                input.value = '';
+                loadAdminSites();
+                loadSites();
+                showToast('已添加');
+            } catch (e) { showToast('添加失败：' + (e.message || '')); }
+        }
+
+        async function loadShopAdmin() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var skins = await safeSelect('skins', function (q) { return q.order('price'); });
+            var box = document.getElementById('skinPriceList');
+            if (box) {
+                if (!skins.length) {
+                    box.innerHTML = '<div style="color:var(--text-muted);font-size:.82em;">暂无皮肤数据</div>';
+                } else {
+                    var h = '';
+                    skins.forEach(function (s) {
+                        h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">';
+                        h += '<span style="font-size:.85em;">' + escapeHtml(s.name || s.title || s.id) + '</span>';
+                        h += '<input type="number" class="skin-price" data-id="' + s.id + '" value="' + (s.price || 0) + '" style="width:80px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);text-align:right;" />';
+                        h += '</div>';
+                    });
+                    box.innerHTML = h;
+                    box.querySelectorAll('.skin-price').forEach(function (inp) {
+                        inp.onchange = async function () {
+                            if (!isAdminUser()) return;
+                            try {
+                                await window.sb.from('skins').update({ price: parseInt(this.value, 10) || 0 }).eq('id', this.dataset.id);
+                                showToast('价格已更新');
+                            } catch (e) { showToast('更新失败'); }
+                        };
+                    });
+                }
+            }
+
+            var acts = await safeSelect('shop_activities', function (q) { return q.order('created_at', { ascending: false }).limit(30); });
+            var ab = document.getElementById('shopActList');
+            if (!ab) return;
+            if (!acts.length) { ab.innerHTML = '<div style="color:var(--text-muted);font-size:.82em;">暂无活动</div>'; return; }
+            var ah = '';
+            acts.forEach(function (a) {
+                ah += '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:.85em;">';
+                ah += '<b>' + escapeHtml(a.title || '') + '</b>';
+                if (a.discount) ah += ' <span style="color:var(--primary);">' + a.discount + ' 折</span>';
+                ah += '<div style="font-size:.85em;color:var(--text-muted);">' + escapeHtml(a.description || '') + '</div>';
+                ah += '</div>';
+            });
+            ab.innerHTML = ah;
+        }
+
+        async function addActivity() {
+            if (!isAdminUser()) { showToast('无管理员权限'); return; }
+            var title = (document.getElementById('actTitle').value || '').trim();
+            var desc = (document.getElementById('actDesc').value || '').trim();
+            var discount = parseFloat(document.getElementById('actDiscount').value || '0');
+            var days = parseInt(document.getElementById('actDays').value || '0', 10);
+            if (!title) { showToast('请填写活动标题'); return; }
+            try {
+                var row = { title: title, description: desc, discount: discount || null };
+                if (days > 0) row.ends_at = new Date(Date.now() + days * 86400000).toISOString();
+                var r = await window.sb.from('shop_activities').insert([row]);
+                if (r.error) throw r.error;
+                document.getElementById('actTitle').value = '';
+                document.getElementById('actDesc').value = '';
+                document.getElementById('actDiscount').value = '';
+                document.getElementById('actDays').value = '';
+                loadShopAdmin();
+                showToast('活动已发布');
+            } catch (e) { showToast('发布失败：' + (e.message || '')); }
+        }
+
+        // ============================================================
+        // 声音开关 / 安装
+        // ============================================================
+        function initSoundToggle() {
+            var t = document.getElementById('soundToggle');
+            var hint = document.getElementById('soundStatusHint');
+            if (!t) return;
+            function sync() {
+                var on = getSoundEnabled();
+                t.checked = on;
+                if (hint) hint.textContent = on ? '已开启' : '已关闭';
+            }
+            t.onchange = function () {
+                localStorage.setItem('sq_sound_enabled', this.checked ? 'true' : 'false');
+                sync();
+            };
+            sync();
+        }
+
+        function installPWA() {
+            if (window.__deferredPrompt) {
+                window.__deferredPrompt.prompt();
+                window.__deferredPrompt = null;
+                return;
+            }
+            showToast('请用浏览器菜单「添加到主屏幕」');
+        }
+        window.installPWA = installPWA;
+
+        // ============================================================
         // 初始化
         // ============================================================
         (async function init() {
+            // 1) 先看本地缓存（可能未验证），避免白屏
             var cached = getSessionUser();
             if (!cached || !cached.id) { location.replace('./index.html'); return; }
             currentUser = cached;
             updateHeader();
             fillProfileForm();
 
+            // 2) 视图路由
             var params = new URLSearchParams(location.search);
             var view = params.get('view');
             if (view === 'messages') showView('messagesView');
             else if (view === 'avatar' || view === 'edit') showView('profileEditView');
             else showView('settingsView');
 
+            // 3) 事件绑定
             document.getElementById('goToMessages').onclick = function () {
                 showView('messagesView');
                 loadNotifications();
             };
+            document.getElementById('goToFeedback').onclick = function () {
+                showView('feedbackView');
+                loadSites();
+            };
+            document.getElementById('goToAbout').onclick = function () { showView('aboutView'); };
+            document.getElementById('goToInstall').onclick = installPWA;
+            document.getElementById('goToAdminFeedback').onclick = function () {
+                showView('adminFeedbackView');
+                loadAdminFeedback();
+            };
+            document.getElementById('goToManageSites').onclick = function () {
+                showView('manageSitesView');
+                loadAdminSites();
+            };
+            var goShopAdmin = document.getElementById('goToShopAdmin');
+            if (goShopAdmin) goShopAdmin.onclick = function () { showView('shopAdminView'); loadShopAdmin(); };
+
+            ['backToSettings', 'backToSettingsFromMsg', 'backToSettingsFromFb', 'backToSettingsFromAdminFb',
+             'backToSettingsFromSites', 'backToSettingsFromShop', 'backToSettingsFromAbout'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.onclick = function () { showView('settingsView'); };
+            });
+
             document.getElementById('saveProfileBtn').onclick = saveProfile;
+            document.getElementById('avatarFileInput').onchange = function () {
+                if (this.files && this.files[0]) uploadAvatar(this.files[0]);
+            };
+            var logout = function () {
+                showConfirm('退出登录', '确定要退出当前账号吗？', async function () {
+                    await clearSession();
+                    location.replace('./index.html');
+                });
+            };
+            document.getElementById('logoutBtn').onclick = logout;
+            var l2 = document.getElementById('logoutBtnFromSettings');
+            if (l2) l2.onclick = logout;
+
             document.getElementById('markAllReadBtn').onclick = markAllRead;
             document.querySelectorAll('.ntf-tab').forEach(function (b) {
                 b.onclick = function () {
@@ -895,15 +1234,55 @@
                 };
             });
 
-            // 等身份从服务器确认后再做进一步渲染
+            document.getElementById('fbSubmitBtn').onclick = submitFeedback;
+            document.getElementById('fbTabNew').onclick = function () {
+                document.getElementById('fbSubmitPanel').style.display = 'block';
+                document.getElementById('fbMinePanel').style.display = 'none';
+                this.classList.add('active');
+                document.getElementById('fbTabMine').classList.remove('active');
+            };
+            document.getElementById('fbTabMine').onclick = function () {
+                document.getElementById('fbSubmitPanel').style.display = 'none';
+                document.getElementById('fbMinePanel').style.display = 'block';
+                this.classList.add('active');
+                document.getElementById('fbTabNew').classList.remove('active');
+                loadMyFeedback();
+            };
+
+            document.getElementById('addSiteBtn').onclick = addSite;
+            document.getElementById('addActBtn').onclick = addActivity;
+            document.getElementById('replyOk').onclick = sendReply;
+            document.getElementById('replyCancel').onclick = function () {
+                document.getElementById('replyModal').classList.remove('active');
+            };
+
+            initSoundToggle();
+
+            // 4) ★ 以服务端身份为准
             var trusted = await whenUserReady();
             if (trusted && trusted.id) {
                 currentUser = trusted;
                 isAdmin = trusted.is_admin === true;
                 updateHeader();
                 fillProfileForm();
+            } else if (!trusted) {
+                // 会话失效
+                showToast('登录已过期，请重新登录');
+                setTimeout(function () { location.replace('./index.html'); }, 1200);
+                return;
             }
+
+            // 管理员入口只在服务端确认后显示
+            ['goToAdminFeedback', 'goToManageSites', 'goToShopAdmin'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = isAdmin ? 'flex' : 'none';
+            });
+            var sa = document.getElementById('goToShopAdmin');
+            if (sa) sa.style.display = isAdmin ? 'block' : 'none';
+
             loadNotifications();
+
+            if (window.hidePageLoading) window.hidePageLoading();
         })();
     </script>
 </body>
