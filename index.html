@@ -1,773 +1,1544 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#2e7d32" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>通行证 · Seven戚社区</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>window.supabase||document.write('<script src="./vendor/supabase.js"><\/script>');</script>
+<script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-16: 23: 17: 15: :root {
-17: 24: 18: 16: --bg: #f5faf5;
-18: 25: 19: 17: --bg-card: #ffffff;
-19: 26: 20: 18: --bg-input: #eaf3ea;
-20: 27: 21: 19: --border: #c8e0c8;
-21: 28: 22: 20: --text: #1e3a2e;
-22: 29: 23: 21: --text-muted: #5a7a6a;
-23: 30: 24: 22: --text-light: #8aaa9a;
-24: 31: 25: 23: --primary: #2e7d32;
-25: 32: 26: 24: --primary-light: #4caf50;
-26: 33: 27: 25: --primary-glow: rgba(46, 125, 50, 0.25);
-27: 34: 28: 26: --primary-bg: #e8f5e9;
-28: 35: 29: 27: --shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
-29: 36: 30: 28: --danger: #e57373;
-30: 37: 31: 29: --danger-bg: #ffebee;
-31: 38: 32: 30: --radius: 16px;
-32: 39: 33: 31: --radius-sm: 10px;
-33: 40: 34: 32: --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-34: 41: 35: 33: }
-35: 42: 36: 34: html, body {
-36: 43: 37: 35: height: 100%;
-37: 44: 38: 36: font-family: var(--font);
-38: 45: 39: 37: background: var(--bg);
-39: 46: 40: 38: background-image:
-40: 47: 41: 39: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
-41: 48: 42: 40: radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
-42: 49: 43: 41: color: var(--text);
-43: 50: 44: 42: display: flex;
-44: 51: 45: 43: align-items: center;
-45: 52: 46: 44: justify-content: center;
-46: 53: 47: 45: padding: 20px;
-47: 54: 48: 46: overflow: hidden;
-48: 55: 49: 47: }
-49: 56: 50: 48: .login-card {
-50: 57: 51: 49: width: 23em;
-51: 58: 52: 50: max-width: 92vw;
-52: 59: 53: 51: max-height: 92vh;
-53: 60: 54: 52: overflow-y: auto;
-54: 61: 55: 53: background: var(--bg-card);
-55: 62: 56: 54: border-radius: var(--radius);
-56: 63: 57: 55: padding: 2.2em 2em;
-57: 64: 58: 56: position: relative;
-58: 65: 59: 57: border: 1px solid var(--border);
-59: 66: 60: 58: box-shadow: var(--shadow);
-60: 67: 61: 59: -webkit-overflow-scrolling: touch;
-61: 68: 62: 60: }
-62: 69: 63: 61: .login-card::-webkit-scrollbar { width: 4px; }
-63: 70: 64: 62: .login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-64: 71: 65: 63: .login-card::after {
-65: 72: 66: 64: content: "";
-66: 73: 67: 65: position: absolute;
-67: 74: 68: 66: inset: 0;
-68: 75: 69: 67: border-radius: var(--radius);
-69: 76: 70: 68: background-image:
-70: 77: 71: 69: linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
-71: 78: 72: 70: linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
-72: 79: 73: 71: background-size: 2em 2em;
-73: 80: 74: 72: opacity: 0.6;
-74: 81: 75: 73: pointer-events: none;
-75: 82: 76: 74: z-index: 0;
-76: 83: 77: 75: }
-77: 84: 78: 76: .login-card::before {
-78: 85: 79: 77: content: "";
-79: 86: 80: 78: position: absolute;
-80: 87: 81: 79: inset: 0;
-81: 88: 82: 80: border-radius: var(--radius);
-82: 89: 83: 81: background: linear-gradient(115deg,
-83: 90: 84: 82: transparent 0%, transparent 40%,
-84: 91: 85: 83: rgba(46, 125, 50, 0.03) 45%,
-85: 92: 86: 84: rgba(46, 125, 50, 0.10) 50%,
-86: 93: 87: 85: rgba(46, 125, 50, 0.03) 55%,
-87: 94: 88: 86: transparent 60%, transparent 100%);
-88: 95: 89: 87: pointer-events: none;
-89: 96: 90: 88: z-index: 1;
-90: 97: 91: 89: animation: sweep 6s ease-in-out infinite;
-91: 98: 92: 90: }
-92: 99: 93: 91: @keyframes sweep {
-93: 100: 94: 92: 0%, 100% { background-position: 100% 100%; }
-94: 101: 95: 93: 50% { background-position: 0% 0%; }
-95: 102: 96: 94: }
-96: 103: 97: 95: .login-card > * { position: relative; z-index: 2; }
-97: 104: 98: 96: 
-98: 105: 99: 97: .login-header {
-99: 106: 100: 98: display: flex;
-100: 107: 101: 99: justify-content: space-between;
-101: 108: 102: 100: align-items: center;
-102: 109: 103: 101: margin-bottom: 1.5em;
-103: 110: 104: 102: }
-104: 111: 105: 103: .login-logo {
-105: 112: 106: 104: font-weight: 900;
-106: 113: 107: 105: font-size: 1.35em;
-107: 114: 108: 106: color: var(--text);
-108: 115: 109: 107: letter-spacing: -0.02em;
-109: 116: 110: 108: display: flex;
-110: 117: 111: 109: align-items: center;
-111: 118: 112: 110: gap: 0.35em;
-112: 119: 113: 111: }
-113: 120: 114: 112: .login-logo span { color: var(--primary); }
-114: 121: 115: 113: .login-logo svg {
-115: 122: 116: 114: width: 1.3em;
-116: 123: 117: 115: height: 1.3em;
-117: 124: 118: 116: stroke: var(--primary);
-118: 125: 119: 117: fill: none;
-119: 126: 120: 118: stroke-width: 2;
-120: 127: 121: 119: stroke-linecap: round;
-121: 128: 122: 120: stroke-linejoin: round;
-122: 129: 123: 121: filter: drop-shadow(0 0 4px var(--primary-glow));
-123: 130: 124: 122: }
-124: 131: 125: 123: .lang-switch { display: flex; gap: 0.3em; }
-125: 132: 126: 124: .lang-btn {
-126: 133: 127: 125: background: transparent;
-127: 134: 128: 126: border: 1.5px solid var(--border);
-128: 135: 129: 127: color: var(--text-muted);
-129: 136: 130: 128: padding: 0.2em 0.7em;
-130: 137: 131: 129: border-radius: 99px;
-131: 138: 132: 130: font-size: 0.65em;
-132: 139: 133: 131: font-weight: 700;
-133: 140: 134: 132: cursor: pointer;
-134: 141: 135: 133: transition: all 0.2s;
-135: 142: 136: 134: font-family: inherit;
-136: 143: 137: 135: }
-137: 144: 138: 136: .lang-btn.active {
-138: 145: 139: 137: background: var(--primary);
-139: 146: 140: 138: border-color: var(--primary);
-140: 147: 141: 139: color: #fff;
-141: 148: 142: 140: box-shadow: 0 0 20px var(--primary-glow);
-142: 149: 143: 141: }
-143: 150: 144: 142: .lang-btn:hover { filter: brightness(1.05); }
-144: 151: 145: 143: 
-145: 152: 146: 144: .login-title {
-146: 153: 147: 145: font-size: 1.4em;
-147: 154: 148: 146: font-weight: 700;
-148: 155: 149: 147: color: var(--text);
-149: 156: 150: 148: text-align: center;
-150: 157: 151: 149: margin-bottom: 1em;
-151: 158: 152: 150: }
-152: 159: 153: 151: .login-title span {
-153: 160: 154: 152: display: block;
-154: 161: 155: 153: font-weight: 400;
-155: 162: 156: 154: color: var(--text-muted);
-156: 163: 157: 155: font-size: 0.55em;
-157: 164: 158: 156: margin-top: 0.2em;
-158: 165: 159: 157: }
-159: 166: 160: 158: .login-form {
-160: 167: 161: 159: display: flex;
-161: 168: 162: 160: flex-direction: column;
-162: 169: 163: 161: gap: 0.9em;
-163: 170: 164: 162: }
-164: 171: 165: 163: .field-hint { font-size: 0.75em; margin-top: 4px; height: 1em; transition: color 0.2s; }
-165: 172: 166: 164: .field-hint.error { color: #e57373; }
-166: 173: 167: 165: .field-hint.success { color: #2e7d32; }
-167: 174: 168: 166: .field-group {
-168: 175: 169: 167: display: flex;
-169: 176: 170: 168: flex-direction: column;
-170: 177: 171: 169: gap: 0.35em;
-171: 178: 172: 170: }
-172: 179: 173: 171: .field-group label {
-173: 180: 174: 172: font-size: 0.7em;
-174: 181: 175: 173: font-weight: 600;
-175: 182: 176: 174: color: var(--text-muted);
-176: 183: 177: 175: text-transform: uppercase;
-177: 184: 178: 176: letter-spacing: 0.06em;
-178: 185: 179: 177: }
-179: 186: 180: 178: .field-group input {
-180: 187: 181: 179: width: 100%;
-181: 188: 182: 180: padding: 0.8em 1em;
-182: 189: 183: 181: border-radius: var(--radius-sm);
-183: 190: 184: 182: border: 2px solid var(--border);
-184: 191: 185: 183: background: var(--bg-input);
-185: 192: 186: 184: color: var(--text);
-186: 193: 187: 185: font-size: 0.95em;
-187: 194: 188: 186: font-weight: 600;
-188: 195: 189: 187: outline: none;
-189: 196: 190: 188: transition: border-color 0.3s, box-shadow 0.3s;
-190: 197: 191: 189: font-family: inherit;
-191: 198: 192: 190: }
-192: 199: 193: 191: .field-group input:focus {
-193: 200: 194: 192: border-color: var(--primary);
-194: 201: 195: 193: box-shadow: 0 0 0 4px var(--primary-glow);
-195: 202: 196: 194: }
-196: 203: 197: 195: .field-group input::placeholder { color: var(--text-light); }
-197: 204: 198: 196: 
-198: 205: 199: 197: .oauth-row { display: flex; gap: 0.6em; }
-199: 206: 200: 198: .oauth-btn {
-200: 207: 201: 199: flex: 1;
-201: 208: 202: 200: display: flex;
-202: 209: 203: 201: justify-content: center;
-203: 210: 204: 202: align-items: center;
-204: 211: 205: 203: gap: 0.5em;
-205: 212: 206: 204: padding: 0.7em;
-206: 213: 207: 205: border-radius: var(--radius-sm);
-207: 214: 208: 206: border: 2px solid var(--border);
-208: 215: 209: 207: background: var(--bg-input);
-209: 216: 210: 208: color: var(--text);
-210: 217: 211: 209: font-size: 0.85em;
-211: 218: 212: 210: font-weight: 600;
-212: 219: 213: 211: cursor: pointer;
-213: 220: 214: 212: position: relative;
-214: 221: 215: 213: overflow: hidden;
-215: 222: 216: 214: transition: all 250ms;
-216: 223: 217: 215: font-family: inherit;
-217: 224: 218: 216: }
-218: 225: 219: 217: .oauth-btn::before {
-219: 226: 220: 218: content: "";
-220: 227: 221: 219: position: absolute;
-221: 228: 222: 220: top: 0; left: 0;
-222: 229: 223: 221: height: 100%; width: 0;
-223: 230: 224: 222: background: var(--primary);
-224: 231: 225: 223: z-index: 0;
-225: 232: 226: 224: transition: width 250ms;
-226: 233: 227: 225: }
-227: 234: 228: 226: .oauth-btn:hover { color: #fff; border-color: var(--primary); }
-228: 235: 229: 227: .oauth-btn:hover::before { width: 100%; }
-229: 236: 230: 228: .oauth-btn > * { position: relative; z-index: 1; }
-230: 237: 231: 229: .oauth-btn .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
-231: 238: 232: 230: 
-232: 239: 233: 231: .separator {
-233: 240: 234: 232: display: flex;
-234: 241: 235: 233: align-items: center;
-235: 242: 236: 234: gap: 0.6em;
-236: 243: 237: 235: color: var(--text-muted);
-237: 244: 238: 236: font-size: 0.75em;
-238: 245: 239: 237: margin: 0.2em 0;
-239: 246: 240: 238: }
-240: 247: 241: 239: .separator div {
-241: 248: 242: 240: flex: 1;
-242: 249: 243: 241: height: 1px;
-243: 250: 244: 242: background: var(--border);
-244: 251: 245: 243: }
-245: 252: 246: 244: .login-continue {
-246: 253: 247: 245: width: 100%;
-247: 254: 248: 246: padding: 0.85em;
-248: 255: 249: 247: border-radius: var(--radius-sm);
-249: 256: 250: 248: border: 2px solid var(--primary);
-250: 257: 251: 249: background: var(--primary);
-251: 258: 252: 250: color: #fff;
-252: 259: 253: 251: font-weight: 700;
-253: 260: 254: 252: font-size: 0.95em;
-254: 261: 255: 253: cursor: pointer;
-255: 262: 256: 254: transition: all 0.3s;
-256: 263: 257: 255: display: flex;
-257: 264: 258: 256: align-items: center;
-258: 265: 259: 257: justify-content: center;
-259: 266: 260: 258: gap: 0.5em;
-260: 267: 261: 259: font-family: inherit;
-261: 268: 262: 260: margin-top: 0.3em;
-262: 269: 263: 261: }
-263: 270: 264: 262: .login-continue:hover {
-264: 271: 265: 263: background: var(--primary-light);
-265: 272: 266: 264: border-color: var(--primary-light);
-266: 273: 267: 265: box-shadow: 0 0 30px var(--primary-glow);
-267: 274: 268: 266: transform: translateY(-1px);
-268: 275: 269: 267: }
-269: 276: 270: 268: .login-continue:disabled {
-270: 277: 271: 269: opacity: 0.5;
-271: 278: 272: 270: pointer-events: none;
-272: 279: 273: 271: }
-273: 280: 274: 272: .login-continue .icon {
-274: 281: 275: 273: width: 1.2em;
-275: 282: 276: 274: height: 1.2em;
-276: 283: 277: 275: stroke: currentColor;
-277: 284: 278: 276: stroke-width: 2.5;
-278: 285: 279: 277: fill: none;
-279: 286: 280: 278: }
-280: 287: 281: 279: .login-footer {
-281: 288: 282: 280: text-align: center;
-282: 289: 283: 281: margin-top: 1.1em;
-283: 290: 284: 282: font-size: 0.82em;
-284: 291: 285: 283: color: var(--text-muted);
-285: 292: 286: 284: }
-286: 293: 287: 285: .login-footer .switch-link {
-287: 294: 288: 286: color: var(--primary);
-288: 295: 289: 287: font-weight: 700;
-289: 296: 290: 288: cursor: pointer;
-290: 297: 291: 289: border: none;
-291: 298: 292: 290: background: none;
-292: 299: 293: 291: font-family: inherit;
-293: 300: 294: 292: font-size: inherit;
-294: 301: 295: 293: padding: 0 4px;
-295: 302: 296: 294: text-decoration: underline;
-296: 303: 297: 295: text-underline-offset: 3px;
-297: 304: 298: 296: }
-298: 305: 299: 297: .login-footer .switch-link:hover { color: var(--primary-light); }
-299: 306: 300: 298: 
-300: 307: 301: 299: .login-error {
-301: 308: 302: 300: color: #c62828;
-302: 309: 303: 301: font-size: 0.78em;
-303: 310: 304: 302: text-align: center;
-304: 311: 305: 303: min-height: 1.5em;
-305: 312: 306: 304: margin-top: 0.2em;
-306: 313: 307: 305: }
-307: 314: 308: 306: 
-308: 315: 309: 307: /* 设备检测提示条 */
-309: 316: 310: 308: .device-hint {
-310: 317: 311: 309: display: flex;
-311: 318: 312: 310: align-items: flex-start;
-312: 319: 313: 311: gap: 8px;
-313: 320: 314: 312: padding: 10px 12px;
-314: 321: 315: 313: border-radius: var(--radius-sm);
-315: 322: 316: 314: background: var(--primary-bg);
-316: 323: 317: 315: border: 1px solid var(--border);
-317: 324: 318: 316: font-size: 0.75em;
-318: 325: 319: 317: color: var(--text-muted);
-319: 326: 320: 318: line-height: 1.5;
-320: 327: 321: 319: }
-321: 328: 322: 320: .device-hint svg {
-322: 329: 323: 321: width: 16px;
-323: 330: 324: 322: height: 16px;
-324: 331: 325: 323: flex-shrink: 0;
-325: 332: 326: 324: stroke: var(--primary);
-326: 333: 327: 325: fill: none;
-327: 334: 328: 326: stroke-width: 2;
-328: 335: 329: 327: stroke-linecap: round;
-329: 336: 330: 328: stroke-linejoin: round;
-330: 337: 331: 329: margin-top: 2px;
-331: 338: 332: 330: }
-332: 339: 333: 331: .device-hint.warn {
-333: 340: 334: 332: background: var(--danger-bg);
-334: 341: 335: 333: border-color: #ffcdd2;
-335: 342: 336: 334: color: #c62828;
-336: 343: 337: 335: }
-337: 344: 338: 336: .device-hint.warn svg { stroke: #c62828; }
-338: 345: 339: 337: 
-339: 346: 340: 338: .auth-card { display: none; }
-340: 347: 341: 339: .auth-card.active { display: block; animation: fadeIn 0.35s ease; }
-341: 348: 342: 340: @keyframes fadeIn {
-342: 349: 343: 341: from { opacity: 0; transform: translateY(8px); }
-343: 350: 344: 342: to { opacity: 1; transform: translateY(0); }
-344: 351: 345: 343: }
-345: 352: 346: 344: 
-346: 353: 347: 345: #toast {
-347: 354: 348: 346: position: fixed;
-348: 355: 349: 347: bottom: 40px;
-349: 356: 350: 348: left: 50%;
-350: 357: 351: 349: transform: translateX(-50%) translateY(80px);
-351: 358: 352: 350: background: var(--text);
-352: 359: 353: 351: color: #fff;
-353: 360: 354: 352: padding: 0.7em 1.6em;
-354: 361: 355: 353: border-radius: 2em;
-355: 362: 356: 354: font-weight: 600;
-356: 363: 357: 355: font-size: 0.85em;
-357: 364: 358: 356: opacity: 0;
-358: 365: 359: 357: transition: all 0.4s ease;
-359: 366: 360: 358: z-index: 300;
-360: 367: 361: 359: pointer-events: none;
-361: 368: 362: 360: white-space: nowrap;
-362: 369: 363: 361: box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-363: 370: 364: 362: display: flex;
-364: 371: 365: 363: align-items: center;
-365: 372: 366: 364: gap: 6px;
-366: 373: 367: 365: }
-367: 374: 368: 366: #toast svg { width: 16px; height: 16px; flex-shrink: 0; }
-368: 375: 369: 367: #toast.show {
-369: 376: 370: 368: opacity: 1;
-370: 377: 371: 369: transform: translateX(-50%) translateY(0);
-371: 378: 372: 370: }
-372: 379: 373: 371: 
-373: 380: 374: 372: .modal-overlay {
-374: 381: 375: 373: position: fixed;
-375: 382: 376: 374: inset: 0;
-376: 383: 377: 375: z-index: 1000;
-377: 384: 378: 376: background: rgba(30, 58, 46, 0.35);
-378: 385: 379: 377: backdrop-filter: blur(6px);
-379: 386: 380: 378: -webkit-backdrop-filter: blur(6px);
-380: 387: 381: 379: display: none;
-381: 388: 382: 380: align-items: center;
-382: 389: 383: 381: justify-content: center;
-383: 390: 384: 382: padding: 20px;
-384: 391: 385: 383: opacity: 0;
-385: 392: 386: 384: transition: opacity 0.3s ease;
-386: 393: 387: 385: }
-387: 394: 388: 386: .modal-overlay.active { display: flex; opacity: 1; }
-388: 395: 389: 387: .modal-box {
-389: 396: 390: 388: background: var(--bg-card);
-390: 397: 391: 389: border-radius: var(--radius);
-391: 398: 392: 390: max-width: 400px;
-392: 399: 393: 391: width: 100%;
-393: 400: 394: 392: padding: 2em;
-394: 401: 395: 393: box-shadow: var(--shadow);
-395: 402: 396: 394: border: 1px solid var(--border);
-396: 403: 397: 395: text-align: center;
-397: 404: 398: 396: transform: scale(0.9);
-398: 405: 399: 397: transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-399: 406: 400: 398: }
-400: 407: 401: 399: .modal-overlay.active .modal-box { transform: scale(1); }
-401: 408: 402: 400: .modal-box .modal-icon {
-402: 409: 403: 401: width: 64px;
-403: 410: 404: 402: height: 64px;
-404: 411: 405: 403: margin: 0 auto 0.4em;
-405: 412: 406: 404: border-radius: 50%;
-406: 413: 407: 405: background: var(--primary-bg);
-407: 414: 408: 406: display: grid;
-408: 415: 409: 407: place-items: center;
-409: 416: 410: 408: color: var(--primary);
-410: 417: 411: 409: }
-411: 418: 412: 410: .modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
-412: 419: 413: 411: .modal-box .modal-icon svg {
-413: 420: 414: 412: width: 32px;
-414: 421: 415: 413: height: 32px;
-415: 422: 416: 414: stroke: currentColor;
-416: 423: 417: 415: fill: none;
-417: 424: 418: 416: stroke-width: 2;
-418: 425: 419: 417: stroke-linecap: round;
-419: 426: 420: 418: stroke-linejoin: round;
-420: 427: 421: 419: }
-421: 428: 422: 420: .modal-box .modal-title {
-422: 429: 423: 421: font-size: 1.25em;
-423: 430: 424: 422: font-weight: 900;
-424: 431: 425: 423: color: var(--text);
-425: 432: 426: 424: margin-bottom: 0.4em;
-426: 433: 427: 425: }
-427: 434: 428: 426: .modal-box .modal-body {
-428: 435: 429: 427: font-size: 0.95em;
-429: 436: 430: 428: color: var(--text-muted);
-430: 437: 431: 429: line-height: 1.6;
-431: 438: 432: 430: margin-bottom: 1.4em;
-432: 439: 433: 431: white-space: pre-line;
-433: 440: 434: 432: }
-434: 441: 435: 433: .modal-box .modal-actions {
-435: 442: 436: 434: display: flex;
-436: 443: 437: 435: justify-content: center;
-437: 444: 438: 436: gap: 10px;
-438: 445: 439: 437: flex-wrap: wrap;
-439: 446: 440: 438: }
-440: 447: 441: 439: .modal-box .modal-actions .btn-secondary {
-441: 448: 442: 440: padding: 0.6em 1.4em;
-442: 449: 443: 441: border-radius: var(--radius-sm);
-443: 450: 444: 442: border: 2px solid var(--border);
-444: 451: 445: 443: background: transparent;
-445: 452: 446: 444: color: var(--text-muted);
-446: 453: 447: 445: font-weight: 700;
-447: 454: 448: 446: font-size: 0.95em;
-448: 455: 449: 447: cursor: pointer;
-449: 456: 450: 448: font-family: inherit;
-450: 457: 451: 449: transition: background 0.2s, border-color 0.2s, color 0.2s;
-451: 458: 452: 450: }
-452: 459: 453: 451: .modal-box .modal-actions .btn-secondary:hover {
-453: 460: 454: 452: border-color: var(--primary);
-454: 461: 455: 453: color: var(--primary);
-455: 462: 456: 454: background: var(--primary-bg);
-456: 463: 457: 455: }
-457: 464: 458: 456: .modal-box .modal-actions .btn-primary {
-458: 465: 459: 457: padding: 0.6em 2em;
-459: 466: 460: 458: border-radius: var(--radius-sm);
-460: 467: 461: 459: border: none;
-461: 468: 462: 460: background: var(--primary);
-462: 469: 463: 461: color: #fff;
-463: 470: 464: 462: font-weight: 700;
-464: 471: 465: 463: font-size: 0.95em;
-465: 472: 466: 464: cursor: pointer;
-466: 473: 467: 465: font-family: inherit;
-467: 474: 468: 466: transition: background 0.2s, box-shadow 0.2s;
-468: 475: 469: 467: }
-469: 476: 470: 468: .modal-box .modal-actions .btn-primary:hover {
-470: 477: 471: 469: background: var(--primary-light);
-471: 478: 472: 470: box-shadow: 0 0 25px var(--primary-glow);
-472: 479: 473: 471: }
-473: 480: 474: 472: 
-474: 481: 475: 473: @media (max-width: 480px) {
-475: 482: 476: 474: .login-card { padding: 1.6em 1.4em; }
-476: 483: 477: 475: .oauth-row { flex-direction: column; }
-477: 484: 478: 476: }
-478: 485: 479: 477: </style>
-479: 486: 480: 478: </head>
-480: 487: 481: 479: <body>
-481: 488: 482: 480: 
-482: 489: 483: 481: <!-- 首次访问专属引导页 -->
-483: 490: 484: 482: <div id="introOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%); flex-direction:column; align-items:center; justify-content:center; color:#1e3a2e; transition:opacity 0.8s ease; overflow:hidden;">
-484: 491: 485: 483:     <div class="bg-orb bg-orb-1" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:350px; height:350px; background:rgba(76,175,80,0.25); top:-100px; left:-100px;"></div>
-485: 492: 486: 484:     <div class="bg-orb bg-orb-2" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:450px; height:450px; background:rgba(46,125,50,0.15); bottom:-150px; right:-100px; animation-delay:-4s;"></div>
-486: 493: 487: 485: 
-487: 494: 488: 486:     <div class="slides-wrap" style="position:relative; z-index:2; width:100%; max-width:420px; height:480px;">
-488: 495: 489: 487:         <!-- 第 1 步：社区广场 -->
-489: 496: 490: 488:         <div class="slide" data-idx="0" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-490: 497: 491: 489:             <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #4caf50, #2e7d32);">
-491: 498: 492: 490:                 <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
-492: 499: 493: 491:                   <defs>
-493: 500: 494: 492:                     <linearGradient id="commGrad" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
-494: 501: 495: 493:                       <stop stop-color="#ffffff" stop-opacity="0.9"/>
-495: 502: 496: 494:                       <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
-496: 503: 497: 495:                     </linearGradient>
-497: 504: 498: 496:                     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-498: 505: 499: 497:                       <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#2e7d32" flood-opacity="0.3"/>
-499: 506: 500: 498:                     </filter>
-500: 507: 501: 499:                   </defs>
-501: 508: 502: 500:                   <path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="url(#commGrad)" filter="url(#shadow)"/>
-502: 509: 503: 501:                   <path d="M26 26H38M26 32H34" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/>
-503: 510: 504: 502:                   <circle cx="46" cy="18" r="6" fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
-504: 511: 505: 503:                 </svg>
-505: 512: 506: 504:             </div>
-506: 513: 507: 505:             <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">社区广场</div>
-507: 514: 508: 506:             <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">帖子广场、实时聊天群、匿名留言板<br>发布动态，随便聊聊，找到同好</div>
-508: 515: 509: 507:             <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-509: 516: 510: 508:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M10 4h28v40H10z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M18 14h12m-12 8h12m-12 8h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 帖子广场</span>
-510: 517: 511: 509:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M4 6h40v28H24l-8 8V34H4z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M16 18h16m-16 6h10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 实时聊天</span>
-511: 518: 512: 510:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="4" y="10" width="40" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 12l20 14 20-14" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 匿名留言</span>
-512: 519: 513: 511:             </div>
-513: 520: 514: 512:         </div>
-514: 521: 515: 513: 
-515: 522: 516: 514:         <!-- 第 2 步：互动游戏 -->
-516: 523: 517: 515:         <div class="slide" data-idx="1" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-517: 524: 518: 516:             <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #7c3aed, #db2777);">
-518: 525: 519: 517:                 <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
-519: 526: 520: 518:                   <defs>
-520: 527: 521: 519:                     <linearGradient id="gameGrad" x1="12" y1="20" x2="52" y2="44" gradientUnits="userSpaceOnUse">
-521: 528: 522: 520:                       <stop stop-color="#ffffff" stop-opacity="0.95"/>
-522: 529: 523: 521:                       <stop offset="1" stop-color="#ffffff" stop-opacity="0.6"/>
-523: 530: 524: 522:                     </linearGradient>
-524: 531: 525: 523:                     <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
-525: 532: 526: 524:                       <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.4"/>
-526: 533: 527: 525:                     </filter>
-527: 534: 528: 526:                   </defs>
-528: 535: 529: 527:                   <path d="M22 24C16 24 12 30 12 38C12 44 16 48 20 48C24 48 26 46 28 42H36C38 46 40 48 44 48C48 48 52 44 52 38C52 30 48 24 42 24H22Z" fill="url(#gameGrad)" filter="url(#shadow2)"/>
-529: 536: 530: 528:                   <circle cx="24" cy="36" r="4" fill="#7c3aed"/>
-530: 537: 531: 529:                   <path d="M38 32V40M34 36H42" stroke="#db2777" stroke-width="3" stroke-linecap="round"/>
-531: 538: 532: 530:                   <path d="M28 18L32 22L36 18" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-532: 539: 533: 531:                 </svg>
-533: 540: 534: 532:             </div>
-534: 541: 535: 533:             <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">互动游戏</div>
-535: 542: 536: 534:             <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">开个房间，和朋友一起玩<br>斗地主、五子棋、你画我猜、连麦聊天</div>
-536: 543: 537: 535:             <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-537: 544: 538: 536:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 12h36v24H6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M12 18h8m-8 6h8m-8 6h8m8-12h8m-8 6h8m-8 6h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 斗地主</span>
-538: 545: 539: 537:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="6" width="36" height="36" fill="none" stroke="currentColor" stroke-width="4"/><path d="M18 6v36M30 6v36M6 18h36M6 30h36" stroke="currentColor" stroke-width="4"/></svg> 五子棋</span>
-539: 546: 540: 538:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20c2.21 0 4-1.79 4-4 0-1.38-.71-2.58-1.78-3.31-.64-.44-1.22-1.12-1.22-1.91 0-1.53 1.24-2.78 2.78-2.78h3.44C37.5 32 44 25.5 44 17.5S35.5 4 24 4z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="14" cy="18" r="2" fill="currentColor"/><circle cx="20" cy="12" r="2" fill="currentColor"/><circle cx="28" cy="12" r="2" fill="currentColor"/><circle cx="34" cy="18" r="2" fill="currentColor"/></svg> 你画我猜</span>
-540: 547: 541: 539:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="18" y="4" width="12" height="24" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><path d="M10 22c0 8 6 14 14 14s14-6 14-14M24 36v8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 连麦</span>
-541: 548: 542: 540:             </div>
-542: 549: 543: 541:         </div>
-543: 550: 544: 542: 
-544: 551: 545: 543:         <!-- 第 3 步：皮肤商城 -->
-545: 552: 546: 544:         <div class="slide" data-idx="2" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-546: 553: 547: 545:             <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #d4af37, #b8941f);">
-547: 554: 548: 546:                 <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
-548: 555: 549: 547:                   <defs>
-549: 556: 550: 548:                     <linearGradient id="shopGrad" x1="18" y1="20" x2="46" y2="50" gradientUnits="userSpaceOnUse">
-550: 557: 551: 549:                       <stop stop-color="#ffffff" stop-opacity="0.95"/>
-551: 558: 552: 550:                       <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
-552: 559: 553: 551:                     </linearGradient>
-553: 560: 554: 552:                     <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
-554: 561: 555: 553:                       <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#d4af37" flood-opacity="0.5"/>
-555: 562: 556: 554:                     </filter>
-556: 563: 557: 555:                   </defs>
-557: 564: 558: 556:                   <path d="M20 24H44L46 48C46.2 50.2 44.5 52 42.3 52H21.7C19.5 52 17.8 50.2 18 48L20 24Z" fill="url(#shopGrad)" filter="url(#shadow3)"/>
-558: 565: 559: 557:                   <path d="M24 24V18C24 13.5817 27.5817 10 32 10C36.4183 10 40 13.5817 40 18V24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-559: 566: 560: 558:                   <circle cx="32" cy="36" r="4" fill="#d4af37"/>
-560: 567: 561: 559:                   <path d="M50 16L52 20M14 16L12 20" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-561: 568: 562: 560:                 </svg>
-562: 569: 563: 561:             </div>
-563: 570: 564: 562:             <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">皮肤商城</div>
-564: 571: 565: 563:             <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">45 款精美气泡皮肤任你挑<br>每日签到、抢红包、晒社区赚小七币</div>
-565: 572: 566: 564:             <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-566: 573: 567: 565:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M14 8l-8 8 4 6 4-4v22h20V18l4 4 4-6-8-8h-6a4 4 0 01-8 0h-6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 45 款皮肤</span>
-567: 574: 568: 566:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 12v24M18 18h12M18 30h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 小七币</span>
-568: 575: 569: 567:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="16" width="36" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 16v26M6 24h36M14 16a6 6 0 006-6c0-2-1-4-4-4-3 0-4 3-2 6zm20 0a6 6 0 01-6-6c0-2 1-4 4-4 3 0 4 3 2 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 每日签到</span>
-569: 576: 570: 568:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="12" width="36" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="24" cy="24" r="4" fill="currentColor"/></svg> 抢红包</span>
-570: 577: 571: 569:             </div>
-571: 578: 572: 570:         </div>
-572: 579: 573: 571: 
-573: 580: 574: 572:         <!-- 第 4 步：匿名留言板 -->
-574: 581: 575: 573:         <div class="slide" data-idx="3" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
-575: 582: 576: 574:             <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #0ea5e9, #0284c7);">
-576: 583: 577: 575:                 <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
-577: 584: 578: 576:                   <defs>
-578: 585: 579: 577:                     <linearGradient id="msgGrad" x1="12" y1="16" x2="52" y2="48" gradientUnits="userSpaceOnUse">
-579: 586: 580: 578:                       <stop stop-color="#ffffff" stop-opacity="0.95"/>
-580: 587: 581: 579:                       <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
-581: 588: 582: 580:                     </linearGradient>
-582: 589: 583: 581:                     <filter id="shadow4" x="-10%" y="-10%" width="120%" height="120%">
-583: 590: 584: 582:                       <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.4"/>
-584: 591: 585: 583:                     </filter>
-585: 592: 586: 584:                   </defs>
-586: 593: 587: 585:                   <rect x="14" y="20" width="36" height="26" rx="4" fill="url(#msgGrad)" filter="url(#shadow4)"/>
-587: 594: 588: 586:                   <path d="M14 24L32 36L50 24" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-588: 595: 589: 587:                   <rect x="34" y="36" width="14" height="12" rx="2" fill="#0284c7" stroke="#fff" stroke-width="2"/>
-589: 596: 590: 588:                   <path d="M38 36V32C38 29.7909 39.7909 28 42 28C44.2091 28 46 29.7909 46 32V36" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-590: 597: 591: 589:                 </svg>
-591: 598: 592: 590:             </div>
-592: 599: 593: 591:             <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">匿名留言板</div>
-593: 600: 594: 592:             <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">无需登录，随写随发<br>每天 3 条额度，管理员审核后公开</div>
-594: 601: 595: 593:             <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-595: 602: 596: 594:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="22" width="36" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M14 22V14a10 10 0 0 1 20 0v8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 全匿名</span>
-596: 603: 597: 595:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M25.5 37H21l-10 5v-5H4V7h40v11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 25.2c0-1.067 7-3.2 7-3.2s7 2.133 7 3.2c0 8.533-7 12.8-7 12.8s-7-4.267-7-12.8Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 安全审核</span>
-597: 604: 598: 596:                 <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 8.256L24.009 3L42 8.256v10.778A26.32 26.32 0 0 1 24.003 44A26.32 26.32 0 0 1 6 19.029z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> XSS 防护</span>
-598: 605: 599: 597:             </div>
-599: 606: 600: 598:         </div>
-600: 607: 601: 599:     </div>
-601: 608: 602: 600: 
-602: 609: 603: 601:     <div class="intro-footer" style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:0 20px; margin-top:10px;">
-603: 610: 604: 602:         <div class="dots" id="dots" style="display:flex; gap:8px; margin-bottom:24px;">
-604: 611: 605: 603:             <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-605: 612: 606: 604:             <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-606: 613: 607: 605:             <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-607: 614: 608: 606:             <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
-608: 615: 609: 607:         </div>
-609: 616: 610: 608:         <button id="introBtn" class="intro-btn" style="background:linear-gradient(135deg, #4caf50, #2e7d32); color:#fff; border:none; padding:16px 48px; font-size:1.05em; font-weight:700; border-radius:99px; cursor:pointer; box-shadow:0 10px 25px rgba(46,125,50,0.3); transition:all 0.3s; display:flex; align-items:center; gap:8px; min-width:220px; justify-content:center; position:relative; overflow:hidden;">
-610: 617: 611: 609:             <span id="introBtnText">下一步</span>
-611: 618: 612: 610:             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-612: 619: 613: 611:         </button>
-613: 620: 614: 612:         <button id="skipBtn" class="skip-btn" style="background:none; border:none; color:#8aaa9a; font-size:0.85em; cursor:pointer; margin-top:16px; padding:6px 12px; transition:color 0.2s;">跳过，直接进入 →</button>
-614: 621: 615: 613:     </div>
-615: 622: 616: 614: </div>
-616: 623: 617: 615: 
-617: 624: 618: 616: <!-- 启动页 (复刻 common.js) -->
-618: 625: 619: 617: <div id="bootOverlay" class="boot-loader-wrapper" style="display:none; position:fixed; inset:0; z-index:999998; background:#000; align-items:center; justify-content:center; font-family:'Poppins','Space Grotesk','PingFang SC',sans-serif; font-size:1.6em; font-weight:600; user-select:none; color:#fff; transition:opacity 1s ease; overflow:hidden;">
-619: 626: 620: 618:     <div class="boot-loader-inner" style="position:relative; display:flex; align-items:center; justify-content:center; height:120px; width:auto; margin:2rem; transform:scale(1.55);">
-620: 627: 621: 619:         <div class="boot-loader" style="position:absolute; top:0; left:0; height:100%; width:100%; z-index:1; background-color:transparent; -webkit-mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px); mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px);">
-621: 628: 622: 620:             <div style="position:absolute;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%),radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%),radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%),radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%),radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);animation:boot-transform 2s infinite alternate, boot-opacity 4s infinite;animation-timing-function:cubic-bezier(0.6,0.8,0.5,1);"></div>
-622: 629: 623: 621:         </div>
-623: 630: 624: 622:         <div id="bootText"></div>
-624: 631: 625: 623:     </div>
-625: 632: 626: 624: </div>
-626: 633: 627: 625: 
-627: 634: 628: 626: <style>
-628: 635: 629: 627:     @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
-629: 636: 630: 628:     .slide .anim-item { opacity: 0; transform: translateY(-160px) scale(0.5); filter: blur(15px); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease; }
-630: 637: 631: 629:     .slide.active { opacity: 1; pointer-events: auto; }
-631: 638: 632: 630:     .slide.active .anim-item { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-632: 639: 633: 631:     .slide.active .delay-1 { transition-delay: 0.1s; }
-633: 640: 634: 632:     .slide.active .delay-2 { transition-delay: 0.35s; }
-634: 641: 635: 633:     .slide.active .delay-3 { transition-delay: 0.6s; }
-635: 642: 636: 634:     .slide.active .delay-4 { transition-delay: 0.85s; }
-636: 643: 637: 635:     .dot.active { width: 28px; border-radius: 4px; background: #2e7d32; }
-637: 644: 638: 636:     .intro-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(46,125,50,0.4); }
-638: 645: 639: 637:     .intro-btn:active { transform: scale(0.96); }
-639: 646: 640: 638:     .skip-btn:hover { color: #2e7d32; transform: scale(1.05); }
-640: 647: 641: 639:     .feature-pill:hover { transform: translateY(-2px); background: rgba(46,125,50,0.15); }
-641: 648: 642: 640:     @keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
-642: 649: 643: 641:     @keyframes boot-opacity { 0%, 100% { opacity: 0; } 15% { opacity: 1; } 65% { opacity: 0; } }
-643: 650: 644: 642:     .boot-letter { display: inline-block; opacity: 0; animation: boot-letter-anim 4s infinite linear; z-index: 2; white-space: pre; }
-644: 651: 645: 643:     @keyframes boot-letter-anim { 0% { opacity: 0; } 5% { opacity: 1; text-shadow: 0 0 4px #fff; transform: scale(1.1) translateY(-2px); } 20% { opacity: 0.2; } 100% { opacity: 0; } }
-645: 652: 646: 644:     .boot-loader-wrapper.fade-out { opacity: 0; pointer-events: none; }
-646: 653: 647: 645: </style>
-647: 654: 648: 646: 
-648: 655: 649: 647: <div class="login-card">
-649: 656: 650: 648: <div class="login-header">
-650: 657: 651: 649: <div class="login-logo">
-651: 658: 652: 650: <svg viewBox="0 0 24 24">
-652: 659: 653: 651: <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-653: 660: 654: 652: <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-654: 661: 655: 653: </svg>
-655: 662: 656: 654: <span>Seven</span>戚
-656: 663: 657: 655: </div>
-657: 664: 658: 656: <div class="lang-switch">
-658: 665: 659: 657: <button class="lang-btn active" data-lang="zh">中文</button>
-659: 666: 660: 658: <button class="lang-btn" data-lang="en">EN</button>
-660: 667: 661: 659: </div>
-661: 668: 662: 660: </div>
-662: 669: 663: 661: 
-663: 670: 664: 662: <!-- ===== 登录卡片 ===== -->
-664: 671: 665: 663: <div id="loginCard" class="auth-card active">
-665: 672: 666: 664: <div class="login-title">
-666: 673: 667: 665: <span id="loginMainTitle">欢迎回来</span>
-667: 674: 668: 666: <span id="loginSubTitle">登录以继续</span>
-668: 675: 669: 667: </div>
-669: 676: 670: 668: <div class="login-form">
-670: 677: 671: 669: <div class="oauth-row">
-671: 678: 672: 670: <button class="oauth-btn" id="googleBtn">
-672: 679: 673: 671: <svg class="icon" viewBox="0 0 24 24">
-673: 680: 674: 672: <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-674: 681: 675: 673: <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-675: 682: 676: 674: <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-676: 683: 677: 675: <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-677: 684: 678: 676: </svg>
-678: 685: 679: 677: <span id="googleText">Google</span>
-679: 686: 680: 678: </button>
-680: 687: 681: 679: <button class="oauth-btn" id="githubBtn">
-681: 688: 682: 680: <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-682: 689: 683: 681: <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-683: 690: 684: 682: </svg>
-684: 691: 685: 683: <span id="githubText">Github</span>
-685: 692: 686: 684: </button>
-686: 693: 687: 685: </div>
-687: 694: 688: 686: <div class="separator">
-688: 695: 689: 687: <div></div>
-689: 696: 690: 688: <span id="orText">或</span>
-690: 697: 691: 689: <div></div>
-691: 698: 692: 690: </div>
-692: 699: 693: 691: <div class="field-group">
-693: 700: 694: 692: <label id="phoneLabel">手机号 / UID</label>
-694: 701: 695: 693: <input type="text" id="loginPhone" placeholder="手机号或自定义UID" maxlength="11" oninput="checkUidLive(this.value, true)" />
-695: 702: 696: 694: <div id="loginPhoneHint" class="field-hint"></div>
-696: 703: 697: 695: </div>
-697: 704: 698: 696: <div class="field-group">
-698: 705: 699: 697: <label id="passwordLabel">密码</label>
-699: 706: 700: 698: <input type="password" id="loginPassword" placeholder="请输入密码" />
-700: 707: 701: 699: </div>
-701: 708: 702: 700: <button class="login-continue" id="loginBtn">
-702: 709: 703: 701: <span id="loginBtnText">登录</span>
-703: 710: 704: 702: <svg class="icon" viewBox="0 0 24 24">
-704: 711: 705: 703: <path d="m6 17 5-5-5-5"/>
-705: 712: 706: 704: <path d="m13 17 5-5-5-5"/>
-706: 713: 707: 705: </svg>
-707: 714: 708: 706: </button>
-708: 715: 709: 707: <div class="login-error" id="loginError"></div>
-709: 716: 710: 708: </div>
-710: 717: 711: 709: <div class="login-footer">
-711: 718: 712: 710: <span id="noAccountText">没有账号？</span>
-712: 719: 713: 711: <button class="switch-link" id="toRegisterBtn">去注册</button>
-713: 720: 714: 712: </div>
-714: 721: 715: 713: </div>
-715: 722: 716: 714: 
-716: 723: 717: 715: <!-- ===== 注册卡片 ===== -->
-717: 724: 718: 716: <div id="registerCard" class="auth-card">
-718: 725: 719: 717: <div class="login-title">
-719: 726: 720: 718: <span id="registerMainTitle">创建账户</span>
-720: 727: 721: 719: <span id="registerSubTitle">加入 Seven戚 社区</span>
-721: 728: 722: 720: </div>
-722: 729: 723: 721: 
-723: 730: 724: 722: <!-- 设备检测提示 -->
-724: 731: 725: 723: <div class="device-hint" id="deviceHint" style="margin-bottom:0.9em;">
-725: 732: 726: 724: <svg viewBox="0 0 24 24">
-726: 733: 727: 725: <rect x="5" y="2" width="14" height="20" rx="2"/>
-727: 734: 728: 726: <line x1="12" y1="18" x2="12.01" y2="18"/>
-728: 735: 729: 727: </svg>
-729: 736: 730: 728: <span id="deviceHintText">正在检测本设备…</span>
-730: 737: 731: 729: </div>
-731: 738: 732: 730: 
-732: 739: 733: 731: <div class="login-form">
-733: 740: 734: 732: <div class="field-group">
-734: 741: 735: 733: <label id="regNickLabel">昵称</label>
-735: 742: 736: 734: <input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
-736: 743: 737: 735: </div>
-737: 744: 738: 736: <div class="field-group">
-738: 745: 739: 737: <label id="regPhoneLabel">自定义UID</label>
-739: 746: 740: 738: <input type="text" id="regPhone" placeholder="例如：abc12345" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,''); checkUidLive(this.value)" />
-740: 747: 741: 739: <div id="regPhoneHint" class="field-hint"></div>
-741: 748: 742: 740: </div>
-742: 749: 743: 741: <div class="field-group">
-743: 750: 744: 742: <label id="regPassLabel">密码</label>
-744: 751: 745: 743: <input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
-745: 752: 746: 744: </div>
-746: 753: 747: 745: <div class="field-group">
-747: 754: 748: 746: <label id="regPass2Label">确认密码</label>
-748: 755: 749: 747: <input type="password" id="regPassword2" placeholder="请再次输入密码" />
-749: 756: 750: 748: </div>
-750: 757: 751: 749: <button class="login-continue" id="registerBtn">
-751: 758: 752: 750: <span id="registerBtnText">注册</span>
-752: 759: 753: 751: <svg class="icon" viewBox="0 0 24 24">
-753: 760: 754: 752: <path d="m6 17 5-5-5-5"/>
-754: 761: 755: 753: <path d="m13 17 5-5-5-5"/>
-755: 762: 756: 754: </svg>
-756: 763: 757: 755: </button>
-757: 764: 758: 756: <div class="login-error" id="registerError"></div>
-758: 765: 759: 757: </div>
-759: 766: 760: 758: <div class="login-footer">
-760: 767: 761: 759: <span id="hasAccountText">已有账号？</span>
-761: 768: 762: 760: <button class="switch-link" id="toLoginBtn">去登录</button>
-762: 769: 763: 761: </div>
-763: 770: 764: 762: </div>
-764: 771: 765: 763: </div>
-765: 772: 766: 764: 
-766: 773: 767: 765: <div id="toast"></div>
-767: 774: 768: 766: 
-768: 775: 769: 767: <!-- ===== 通用提示弹窗 ===== -->
-769: 776: 770: 768: <div class="modal-overlay" id="uiModal">
-770: 777: 771: 769: <div class="modal-box">
-771: 778: 772: 770: <div class="modal-icon" id="uiModalIconWrap">
-772: 779: 773: 771: <svg id="uiModalIcon" viewBox="0 0 24 24">
-773: 780: 774: 772: <path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/>
-774: 781: 775: 773: </svg>
-775: 782: 776: 774: </div>
-776: 783: 777: 775: <div class="modal-title" id="uiModalTitle">提示</div>
+:root {
+--bg: #f5faf5;
+--bg-card: #ffffff;
+--bg-input: #eaf3ea;
+--border: #c8e0c8;
+--text: #1e3a2e;
+--text-muted: #5a7a6a;
+--text-light: #8aaa9a;
+--primary: #2e7d32;
+--primary-light: #4caf50;
+--primary-glow: rgba(46, 125, 50, 0.25);
+--primary-bg: #e8f5e9;
+--shadow: 0 8px 32px rgba(46, 125, 50, 0.12);
+--danger: #e57373;
+--danger-bg: #ffebee;
+--radius: 16px;
+--radius-sm: 10px;
+--font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+}
+html, body {
+height: 100%;
+font-family: var(--font);
+background: var(--bg);
+background-image:
+radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%),
+radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%);
+color: var(--text);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+overflow: hidden;
+}
+.login-card {
+width: 23em;
+max-width: 92vw;
+max-height: 92vh;
+overflow-y: auto;
+background: var(--bg-card);
+border-radius: var(--radius);
+padding: 2.2em 2em;
+position: relative;
+border: 1px solid var(--border);
+box-shadow: var(--shadow);
+-webkit-overflow-scrolling: touch;
+}
+.login-card::-webkit-scrollbar { width: 4px; }
+.login-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+.login-card::after {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: var(--radius);
+background-image:
+linear-gradient(rgba(46, 125, 50, 0.04) 1px, transparent 1px),
+linear-gradient(90deg, rgba(46, 125, 50, 0.04) 1px, transparent 1px);
+background-size: 2em 2em;
+opacity: 0.6;
+pointer-events: none;
+z-index: 0;
+}
+.login-card::before {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: var(--radius);
+background: linear-gradient(115deg,
+transparent 0%, transparent 40%,
+rgba(46, 125, 50, 0.03) 45%,
+rgba(46, 125, 50, 0.10) 50%,
+rgba(46, 125, 50, 0.03) 55%,
+transparent 60%, transparent 100%);
+pointer-events: none;
+z-index: 1;
+animation: sweep 6s ease-in-out infinite;
+}
+@keyframes sweep {
+0%, 100% { background-position: 100% 100%; }
+50% { background-position: 0% 0%; }
+}
+.login-card > * { position: relative; z-index: 2; }
 
-(输出已达上限，只显示了第 1-776 行；要继续读就传 offset=777)
+.login-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1.5em;
+}
+.login-logo {
+font-weight: 900;
+font-size: 1.35em;
+color: var(--text);
+letter-spacing: -0.02em;
+display: flex;
+align-items: center;
+gap: 0.35em;
+}
+.login-logo span { color: var(--primary); }
+.login-logo svg {
+width: 1.3em;
+height: 1.3em;
+stroke: var(--primary);
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+.lang-switch { display: flex; gap: 0.3em; }
+.lang-btn {
+background: transparent;
+border: 1.5px solid var(--border);
+color: var(--text-muted);
+padding: 0.2em 0.7em;
+border-radius: 99px;
+font-size: 0.65em;
+font-weight: 700;
+cursor: pointer;
+transition: all 0.2s;
+font-family: inherit;
+}
+.lang-btn.active {
+background: var(--primary);
+border-color: var(--primary);
+color: #fff;
+box-shadow: 0 0 20px var(--primary-glow);
+}
+.lang-btn:hover { filter: brightness(1.05); }
+
+.login-title {
+font-size: 1.4em;
+font-weight: 700;
+color: var(--text);
+text-align: center;
+margin-bottom: 1em;
+}
+.login-title span {
+display: block;
+font-weight: 400;
+color: var(--text-muted);
+font-size: 0.55em;
+margin-top: 0.2em;
+}
+.login-form {
+display: flex;
+flex-direction: column;
+gap: 0.9em;
+}
+.field-hint { font-size: 0.75em; margin-top: 4px; height: 1em; transition: color 0.2s; }
+.field-hint.error { color: #e57373; }
+.field-hint.success { color: #2e7d32; }
+.field-group {
+display: flex;
+flex-direction: column;
+gap: 0.35em;
+}
+.field-group label {
+font-size: 0.7em;
+font-weight: 600;
+color: var(--text-muted);
+text-transform: uppercase;
+letter-spacing: 0.06em;
+}
+.field-group input {
+width: 100%;
+padding: 0.8em 1em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: var(--bg-input);
+color: var(--text);
+font-size: 0.95em;
+font-weight: 600;
+outline: none;
+transition: border-color 0.3s, box-shadow 0.3s;
+font-family: inherit;
+}
+.field-group input:focus {
+border-color: var(--primary);
+box-shadow: 0 0 0 4px var(--primary-glow);
+}
+.field-group input::placeholder { color: var(--text-light); }
+
+.oauth-row { display: flex; gap: 0.6em; }
+.oauth-btn {
+flex: 1;
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 0.5em;
+padding: 0.7em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: var(--bg-input);
+color: var(--text);
+font-size: 0.85em;
+font-weight: 600;
+cursor: pointer;
+position: relative;
+overflow: hidden;
+transition: all 250ms;
+font-family: inherit;
+}
+.oauth-btn::before {
+content: "";
+position: absolute;
+top: 0; left: 0;
+height: 100%; width: 0;
+background: var(--primary);
+z-index: 0;
+transition: width 250ms;
+}
+.oauth-btn:hover { color: #fff; border-color: var(--primary); }
+.oauth-btn:hover::before { width: 100%; }
+.oauth-btn > * { position: relative; z-index: 1; }
+.oauth-btn .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
+
+.separator {
+display: flex;
+align-items: center;
+gap: 0.6em;
+color: var(--text-muted);
+font-size: 0.75em;
+margin: 0.2em 0;
+}
+.separator div {
+flex: 1;
+height: 1px;
+background: var(--border);
+}
+.login-continue {
+width: 100%;
+padding: 0.85em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--primary);
+background: var(--primary);
+color: #fff;
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+transition: all 0.3s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.5em;
+font-family: inherit;
+margin-top: 0.3em;
+}
+.login-continue:hover {
+background: var(--primary-light);
+border-color: var(--primary-light);
+box-shadow: 0 0 30px var(--primary-glow);
+transform: translateY(-1px);
+}
+.login-continue:disabled {
+opacity: 0.5;
+pointer-events: none;
+}
+.login-continue .icon {
+width: 1.2em;
+height: 1.2em;
+stroke: currentColor;
+stroke-width: 2.5;
+fill: none;
+}
+.login-footer {
+text-align: center;
+margin-top: 1.1em;
+font-size: 0.82em;
+color: var(--text-muted);
+}
+.login-footer .switch-link {
+color: var(--primary);
+font-weight: 700;
+cursor: pointer;
+border: none;
+background: none;
+font-family: inherit;
+font-size: inherit;
+padding: 0 4px;
+text-decoration: underline;
+text-underline-offset: 3px;
+}
+.login-footer .switch-link:hover { color: var(--primary-light); }
+
+.login-error {
+color: #c62828;
+font-size: 0.78em;
+text-align: center;
+min-height: 1.5em;
+margin-top: 0.2em;
+}
+
+/* 设备检测提示条 */
+.device-hint {
+display: flex;
+align-items: flex-start;
+gap: 8px;
+padding: 10px 12px;
+border-radius: var(--radius-sm);
+background: var(--primary-bg);
+border: 1px solid var(--border);
+font-size: 0.75em;
+color: var(--text-muted);
+line-height: 1.5;
+}
+.device-hint svg {
+width: 16px;
+height: 16px;
+flex-shrink: 0;
+stroke: var(--primary);
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+margin-top: 2px;
+}
+.device-hint.warn {
+background: var(--danger-bg);
+border-color: #ffcdd2;
+color: #c62828;
+}
+.device-hint.warn svg { stroke: #c62828; }
+
+.auth-card { display: none; }
+.auth-card.active { display: block; animation: fadeIn 0.35s ease; }
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(8px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+#toast {
+position: fixed;
+bottom: 40px;
+left: 50%;
+transform: translateX(-50%) translateY(80px);
+background: var(--text);
+color: #fff;
+padding: 0.7em 1.6em;
+border-radius: 2em;
+font-weight: 600;
+font-size: 0.85em;
+opacity: 0;
+transition: all 0.4s ease;
+z-index: 300;
+pointer-events: none;
+white-space: nowrap;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+#toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+#toast.show {
+opacity: 1;
+transform: translateX(-50%) translateY(0);
+}
+
+.modal-overlay {
+position: fixed;
+inset: 0;
+z-index: 1000;
+background: rgba(30, 58, 46, 0.35);
+backdrop-filter: blur(6px);
+-webkit-backdrop-filter: blur(6px);
+display: none;
+align-items: center;
+justify-content: center;
+padding: 20px;
+opacity: 0;
+transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+.modal-box {
+background: var(--bg-card);
+border-radius: var(--radius);
+max-width: 400px;
+width: 100%;
+padding: 2em;
+box-shadow: var(--shadow);
+border: 1px solid var(--border);
+text-align: center;
+transform: scale(0.9);
+transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.active .modal-box { transform: scale(1); }
+.modal-box .modal-icon {
+width: 64px;
+height: 64px;
+margin: 0 auto 0.4em;
+border-radius: 50%;
+background: var(--primary-bg);
+display: grid;
+place-items: center;
+color: var(--primary);
+}
+.modal-box .modal-icon.warn { background: var(--danger-bg); color: #c62828; }
+.modal-box .modal-icon svg {
+width: 32px;
+height: 32px;
+stroke: currentColor;
+fill: none;
+stroke-width: 2;
+stroke-linecap: round;
+stroke-linejoin: round;
+}
+.modal-box .modal-title {
+font-size: 1.25em;
+font-weight: 900;
+color: var(--text);
+margin-bottom: 0.4em;
+}
+.modal-box .modal-body {
+font-size: 0.95em;
+color: var(--text-muted);
+line-height: 1.6;
+margin-bottom: 1.4em;
+white-space: pre-line;
+}
+.modal-box .modal-actions {
+display: flex;
+justify-content: center;
+gap: 10px;
+flex-wrap: wrap;
+}
+.modal-box .modal-actions .btn-secondary {
+padding: 0.6em 1.4em;
+border-radius: var(--radius-sm);
+border: 2px solid var(--border);
+background: transparent;
+color: var(--text-muted);
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+font-family: inherit;
+transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.modal-box .modal-actions .btn-secondary:hover {
+border-color: var(--primary);
+color: var(--primary);
+background: var(--primary-bg);
+}
+.modal-box .modal-actions .btn-primary {
+padding: 0.6em 2em;
+border-radius: var(--radius-sm);
+border: none;
+background: var(--primary);
+color: #fff;
+font-weight: 700;
+font-size: 0.95em;
+cursor: pointer;
+font-family: inherit;
+transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-box .modal-actions .btn-primary:hover {
+background: var(--primary-light);
+box-shadow: 0 0 25px var(--primary-glow);
+}
+
+@media (max-width: 480px) {
+.login-card { padding: 1.6em 1.4em; }
+.oauth-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- 首次访问专属引导页 -->
+<div id="introOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%); flex-direction:column; align-items:center; justify-content:center; color:#1e3a2e; transition:opacity 0.8s ease; overflow:hidden;">
+    <div class="bg-orb bg-orb-1" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:350px; height:350px; background:rgba(76,175,80,0.25); top:-100px; left:-100px;"></div>
+    <div class="bg-orb bg-orb-2" style="position:absolute; border-radius:50%; filter:blur(80px); z-index:1; opacity:0.6; animation:floatOrb 8s ease-in-out infinite alternate; width:450px; height:450px; background:rgba(46,125,50,0.15); bottom:-150px; right:-100px; animation-delay:-4s;"></div>
+
+    <div class="slides-wrap" style="position:relative; z-index:2; width:100%; max-width:420px; height:480px;">
+        <!-- 第 1 步：社区广场 -->
+        <div class="slide" data-idx="0" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #4caf50, #2e7d32);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="commGrad" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.9"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#2e7d32" flood-opacity="0.3"/>
+                    </filter>
+                  </defs>
+                  <path d="M16 24C16 18.4772 20.4772 14 26 14H38C43.5228 14 48 18.4772 48 24V32C48 37.5228 43.5228 42 38 42H30L20 50V42C17.7909 42 16 40.2091 16 38V24Z" fill="url(#commGrad)" filter="url(#shadow)"/>
+                  <path d="M26 26H38M26 32H34" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/>
+                  <circle cx="46" cy="18" r="6" fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">社区广场</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">帖子广场、实时聊天群、匿名留言板<br>发布动态，随便聊聊，找到同好</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M10 4h28v40H10z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M18 14h12m-12 8h12m-12 8h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 帖子广场</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M4 6h40v28H24l-8 8V34H4z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M16 18h16m-16 6h10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 实时聊天</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="4" y="10" width="40" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 12l20 14 20-14" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 匿名留言</span>
+            </div>
+        </div>
+
+        <!-- 第 2 步：互动游戏 -->
+        <div class="slide" data-idx="1" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #7c3aed, #db2777);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="gameGrad" x1="12" y1="20" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.6"/>
+                    </linearGradient>
+                    <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.4"/>
+                    </filter>
+                  </defs>
+                  <path d="M22 24C16 24 12 30 12 38C12 44 16 48 20 48C24 48 26 46 28 42H36C38 46 40 48 44 48C48 48 52 44 52 38C52 30 48 24 42 24H22Z" fill="url(#gameGrad)" filter="url(#shadow2)"/>
+                  <circle cx="24" cy="36" r="4" fill="#7c3aed"/>
+                  <path d="M38 32V40M34 36H42" stroke="#db2777" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M28 18L32 22L36 18" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">互动游戏</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">开个房间，和朋友一起玩<br>斗地主、五子棋、你画我猜、连麦聊天</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 12h36v24H6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M12 18h8m-8 6h8m-8 6h8m8-12h8m-8 6h8m-8 6h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 斗地主</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="6" width="36" height="36" fill="none" stroke="currentColor" stroke-width="4"/><path d="M18 6v36M30 6v36M6 18h36M6 30h36" stroke="currentColor" stroke-width="4"/></svg> 五子棋</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20c2.21 0 4-1.79 4-4 0-1.38-.71-2.58-1.78-3.31-.64-.44-1.22-1.12-1.22-1.91 0-1.53 1.24-2.78 2.78-2.78h3.44C37.5 32 44 25.5 44 17.5S35.5 4 24 4z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="14" cy="18" r="2" fill="currentColor"/><circle cx="20" cy="12" r="2" fill="currentColor"/><circle cx="28" cy="12" r="2" fill="currentColor"/><circle cx="34" cy="18" r="2" fill="currentColor"/></svg> 你画我猜</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="18" y="4" width="12" height="24" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><path d="M10 22c0 8 6 14 14 14s14-6 14-14M24 36v8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 连麦</span>
+            </div>
+        </div>
+
+        <!-- 第 3 步：皮肤商城 -->
+        <div class="slide" data-idx="2" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #d4af37, #b8941f);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="shopGrad" x1="18" y1="20" x2="46" y2="50" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#d4af37" flood-opacity="0.5"/>
+                    </filter>
+                  </defs>
+                  <path d="M20 24H44L46 48C46.2 50.2 44.5 52 42.3 52H21.7C19.5 52 17.8 50.2 18 48L20 24Z" fill="url(#shopGrad)" filter="url(#shadow3)"/>
+                  <path d="M24 24V18C24 13.5817 27.5817 10 32 10C36.4183 10 40 13.5817 40 18V24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                  <circle cx="32" cy="36" r="4" fill="#d4af37"/>
+                  <path d="M50 16L52 20M14 16L12 20" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">皮肤商城</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">45 款精美气泡皮肤任你挑<br>每日签到、抢红包、晒社区赚小七币</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M14 8l-8 8 4 6 4-4v22h20V18l4 4 4-6-8-8h-6a4 4 0 01-8 0h-6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 45 款皮肤</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 12v24M18 18h12M18 30h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 小七币</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="16" width="36" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M24 16v26M6 24h36M14 16a6 6 0 006-6c0-2-1-4-4-4-3 0-4 3-2 6zm20 0a6 6 0 01-6-6c0-2 1-4 4-4 3 0 4 3 2 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 每日签到</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="12" width="36" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="24" cy="24" r="4" fill="currentColor"/></svg> 抢红包</span>
+            </div>
+        </div>
+
+        <!-- 第 4 步：匿名留言板 -->
+        <div class="slide" data-idx="3" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s ease;">
+            <div class="slide-icon anim-item delay-1" style="width:96px; height:96px; border-radius:28px; display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow:0 12px 32px rgba(46,125,50,0.2); background:linear-gradient(135deg, #0ea5e9, #0284c7);">
+                <svg viewBox="0 0 64 64" style="width:48px; height:48px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="msgGrad" x1="12" y1="16" x2="52" y2="48" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+                      <stop offset="1" stop-color="#ffffff" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <filter id="shadow4" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.4"/>
+                    </filter>
+                  </defs>
+                  <rect x="14" y="20" width="36" height="26" rx="4" fill="url(#msgGrad)" filter="url(#shadow4)"/>
+                  <path d="M14 24L32 36L50 24" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="34" y="36" width="14" height="12" rx="2" fill="#0284c7" stroke="#fff" stroke-width="2"/>
+                  <path d="M38 36V32C38 29.7909 39.7909 28 42 28C44.2091 28 46 29.7909 46 32V36" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="slide-title anim-item delay-2" style="font-size:1.8em; font-weight:900; color:#1e3a2e; margin-bottom:14px; letter-spacing:0.5px; text-shadow:0 4px 12px rgba(46,125,50,0.1);">匿名留言板</div>
+            <div class="slide-desc anim-item delay-3" style="font-size:0.95em; color:#5a7a6a; line-height:1.7; margin-bottom:20px;">无需登录，随写随发<br>每天 3 条额度，管理员审核后公开</div>
+            <div class="slide-features anim-item delay-4" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><rect x="6" y="22" width="36" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M14 22V14a10 10 0 0 1 20 0v8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg> 全匿名</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M25.5 37H21l-10 5v-5H4V7h40v11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 25.2c0-1.067 7-3.2 7-3.2s7 2.133 7 3.2c0 8.533-7 12.8-7 12.8s-7-4.267-7-12.8Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> 安全审核</span>
+                <span class="feature-pill" style="background:rgba(46,125,50,0.08); border:1px solid rgba(46,125,50,0.15); color:#2e7d32; padding:6px 14px; border-radius:99px; font-size:0.8em; font-weight:700;"><svg viewBox="0 0 48 48" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px;"><path d="M6 8.256L24.009 3L42 8.256v10.778A26.32 26.32 0 0 1 24.003 44A26.32 26.32 0 0 1 6 19.029z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></svg> XSS 防护</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="intro-footer" style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:0 20px; margin-top:10px;">
+        <div class="dots" id="dots" style="display:flex; gap:8px; margin-bottom:24px;">
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+            <div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(46,125,50,0.2); transition:all 0.4s;"></div>
+        </div>
+        <button id="introBtn" class="intro-btn" style="background:linear-gradient(135deg, #4caf50, #2e7d32); color:#fff; border:none; padding:16px 48px; font-size:1.05em; font-weight:700; border-radius:99px; cursor:pointer; box-shadow:0 10px 25px rgba(46,125,50,0.3); transition:all 0.3s; display:flex; align-items:center; gap:8px; min-width:220px; justify-content:center; position:relative; overflow:hidden;">
+            <span id="introBtnText">下一步</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+        <button id="skipBtn" class="skip-btn" style="background:none; border:none; color:#8aaa9a; font-size:0.85em; cursor:pointer; margin-top:16px; padding:6px 12px; transition:color 0.2s;">跳过，直接进入 →</button>
+    </div>
+</div>
+
+<!-- 启动页 (复刻 common.js) -->
+<div id="bootOverlay" class="boot-loader-wrapper" style="display:none; position:fixed; inset:0; z-index:999998; background:#000; align-items:center; justify-content:center; font-family:'Poppins','Space Grotesk','PingFang SC',sans-serif; font-size:1.6em; font-weight:600; user-select:none; color:#fff; transition:opacity 1s ease; overflow:hidden;">
+    <div class="boot-loader-inner" style="position:relative; display:flex; align-items:center; justify-content:center; height:120px; width:auto; margin:2rem; transform:scale(1.55);">
+        <div class="boot-loader" style="position:absolute; top:0; left:0; height:100%; width:100%; z-index:1; background-color:transparent; -webkit-mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px); mask:repeating-linear-gradient(90deg,transparent 0,transparent 6px,black 7px,black 8px);">
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%),radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%),radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%),radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%),radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);mask:radial-gradient(circle at 50% 50%,transparent 0%,transparent 10%,black 25%);animation:boot-transform 2s infinite alternate, boot-opacity 4s infinite;animation-timing-function:cubic-bezier(0.6,0.8,0.5,1);"></div>
+        </div>
+        <div id="bootText"></div>
+    </div>
+</div>
+
+<style>
+    @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
+    .slide .anim-item { opacity: 0; transform: translateY(-160px) scale(0.5); filter: blur(15px); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease; }
+    .slide.active { opacity: 1; pointer-events: auto; }
+    .slide.active .anim-item { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    .slide.active .delay-1 { transition-delay: 0.1s; }
+    .slide.active .delay-2 { transition-delay: 0.35s; }
+    .slide.active .delay-3 { transition-delay: 0.6s; }
+    .slide.active .delay-4 { transition-delay: 0.85s; }
+    .dot.active { width: 28px; border-radius: 4px; background: #2e7d32; }
+    .intro-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(46,125,50,0.4); }
+    .intro-btn:active { transform: scale(0.96); }
+    .skip-btn:hover { color: #2e7d32; transform: scale(1.05); }
+    .feature-pill:hover { transform: translateY(-2px); background: rgba(46,125,50,0.15); }
+    @keyframes boot-transform { 0% { transform: translate(-55%); } 100% { transform: translate(55%); } }
+    @keyframes boot-opacity { 0%, 100% { opacity: 0; } 15% { opacity: 1; } 65% { opacity: 0; } }
+    .boot-letter { display: inline-block; opacity: 0; animation: boot-letter-anim 4s infinite linear; z-index: 2; white-space: pre; }
+    @keyframes boot-letter-anim { 0% { opacity: 0; } 5% { opacity: 1; text-shadow: 0 0 4px #fff; transform: scale(1.1) translateY(-2px); } 20% { opacity: 0.2; } 100% { opacity: 0; } }
+    .boot-loader-wrapper.fade-out { opacity: 0; pointer-events: none; }
+</style>
+
+<div class="login-card">
+<div class="login-header">
+<div class="login-logo">
+<svg viewBox="0 0 24 24">
+<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+<path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+</svg>
+<span>Seven</span>戚
+</div>
+<div class="lang-switch">
+<button class="lang-btn active" data-lang="zh">中文</button>
+<button class="lang-btn" data-lang="en">EN</button>
+</div>
+</div>
+
+<!-- ===== 登录卡片 ===== -->
+<div id="loginCard" class="auth-card active">
+<div class="login-title">
+<span id="loginMainTitle">欢迎回来</span>
+<span id="loginSubTitle">登录以继续</span>
+</div>
+<div class="login-form">
+<div class="oauth-row">
+<button class="oauth-btn" id="googleBtn">
+<svg class="icon" viewBox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+</svg>
+<span id="googleText">Google</span>
+</button>
+<button class="oauth-btn" id="githubBtn">
+<svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+</svg>
+<span id="githubText">Github</span>
+</button>
+</div>
+<div class="separator">
+<div></div>
+<span id="orText">或</span>
+<div></div>
+</div>
+<div class="field-group">
+<label id="phoneLabel">手机号 / UID</label>
+<input type="text" id="loginPhone" placeholder="手机号或自定义UID" maxlength="11" oninput="checkUidLive(this.value, true)" />
+<div id="loginPhoneHint" class="field-hint"></div>
+</div>
+<div class="field-group">
+<label id="passwordLabel">密码</label>
+<input type="password" id="loginPassword" placeholder="请输入密码" />
+</div>
+<button class="login-continue" id="loginBtn">
+<span id="loginBtnText">登录</span>
+<svg class="icon" viewBox="0 0 24 24">
+<path d="m6 17 5-5-5-5"/>
+<path d="m13 17 5-5-5-5"/>
+</svg>
+</button>
+<div class="login-error" id="loginError"></div>
+</div>
+<div class="login-footer">
+<span id="noAccountText">没有账号？</span>
+<button class="switch-link" id="toRegisterBtn">去注册</button>
+</div>
+</div>
+
+<!-- ===== 注册卡片 ===== -->
+<div id="registerCard" class="auth-card">
+<div class="login-title">
+<span id="registerMainTitle">创建账户</span>
+<span id="registerSubTitle">加入 Seven戚 社区</span>
+</div>
+
+<!-- 设备检测提示 -->
+<div class="device-hint" id="deviceHint" style="margin-bottom:0.9em;">
+<svg viewBox="0 0 24 24">
+<rect x="5" y="2" width="14" height="20" rx="2"/>
+<line x1="12" y1="18" x2="12.01" y2="18"/>
+</svg>
+<span id="deviceHintText">正在检测本设备…</span>
+</div>
+
+<div class="login-form">
+<div class="field-group">
+<label id="regNickLabel">昵称</label>
+<input type="text" id="regNick" placeholder="请输入昵称" maxlength="12" />
+</div>
+<div class="field-group">
+<label id="regPhoneLabel">自定义UID</label>
+<input type="text" id="regPhone" placeholder="例如：abc12345" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,''); checkUidLive(this.value)" />
+<div id="regPhoneHint" class="field-hint"></div>
+</div>
+<div class="field-group">
+<label id="regPassLabel">密码</label>
+<input type="password" id="regPassword" placeholder="请设置密码（至少6位）" />
+</div>
+<div class="field-group">
+<label id="regPass2Label">确认密码</label>
+<input type="password" id="regPassword2" placeholder="请再次输入密码" />
+</div>
+<button class="login-continue" id="registerBtn">
+<span id="registerBtnText">注册</span>
+<svg class="icon" viewBox="0 0 24 24">
+<path d="m6 17 5-5-5-5"/>
+<path d="m13 17 5-5-5-5"/>
+</svg>
+</button>
+<div class="login-error" id="registerError"></div>
+</div>
+<div class="login-footer">
+<span id="hasAccountText">已有账号？</span>
+<button class="switch-link" id="toLoginBtn">去登录</button>
+</div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== 通用提示弹窗 ===== -->
+<div class="modal-overlay" id="uiModal">
+<div class="modal-box">
+<div class="modal-icon" id="uiModalIconWrap">
+<svg id="uiModalIcon" viewBox="0 0 24 24">
+<path d="M8 9h.01M16 9h.01M8.5 15a4 4 0 0 0 7 0"/>
+</svg>
+</div>
+<div class="modal-title" id="uiModalTitle">提示</div>
+<div class="modal-body" id="uiModalBody">内容</div>
+<div class="modal-actions">
+<button class="btn-secondary" id="uiModalSecondaryBtn" style="display:none;"></button>
+<button class="btn-primary" id="uiModalBtn">知道了</button>
+</div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// Supabase 配置
+// ============================================================
+var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
+window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// 设备 ID 相关
+// ============================================================
+var MAX_ACCOUNTS_PER_DEVICE = 2;
+
+function getDeviceId() {
+var id = localStorage.getItem('sq_device_id');
+if (!id) {
+if (window.crypto && crypto.randomUUID) {
+id = 'dev_' + crypto.randomUUID();
+} else {
+id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+}
+localStorage.setItem('sq_device_id', id);
+}
+return id;
+}
+
+async function getDeviceRegisterCount(deviceId) {
+try {
+var res = await window.sb.rpc('get_device_register_count', { p_device_id: deviceId });
+if (res.error) throw res.error;
+return res.data || 0;
+} catch (e) {
+console.warn('设备检测失败:', e);
+return 0;
+}
+}
+
+async function recordDeviceRegistration(deviceId, userId, phone) {
+try {
+await window.sb.rpc('record_device_registration', {
+p_device_id: deviceId,
+p_user_id: userId,
+p_phone: phone
+});
+} catch (e) {
+console.warn('设备记录写入失败:', e);
+}
+}
+
+async function refreshDeviceHint() {
+var hintEl = document.getElementById('deviceHint');
+var textEl = document.getElementById('deviceHintText');
+var t = T();
+var deviceId = getDeviceId();
+var count = await getDeviceRegisterCount(deviceId);
+var remain = MAX_ACCOUNTS_PER_DEVICE - count;
+
+if (remain <= 0) {
+hintEl.classList.add('warn');
+textEl.textContent = t.deviceLimitReached.replace('{n}', MAX_ACCOUNTS_PER_DEVICE);
+document.getElementById('registerBtn').disabled = true;
+} else {
+hintEl.classList.remove('warn');
+textEl.textContent = t.deviceHintLeft.replace('{n}', remain).replace('{total}', MAX_ACCOUNTS_PER_DEVICE);
+}
+}
+
+// ============================================================
+// 多语言
+// ============================================================
+var LANGS = {
+zh: {
+loginMainTitle: '欢迎回来',
+loginSubTitle: '登录以继续',
+registerMainTitle: '创建账户',
+registerSubTitle: '加入 Seven戚 社区',
+phoneLabel: '手机号 / UID',
+phonePh: '请输入手机号或自定义UID',
+passwordLabel: '密码',
+passwordPh: '请输入密码',
+regNickLabel: '昵称',
+regNickPh: '请输入昵称',
+regPhoneLabel: '自定义UID',
+regPhonePh: '5-10位数字加字母组合',
+regPassLabel: '密码',
+regPassPh: '请设置密码（至少6位）',
+regPass2Label: '确认密码',
+regPass2Ph: '请再次输入密码',
+loginBtnText: '登录',
+registerBtnText: '注册',
+orText: '或',
+noAccountText: '没有账号？',
+toRegisterBtn: '去注册',
+hasAccountText: '已有账号？',
+toLoginBtn: '去登录',
+googleText: 'Google',
+githubText: 'Github',
+modalTitle: '无法登录',
+modalDescGoogle: '哪来的乐乐？你有谷歌账号吗就用',
+modalDescGithub: '哪来的乐乐？你有 Github 账号吗就用',
+fillAll: '请填写完整信息',
+badPhone: '格式不对哦：手机号需11位纯数字，UID需5-10位字母+数字组合',
+    uidPureNum: '请不要只填数字，UID必须带字母（例如：abc123）',
+    uidPureLetter: '请不要只填字母，UID必须带数字（例如：123abc）',
+    uidTooShort: 'UID至少要有5位哦',
+    uidValid: '✅ 格式正确',
+shortPwd: '密码至少6位',
+pwdMismatch: '两次密码不一致',
+nicknameTaken: '该昵称不可用，请使用其他名称',
+phoneExists: '该账号已注册',
+loginSuccess: '登录成功！',
+registerSuccess: '注册成功，请登录',
+logging: '登录中...',
+registering: '注册中...',
+loginFail: '账号未注册或密码错误',
+deviceHintLeft: '本设备还可注册 {n} 个账号（上限 {total} 个）',
+deviceLimitReached: '本设备已注册 {n} 个账号，无法继续注册',
+deviceLimitTitle: '设备已达上限',
+deviceLimitFeedbackBtn: '去反馈说明情况',
+deviceLimitBody: '本设备已注册 {n} 个账号，无法继续注册新账号。\n\n如有特殊情况，请提交反馈说明原因，管理员会尽快处理。',
+netError: '网络异常，请检查网络后重试'
+},
+en: {
+loginMainTitle: 'Welcome back',
+loginSubTitle: 'Sign in to continue',
+registerMainTitle: 'Create account',
+registerSubTitle: 'Join Seven Qi Community',
+phoneLabel: 'Phone / UID',
+phonePh: 'Enter phone or custom UID',
+passwordLabel: 'Password',
+passwordPh: 'Enter password',
+regNickLabel: 'Nickname',
+regNickPh: 'Enter nickname',
+regPhoneLabel: 'Custom UID',
+regPhonePh: '5-10 chars (letters & numbers)',
+regPassLabel: 'Password',
+regPassPh: 'At least 6 characters',
+regPass2Label: 'Confirm password',
+regPass2Ph: 'Re-enter password',
+loginBtnText: 'Login',
+registerBtnText: 'Register',
+orText: 'OR',
+noAccountText: "Don't have an account?",
+toRegisterBtn: 'Sign up',
+hasAccountText: 'Already have an account?',
+toLoginBtn: 'Log in',
+googleText: 'Google',
+githubText: 'Github',
+modalTitle: 'Login Unavailable',
+modalDescGoogle: "Where'd you come from? You got a Google account?",
+modalDescGithub: "Where'd you come from? You got a Github account?",
+fillAll: 'Please fill in all fields',
+badPhone: 'Invalid format. Phone: 11 digits; UID: 5-10 letters+numbers',
+    uidPureNum: 'UID cannot be pure numbers, please add letters',
+    uidPureLetter: 'UID cannot be pure letters, please add numbers',
+    uidTooShort: 'UID must be at least 5 characters',
+    uidValid: '✅ Valid format',
+shortPwd: 'Password must be at least 6 characters',
+pwdMismatch: 'Passwords do not match',
+nicknameTaken: 'This nickname is unavailable',
+phoneExists: 'Account already registered',
+loginSuccess: 'Login successful!',
+registerSuccess: 'Registered, please log in',
+logging: 'Logging in...',
+registering: 'Registering...',
+loginFail: 'Account not registered or wrong password',
+deviceHintLeft: 'This device can register {n} more account(s) (max {total})',
+deviceLimitReached: 'This device has registered {n} accounts. Registration disabled.',
+deviceLimitTitle: 'Device Limit Reached',
+deviceLimitFeedbackBtn: 'Submit feedback',
+deviceLimitBody: 'This device has registered {n} accounts. You cannot register more.\n\nIf you need an exception, please submit feedback and an admin will review it.',
+netError: 'Network error, please check your connection and try again'
+}
+};
+var currentLang = 'zh';
+
+// ============================================================
+// 首次访问引导页逻辑
+// ============================================================
+function initFirstVisitIntro() {
+    var hasSeenIntro = localStorage.getItem('seven_intro_shown_v2');
+    if (hasSeenIntro) return; // 如果不是第一次访问，直接退出，显示登录框
+    
+    var introOverlay = document.getElementById('introOverlay');
+    var bootOverlay = document.getElementById('bootOverlay');
+    var bootText = document.getElementById('bootText');
+    var introBtn = document.getElementById('introBtn');
+    var introBtnText = document.getElementById('introBtnText');
+    var skipBtn = document.getElementById('skipBtn');
+    var dots = document.querySelectorAll('.dot');
+    var slides = document.querySelectorAll('.slide');
+    var currentSlide = 0;
+    var totalSlides = slides.length;
+
+    if (!introOverlay) return;
+    
+    // 显示遮罩层
+    introOverlay.style.display = 'flex';
+    
+    // 初始化启动文字
+    if (bootText) {
+        const text = 'Seven戚  出品';
+        const chars = text.split('');
+        chars.forEach((c, i) => {
+            const span = document.createElement('span');
+            span.className = 'boot-letter';
+            span.style.animationDelay = (0.1 + i * 0.105).toFixed(3) + 's';
+            span.textContent = c;
+            bootText.appendChild(span);
+        });
+    }
+
+    // 初始第一页动画
+    setTimeout(() => {
+        if(slides[0]) {
+            slides[0].classList.add('active');
+            dots[0].classList.add('active');
+        }
+    }, 100);
+
+    const goToSlide = (idx) => {
+        if(slides[currentSlide]) slides[currentSlide].classList.remove('active');
+        if(dots[currentSlide]) dots[currentSlide].classList.remove('active');
+        currentSlide = idx;
+        if(slides[currentSlide]) slides[currentSlide].classList.add('active');
+        if(dots[currentSlide]) dots[currentSlide].classList.add('active');
+        if (currentSlide === totalSlides - 1) {
+            if(introBtnText) introBtnText.textContent = '开启体验';
+        } else {
+            if(introBtnText) introBtnText.textContent = '下一步';
+        }
+    };
+
+    const finishIntro = () => {
+        // 记录已展示过，以后不再弹
+        localStorage.setItem('seven_intro_shown_v2', '1');
+        
+        introOverlay.style.opacity = '0';
+        setTimeout(() => { 
+            introOverlay.style.display = 'none'; 
+            if (!bootOverlay) return;
+            bootOverlay.style.display = 'flex';
+
+            // 启动动画 2 秒后淡出（原来 4 秒太长，且脚本出错会一直黑屏）
+            var done = false;
+            function endBoot() {
+                if (done) return;
+                done = true;
+                bootOverlay.classList.add('fade-out');
+                setTimeout(() => { bootOverlay.style.display = 'none'; }, 600);
+            }
+            setTimeout(endBoot, 2000);
+            setTimeout(endBoot, 5000);   // 兜底
+        }, 600);
+    };
+
+    if (introBtn) {
+        introBtn.onclick = function() {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else {
+                finishIntro();
+            }
+        };
+    }
+
+    if (skipBtn) {
+        skipBtn.onclick = finishIntro;
+    }
+}
+document.addEventListener('DOMContentLoaded', initFirstVisitIntro);
+
+var currentLang = 'zh';
+function T() { return LANGS[currentLang]; }
+
+
+/* ============================================================
+   ★ 账号 → 邮箱映射（唯一需要按后端实际情况修改的地方）
+   Supabase Auth 在本项目只开启了「邮箱」登录，
+   而用户习惯用 手机号 / 自定义 UID 登录，
+   因此注册时后端会把账号写成 `${账号}@${AUTH_DOMAIN}`。
+   若你的数据库用的是别的域名，只改这一行即可。
+   ============================================================ */
+var AUTH_DOMAIN = '@sevenqi.local';
+
+// 登录时会依次尝试这些域名，命中即通过。
+// 如果你在数据库里用的不是第一个，把真实域名放到第一位即可。
+var AUTH_DOMAIN_CANDIDATES = [AUTH_DOMAIN, '@sevenqi.com', '@sevenqi.app', '@sevenqi.cn', '@sq.local'];
+
+function accountToEmail(account, domain) {
+    var a = String(account || '').trim().toLowerCase();
+    if (!a) return '';
+    if (a.indexOf('@') > -1) return a;      // 用户直接输了完整邮箱
+    return a + (domain || AUTH_DOMAIN);
+}
+
+/* ============================================================
+   多语言应用
+   ============================================================ */
+function applyLang(lang) {
+    currentLang = lang;
+    var t = T();
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+    document.querySelectorAll('.lang-btn').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.lang === lang);
+    });
+
+    function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+    function setPh(id, v) { var el = document.getElementById(id); if (el) el.placeholder = v; }
+
+    setText('loginMainTitle', t.loginMainTitle);
+    setText('loginSubTitle', t.loginSubTitle);
+    setText('phoneLabel', t.phoneLabel);
+    setText('passwordLabel', t.passwordLabel);
+    setPh('loginPhone', t.phonePh);
+    setPh('loginPassword', t.passwordPh);
+    setText('loginBtnText', t.loginBtnText);
+    setText('orText', t.orText);
+    setText('noAccountText', t.noAccountText);
+    setText('toRegisterBtn', t.toRegisterBtn);
+    setText('googleText', t.googleText);
+    setText('githubText', t.githubText);
+
+    setText('registerMainTitle', t.registerMainTitle);
+    setText('registerSubTitle', t.registerSubTitle);
+    setText('regNickLabel', t.regNickLabel);
+    setText('regPhoneLabel', t.regPhoneLabel);
+    setText('regPassLabel', t.regPassLabel);
+    setText('regPass2Label', t.regPass2Label);
+    setPh('regNick', t.regNickPh);
+    setPh('regPhone', t.regPhonePh);
+    setPh('regPassword', t.regPassPh);
+    setPh('regPassword2', t.regPass2Ph);
+    setText('registerBtnText', t.registerBtnText);
+    setText('hasAccountText', t.hasAccountText);
+    setText('toLoginBtn', t.toLoginBtn);
+
+    try { localStorage.setItem('sq_lang', lang); } catch (e) {}
+}
+
+function setLang(lang) {
+    applyLang(lang);
+    var t = T();
+    var hint = document.getElementById('loginPhoneHint');
+    if (hint && hint.dataset.state === 'error') hint.textContent = t.badPhone;
+}
+
+/* ============================================================
+   账号格式实时校验（登录 / 注册共用）
+   ============================================================ */
+function checkUidLive(value, isLogin) {
+    var t = T();
+    var hint = document.getElementById(isLogin ? 'loginPhoneHint' : 'regPhoneHint');
+    if (!hint) return true;
+
+    var v = String(value || '').trim();
+    hint.className = 'field-hint';
+
+    if (!v) {
+        hint.textContent = '';
+        hint.dataset.state = '';
+        return false;
+    }
+
+    if (isLogin) {
+        // 登录：手机号 11 位纯数字，或 5-10 位字母+数字，或邮箱
+        var ok = /^1\d{10}$/.test(v) || /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        if (!ok) {
+            hint.classList.add('error');
+            hint.textContent = t.badPhone;
+            hint.dataset.state = 'error';
+            return false;
+        }
+        hint.textContent = '';
+        hint.dataset.state = '';
+        return true;
+    }
+
+    // 注册：必须是 5-10 位、字母+数字组合
+    if (/^\d+$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.uidPureNum; hint.dataset.state = 'error'; return false;
+    }
+    if (/^[a-zA-Z]+$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.uidPureLetter; hint.dataset.state = 'error'; return false;
+    }
+    if (v.length < 5) {
+        hint.classList.add('error'); hint.textContent = t.uidTooShort; hint.dataset.state = 'error'; return false;
+    }
+    if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{5,10}$/.test(v)) {
+        hint.classList.add('error'); hint.textContent = t.badPhone; hint.dataset.state = 'error'; return false;
+    }
+    hint.classList.add('success');
+    hint.textContent = t.uidValid;
+    hint.dataset.state = 'success';
+    return true;
+}
+
+/* ============================================================
+   卡片切换 / 提示
+   ============================================================ */
+function showCard(which) {
+    ['loginCard', 'registerCard'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === which + 'Card');
+    });
+    var le = document.getElementById('loginError');
+    var re = document.getElementById('registerError');
+    if (le) le.textContent = '';
+    if (re) re.textContent = '';
+    if (which === 'register') refreshDeviceHint();
+}
+
+var _toastTimer = null;
+function toast(msg) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+}
+
+function uiAlert(title, body, opts) {
+    opts = opts || {};
+    var overlay = document.getElementById('uiModal');
+    if (!overlay) { alert(title + '\n' + body); return; }
+    document.getElementById('uiModalTitle').textContent = title || '提示';
+    document.getElementById('uiModalBody').textContent = body || '';
+    var primary = document.getElementById('uiModalBtn');
+    var secondary = document.getElementById('uiModalSecondaryBtn');
+
+    if (opts.secondaryText) {
+        secondary.style.display = '';
+        secondary.textContent = opts.secondaryText;
+        secondary.onclick = function () {
+            overlay.classList.remove('active');
+            if (opts.onSecondary) opts.onSecondary();
+        };
+    } else {
+        secondary.style.display = 'none';
+    }
+    primary.textContent = opts.okText || '知道了';
+    primary.onclick = function () {
+        overlay.classList.remove('active');
+        if (opts.onOk) opts.onOk();
+    };
+    overlay.classList.add('active');
+}
+
+/* ============================================================
+   登录
+   ============================================================ */
+async function doLogin() {
+    var t = T();
+    var account = document.getElementById('loginPhone').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errEl = document.getElementById('loginError');
+    var btn = document.getElementById('loginBtn');
+    var btnText = document.getElementById('loginBtnText');
+
+    errEl.textContent = '';
+
+    if (!account || !password) { errEl.textContent = t.fillAll; return; }
+    if (!checkUidLive(account, true)) { errEl.textContent = t.badPhone; return; }
+    if (password.length < 6) { errEl.textContent = t.shortPwd; return; }
+
+    btn.disabled = true;
+    btnText.textContent = t.logging;
+
+    try {
+        // 账号 → 邮箱：依次尝试候选域名，避免因域名约定不一致而登录不了
+        var candidates = account.indexOf('@') > -1 ? [account] : AUTH_DOMAIN_CANDIDATES;
+        var res = null;
+        for (var ci = 0; ci < candidates.length; ci++) {
+            res = await window.sb.auth.signInWithPassword({
+                email: accountToEmail(account, candidates[ci]),
+                password: password
+            });
+            if (!res.error) break;
+            // 只有「账号密码不对」才值得换域名重试；网络错误等直接跳出
+            if (!/invalid login credentials/i.test(String(res.error.message || ''))) break;
+        }
+
+        if (res.error) {
+            var msg = String(res.error.message || '');
+            if (/invalid login credentials/i.test(msg)) {
+                errEl.textContent = t.loginFail;
+            } else if (/email not confirmed/i.test(msg)) {
+                errEl.textContent = '邮箱尚未验证，请联系管理员';
+            } else {
+                errEl.textContent = msg || t.netError;
+            }
+            btn.disabled = false;
+            btnText.textContent = t.loginBtnText;
+            return;
+        }
+
+        // 登录成功：立刻从服务端拉取真实档案（is_admin / 封禁状态一律以服务端为准）
+        var profile = null;
+        try { profile = await fetchMyProfileServer(); } catch (e) {}
+
+        if (!profile) {
+            // Auth 有用户但档案缺失 —— 补建一条，避免进站后白屏
+            profile = await ensureProfileFromAuth();
+        }
+        if (!profile) {
+            await window.sb.auth.signOut();
+            errEl.textContent = '账号档案不存在，请联系管理员';
+            btn.disabled = false;
+            btnText.textContent = t.loginBtnText;
+            return;
+        }
+
+        localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(profile)));
+        if (window.sqTrust) { window.sqTrust.user = profile; window.sqTrust.ready = true; }
+
+        toast(t.loginSuccess);
+        setTimeout(function () { window.location.href = './posts.html'; }, 500);
+
+    } catch (e) {
+        errEl.textContent = (e && e.message) || t.netError;
+        btn.disabled = false;
+        btnText.textContent = t.loginBtnText;
+    }
+}
+
+/* ============================================================
+   注册
+   ============================================================ */
+async function doRegister() {
+    var t = T();
+    var nickname = document.getElementById('regNick').value.trim();
+    var uid = document.getElementById('regPhone').value.trim();
+    var pwd = document.getElementById('regPassword').value;
+    var pwd2 = document.getElementById('regPassword2').value;
+    var errEl = document.getElementById('registerError');
+    var btn = document.getElementById('registerBtn');
+    var btnText = document.getElementById('registerBtnText');
+
+    errEl.textContent = '';
+
+    if (!nickname || !uid || !pwd || !pwd2) { errEl.textContent = t.fillAll; return; }
+    if (nickname.length < 2) { errEl.textContent = '昵称至少 2 个字'; return; }
+    if (!checkUidLive(uid, false)) { errEl.textContent = t.badPhone; return; }
+    if (pwd.length < 6) { errEl.textContent = t.shortPwd; return; }
+    if (pwd !== pwd2) { errEl.textContent = t.pwdMismatch; return; }
+
+    btn.disabled = true;
+    btnText.textContent = t.registering;
+
+    try {
+        // 设备注册数（服务端判定，前端只做提示）
+        var deviceId = getDeviceId();
+        var used = await getDeviceRegisterCount(deviceId);
+        if (used >= MAX_ACCOUNTS_PER_DEVICE) {
+            btn.disabled = true;
+            btnText.textContent = t.registerBtnText;
+            uiAlert(t.deviceLimitTitle, t.deviceLimitBody.replace('{n}', MAX_ACCOUNTS_PER_DEVICE), {
+                secondaryText: t.deviceLimitFeedbackBtn,
+                onSecondary: function () { window.location.href = './messages.html'; }
+            });
+            return;
+        }
+
+        // 昵称 / UID 是否已被占用（服务端查，RPC 不存在时静默跳过）
+        var exists = await checkAccountAvailable(uid, nickname);
+        if (exists.uidTaken) { errEl.textContent = t.phoneExists; throw new Error(t.phoneExists); }
+        if (exists.nickTaken) { errEl.textContent = t.nicknameTaken; throw new Error(t.nicknameTaken); }
+
+        var email = accountToEmail(uid);
+        var res = await window.sb.auth.signUp({
+            email: email,
+            password: pwd,
+            options: { data: { nickname: nickname, custom_uid: uid } }
+        });
+
+        if (res.error) {
+            var msg = String(res.error.message || '');
+            if (/already registered|already exists/i.test(msg)) {
+                errEl.textContent = t.phoneExists;
+            } else if (/password/i.test(msg)) {
+                errEl.textContent = /weak/i.test(msg) ? '密码太简单，请更换更复杂的密码' : msg;
+            } else {
+                errEl.textContent = msg || t.netError;
+            }
+            throw new Error('__handled__');
+        }
+
+        // 自动确认已开启时 signUp 会直接返回会话
+        if (!res.data.session) {
+            // 兜底：尝试用刚注册的账号登录一次
+            var again = await window.sb.auth.signInWithPassword({ email: email, password: pwd });
+            if (again.error) {
+                uiAlert('注册成功', '账号已创建，请返回登录。', { onOk: function () { showCard('login'); } });
+                return;
+            }
+        }
+
+        await ensureProfileFromAuth(nickname, uid);
+        await recordDeviceRegistration(deviceId, null, uid);
+        await window.sb.auth.signOut();
+
+        toast(t.registerSuccess);
+        showCard('login');
+        document.getElementById('loginPhone').value = uid;
+        document.getElementById('loginPassword').value = '';
+
+    } catch (e) {
+        if (e && e.message !== '__handled__') {
+            errEl.textContent = (e && e.message) || t.netError;
+        }
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = t.registerBtnText;
+    }
+}
+
+/* ============================================================
+   服务端档案读取 / 创建
+   —— 权限字段（is_admin、封禁、余额）只能来自这里，不能来自 localStorage
+   ============================================================ */
+async function fetchMyProfileServer() {
+    if (!window.sb) return null;
+
+    // 1) 优先走 RPC（推荐，数据库里配好 SECURITY DEFINER 函数）
+    try {
+        var r = await window.sb.rpc('get_my_profile');
+        if (!r.error && r.data) return Array.isArray(r.data) ? r.data[0] : r.data;
+    } catch (e) {}
+
+    // 2) 退化：读自己的 users 行（受 RLS 保护，只能读到本人）
+    try {
+        var s = await window.sb.auth.getUser();
+        var me = s && s.data && s.data.user;
+        if (!me) return null;
+        var q = await window.sb.from('users')
+            .select('id, nickname, avatar_url, custom_uid, phone, created_at, banned_until, banned_reason, is_admin, coins')
+            .eq('id', me.id).maybeSingle();
+        if (!q.error && q.data) return q.data;
+    } catch (e) {}
+
+    return null;
+}
+
+function sanitizeLocalUser(u) {
+    if (!u) return null;
+    var o = {};
+    var allow = ['id', 'nickname', 'avatar_url', 'custom_uid', 'phone', 'created_at',
+                 'banned_until', 'banned_reason', 'is_admin', 'role', 'role_color',
+                 'is_official', 'coins', 'signature'];
+    allow.forEach(function (k) { if (u[k] !== undefined) o[k] = u[k]; });
+    // 记录服务端签名时间，便于判断缓存是否过期
+    o.__verified_at = Date.now();
+    return o;
+}
+
+async function ensureProfileFromAuth(nickname, uid) {
+    try {
+        var s = await window.sb.auth.getUser();
+        var me = s && s.data && s.data.user;
+        if (!me) return null;
+
+        var meta = me.user_metadata || {};
+        var nick = nickname || meta.nickname || (me.email || '').split('@')[0] || '新用户';
+        var myUid = uid || meta.custom_uid || (me.email || '').split('@')[0] || null;
+
+        // 1) RPC 建档
+        try {
+            var r = await window.sb.rpc('register_profile', { p_nickname: nick, p_uid: myUid });
+            if (!r.error) {
+                var p = await fetchMyProfileServer();
+                if (p) return p;
+            }
+        } catch (e) {}
+
+        // 2) 直接插表兜底
+        try {
+            var ins = await window.sb.from('users')
+                .insert([{ id: me.id, nickname: nick, custom_uid: myUid }])
+                .select();
+            if (!ins.error && ins.data && ins.data[0]) return ins.data[0];
+        } catch (e) {}
+
+        // 3) 也许是触发器已建好，再读一次
+        return await fetchMyProfileServer();
+    } catch (e) {
+        return null;
+    }
+}
+
+async function checkAccountAvailable(uid, nickname) {
+    var out = { uidTaken: false, nickTaken: false };
+    try {
+        var r = await window.sb.rpc('check_account_available', { p_uid: uid, p_nickname: nickname });
+        if (!r.error && r.data) {
+            out.uidTaken = !!r.data.uid_taken;
+            out.nickTaken = !!r.data.nick_taken;
+        }
+    } catch (e) {}
+    return out;
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+(function bindIndexEvents() {
+    function on(id, ev, fn) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener(ev, fn);
+    }
+
+    // 语言
+    document.querySelectorAll('.lang-btn').forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.dataset.lang); });
+    });
+
+    // 卡片切换
+    on('toRegisterBtn', 'click', function () { showCard('register'); });
+    on('toLoginBtn', 'click', function () { showCard('login'); });
+
+    // 登录 / 注册
+    on('loginBtn', 'click', doLogin);
+    on('registerBtn', 'click', doRegister);
+
+    // 回车提交
+    on('loginPassword', 'keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+    on('loginPhone', 'keydown', function (e) { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+    on('regPassword2', 'keydown', function (e) { if (e.key === 'Enter') doRegister(); });
+
+    // 第三方登录（后端未开启 OAuth，如实提示，不再假装能登录）
+    on('googleBtn', 'click', function () {
+        uiAlert(T().modalTitle, T().modalDescGoogle);
+    });
+    on('githubBtn', 'click', function () {
+        uiAlert(T().modalTitle, T().modalDescGithub);
+    });
+
+    // 恢复上次语言
+    var savedLang = 'zh';
+    try { savedLang = localStorage.getItem('sq_lang') || 'zh'; } catch (e) {}
+    applyLang(savedLang);
+
+    // 已登录 → 直接进站（但必须服务端确认过身份）
+    (async function autoRedirect() {
+        try {
+            var s = await window.sb.auth.getSession();
+            if (!s.data || !s.data.session) {
+                localStorage.removeItem('sq_user_session');
+                return;
+            }
+            var p = await fetchMyProfileServer();
+            if (!p) return;
+            localStorage.setItem('sq_user_session', JSON.stringify(sanitizeLocalUser(p)));
+            window.location.replace('./posts.html');
+        } catch (e) {}
+    })();
+})();
+</script>
+</body>
+</html>

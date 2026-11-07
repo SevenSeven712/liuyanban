@@ -3,8 +3,8 @@
 // 初始化 Supabase 客户端
 // ============================================================
 if (!window.sb) {
-    var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
-    var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
+    var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+    var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 

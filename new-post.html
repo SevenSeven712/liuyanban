@@ -1,620 +1,616 @@
-liuyanban/new-post.html（总共 616 行），请查收：
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#2e7d32" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Seven戚 · 发帖</title>
+    <script src="./vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        :root {
+            --bg: #f5faf5;
+            --bg-card: #ffffff;
+            --bg-input: #eaf3ea;
+            --border: #c8e0c8;
+            --text: #1e3a2e;
+            --text-muted: #5a7a6a;
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-bg: #e8f5e9;
+            --shadow: 0 8px 32px rgba(46,125,50,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+            --danger: #e57373;
+            --official-blue: #2b6cff;
+        }
+        html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
+        #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 
-1: <!DOCTYPE html>
-2: <html lang="zh">
-3: <head>
-4:     <meta charset="UTF-8" />
-5:     <link rel="manifest" href="./manifest.json" />
-6:     <meta name="theme-color" content="#2e7d32" />
-7:     <link rel="apple-touch-icon" href="./icon.svg" />
-8:     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-9:     <title>Seven戚 · 发帖</title>
-10:     <script src="./vendor/supabase.js"></script>
-11: <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
-12:     <style>
-13:         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-14:         :root {
-15:             --bg: #f5faf5;
-16:             --bg-card: #ffffff;
-17:             --bg-input: #eaf3ea;
-18:             --border: #c8e0c8;
-19:             --text: #1e3a2e;
-20:             --text-muted: #5a7a6a;
-21:             --primary: #2e7d32;
-22:             --primary-light: #4caf50;
-23:             --primary-bg: #e8f5e9;
-24:             --shadow: 0 8px 32px rgba(46,125,50,0.12);
-25:             --radius: 16px;
-26:             --radius-sm: 10px;
-27:             --font: "Space Grotesk", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-28:             --danger: #e57373;
-29:             --official-blue: #2b6cff;
-30:         }
-31:         html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; }
-32:         #mainApp { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
-33: 
-34:         .app-header {
-35:             flex-shrink: 0; padding: 12px 20px;
-36:             background: rgba(255,255,255,0.92);
-37:             border-bottom: 1px solid var(--border);
-38:             display: flex; align-items: center; justify-content: space-between;
-39:             min-height: 56px; z-index: 50;
-40:         }
-41:         .app-header .back-btn {
-42:             background: none; border: none; cursor: pointer; color: var(--text);
-43:             display: flex; align-items: center; padding: 4px;
-44:             text-decoration: none;
-45:         }
-46:         .app-header .back-btn svg {
-47:             width: 24px; height: 24px; fill: none; stroke: currentColor;
-48:             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-49:         }
-50:         .app-header .title { font-weight: 700; font-size: 1em; }
-51:         .app-header .placeholder { width: 32px; }
-52: 
-53:         .app-content {
-54:             flex: 1; overflow-y: auto; padding: 16px 20px;
-55:             -webkit-overflow-scrolling: touch;
-56:         }
-57: 
-58:         .field-group { margin-bottom: 16px; }
-59:         .field-group label {
-60:             display: block; font-size: 0.7em; font-weight: 600;
-61:             color: var(--text-muted); text-transform: uppercase;
-62:             letter-spacing: 0.05em; margin-bottom: 4px;
-63:         }
-64:         .field-group input, .field-group select {
-65:             width: 100%; padding: 10px 12px;
-66:             border-radius: var(--radius-sm);
-67:             border: 2px solid var(--border);
-68:             background: var(--bg-input);
-69:             font-family: inherit; font-size: 0.9em;
-70:             outline: none; color: var(--text);
-71:         }
-72:         .field-group input:focus, .field-group select:focus { border-color: var(--primary); }
-73: 
-74:         .editor-container { position: relative; }
-75:         .editor-toolbar {
-76:             display: flex; flex-wrap: wrap; gap: 4px;
-77:             margin-bottom: 8px; padding: 6px;
-78:             background: var(--bg-card);
-79:             border: 1px solid var(--border);
-80:             border-radius: var(--radius-sm);
-81:         }
-82:         .editor-toolbar button {
-83:             background: none; border: none; cursor: pointer;
-84:             padding: 6px 8px; border-radius: 6px;
-85:             color: var(--text-muted);
-86:             transition: background 0.2s;
-87:             display: flex; align-items: center;
-88:             pointer-events: auto;
-89:             z-index: 10;
-90:         }
-91:         .editor-toolbar button:hover, .editor-toolbar button.active {
-92:             background: var(--primary-bg); color: var(--primary);
-93:         }
-94:         .editor-toolbar button svg {
-95:             width: 18px; height: 18px; fill: none; stroke: currentColor;
-96:             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-97:         }
-98: 
-99:         .editor-content {
-100:             min-height: 200px; max-height: 400px;
-101:             overflow-y: auto; border: 2px solid var(--border);
-102:             border-radius: var(--radius-sm); padding: 12px;
-103:             background: var(--bg-input); font-size: 0.9em;
-104:             line-height: 1.6; outline: none; word-break: break-word;
-105:         }
-106:         .editor-content img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
-107:         .editor-content a { color: var(--official-blue); text-decoration: underline; cursor: pointer; }
-108:         .editor-content .chapter-block {
-109:             display: block; margin: 8px 0; padding: 8px 12px;
-110:             border-left: 4px solid; background: rgba(0,0,0,0.03);
-111:             border-radius: 4px;
-112:         }
-113: 
-114:         .editor-container.fullscreen-mode {
-115:             position: fixed; inset: 0; z-index: 9999;
-116:             background: #fff; display: flex; flex-direction: column;
-117:         }
-118:         .editor-container.fullscreen-mode .editor-toolbar {
-119:             flex-shrink: 0; margin: 12px;
-120:         }
-121:         .editor-container.fullscreen-mode .editor-content {
-122:             flex: 1; max-height: none; margin: 0 12px 12px 12px;
-123:         }
-124:         .editor-container.fullscreen-mode .fullscreen-exit {
-125:             display: flex !important;
-126:         }
-127:         .fullscreen-exit {
-128:             display: none; position: absolute; top: 20px; right: 20px;
-129:             z-index: 10000; background: var(--primary); color: #fff;
-130:             border: none; border-radius: 99px; padding: 8px 16px;
-131:             cursor: pointer; font-weight: 600; font-size: 0.85em;
-132:             align-items: center; gap: 4px;
-133:         }
-134:         .fullscreen-exit svg {
-135:             width: 16px; height: 16px; fill: none; stroke: currentColor;
-136:             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-137:         }
-138: 
-139:         .poll-builder {
-140:             margin-top: 12px; padding: 12px;
-141:             border: 1px dashed var(--border);
-142:             border-radius: var(--radius-sm);
-143:             background: var(--bg-card);
-144:         }
-145:         .poll-builder label { font-weight: 600; font-size: 0.85em; }
-146:         .poll-builder input[type="text"] {
-147:             width: 100%; margin: 6px 0; padding: 8px;
-148:             border: 2px solid var(--border); border-radius: 6px;
-149:             font-size: 0.85em; outline: none;
-150:         }
-151:         .poll-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
-152:         .poll-option-row input {
-153:             flex: 1; padding: 8px 10px;
-154:             border: 2px solid var(--border); border-radius: 6px;
-155:             font-size: 0.85em; outline: none;
-156:         }
-157:         .poll-option-row button {
-158:             background: none; border: none; cursor: pointer;
-159:             color: var(--danger); font-size: 1.2em; padding: 0 4px;
-160:         }
-161:         .poll-builder .add-option-btn {
-162:             margin-top: 4px; background: var(--primary-bg);
-163:             color: var(--primary); border: none; border-radius: 6px;
-164:             padding: 6px 12px; cursor: pointer; font-size: 0.8em;
-165:         }
-166: 
-167:         .actions { display: flex; gap: 8px; margin-top: 16px; }
-168:         .actions button {
-169:             flex: 1; padding: 12px; border-radius: var(--radius-sm);
-170:             border: none; font-weight: 700; font-size: 1em;
-171:             cursor: pointer; font-family: inherit;
-172:             transition: background 0.2s;
-173:         }
-174:         .actions .btn-primary { background: var(--primary); color: #fff; }
-175:         .actions .btn-primary:hover { background: var(--primary-light); }
-176:         .actions .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
-177:         .actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
-178: 
-179:         #toast {
-180:             position: fixed; bottom: 80px; left: 50%;
-181:             transform: translateX(-50%) translateY(80px);
-182:             background: var(--text); color: #fff;
-183:             padding: 0.7em 1.6em; border-radius: 2em;
-184:             font-weight: 600; font-size: 0.85em;
-185:             opacity: 0; transition: all 0.4s ease;
-186:             z-index: 99999; pointer-events: none;
-187:             white-space: nowrap; box-shadow: var(--shadow);
-188:         }
-189:         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-190: 
-191:         /* 自定义链接弹窗 */
-192:         .link-modal-overlay {
-193:             position: fixed; inset: 0; z-index: 20000;
-194:             background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-195:             display: none; align-items: center; justify-content: center;
-196:             padding: 20px;
-197:         }
-198:         .link-modal-overlay.active { display: flex; }
-199:         .link-modal-box {
-200:             background: #fff; border-radius: 16px;
-201:             max-width: 400px; width: 100%; padding: 24px;
-202:             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-203:         }
-204:         .link-modal-box h3 { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; }
-205:         .link-modal-box .form-group { margin-bottom: 12px; }
-206:         .link-modal-box .form-group label {
-207:             display: block; font-size: 0.75em; font-weight: 600;
-208:             color: #5a7a6a; margin-bottom: 4px;
-209:         }
-210:         .link-modal-box .form-group input {
-211:             width: 100%; padding: 8px 12px;
-212:             border: 2px solid #c8e0c8; border-radius: 8px;
-213:             font-size: 0.9em; outline: none;
-214:         }
-215:         .link-modal-box .form-group input:focus { border-color: #2e7d32; }
-216:         .link-modal-box .modal-actions {
-217:             display: flex; gap: 8px; justify-content: flex-end;
-218:             margin-top: 16px;
-219:         }
-220:         .link-modal-box .modal-actions button {
-221:             padding: 8px 18px; border-radius: 8px; border: none;
-222:             font-weight: 600; font-size: 0.85em; cursor: pointer;
-223:         }
-224:         .link-modal-box .modal-actions .btn-cancel {
-225:             background: #eaf3ea; color: #5a7a6a;
-226:         }
-227:         .link-modal-box .modal-actions .btn-confirm {
-228:             background: #2e7d32; color: #fff;
-229:         }
-230: 
-231:         @media (max-width: 480px) {
-232:             .app-header { padding: 10px 14px; }
-233:             .app-content { padding: 12px 14px; }
-234:         }
-235:     </style>
-236: </head>
-237: <body>
-238:     <div id="mainApp">
-239:         <div class="app-header">
-240:             <!-- 左上角返回按钮：直接跳转到帖子列表 -->
-241:             <a href="posts.html" class="back-btn" title="返回帖子广场">
-242:                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-243:             </a>
-244:             <span class="title"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>发帖</span>
-245:             <div class="placeholder"></div>
-246:         </div>
-247: 
-248:         <div class="app-content">
-249:             <div class="field-group">
-250:                 <label>标题（选填）</label>
-251:                 <input type="text" id="postTitleInput" maxlength="100" placeholder="输入帖子标题..." />
-252:             </div>
-253: 
-254:             <div class="field-group">
-255:                 <label>分类</label>
-256:                 <select id="postCategorySelect"></select>
-257:             </div>
-258: 
-259:             <div class="field-group">
-260:                 <label>正文（支持富文本）</label>
-261:                 <div class="editor-container" id="editorContainer">
-262:                     <div class="editor-toolbar" id="editorToolbar">
-263:                         <button type="button" onclick="execCommand('bold')" title="粗体">
-264:                             <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6zM6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-265:                         </button>
-266:                         <button type="button" onclick="execCommand('italic')" title="斜体">
-267:                             <svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
-268:                         </button>
-269:                         <button type="button" onclick="execCommand('underline')" title="下划线">
-270:                             <svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
-271:                         </button>
-272:                         <button type="button" onclick="execCommand('justifyLeft')" title="左对齐">
-273:                             <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
-274:                         </button>
-275:                         <button type="button" onclick="execCommand('justifyCenter')" title="居中">
-276:                             <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-277:                         </button>
-278:                         <button type="button" onclick="execCommand('justifyRight')" title="右对齐">
-279:                             <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
-280:                         </button>
-281:                         <button type="button" onclick="addChapter()" title="章节模式">
-282:                             <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
-283:                         </button>
-284:                         <button type="button" onclick="insertImage()" title="插入图片">
-285:                             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-286:                         </button>
-287:                         <button type="button" onclick="showLinkModal()" title="插入链接" id="linkBtn">
-288:                             <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-289:                         </button>
-290:                         <button type="button" onclick="addPoll()" title="添加投票">
-291:                             <svg viewBox="0 0 24 24"><path d="M9 11V6a2 2 0 0 1 4 0v5"/><path d="M13 11V6a2 2 0 0 1 4 0v5"/><path d="M17 11V5a2 2 0 0 1 4 0v7a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6V9"/></svg>
-292:                         </button>
-293:                         <button type="button" onclick="toggleFullscreen()" title="全屏编辑">
-294:                             <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-295:                         </button>
-296:                     </div>
-297:                     <div class="editor-content" id="richEditor" contenteditable="true"></div>
-298:                     <button class="fullscreen-exit" id="fullscreenExitBtn" onclick="toggleFullscreen()">
-299:                         <svg viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-300:                         退出全屏
-301:                     </button>
-302:                 </div>
-303:                 <div id="pollBuilderContainer"></div>
-304:             </div>
-305: 
-306:             <div class="actions">
-307:                 <button class="btn-secondary" onclick="window.location.href='./posts.html'">取消</button>
-308:                 <button class="btn-primary" id="submitPostBtn">发布</button>
-309:             </div>
-310:         </div>
-311:     </div>
-312: 
-313:     <!-- 自定义链接弹窗 -->
-314:     <div class="link-modal-overlay" id="linkModalOverlay">
-315:         <div class="link-modal-box">
-316:             <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>插入链接</h3>
-317:             <div class="form-group">
-318:                 <label>链接地址（必填，以 https:// 开头）</label>
-319:                 <input type="text" id="linkUrlInput" placeholder="https://example.com" />
-320:             </div>
-321:             <div class="form-group">
-322:                 <label>链接文字（选填，留空显示网址）</label>
-323:                 <input type="text" id="linkTextInput" placeholder="输入链接显示文字..." />
-324:             </div>
-325:             <div class="modal-actions">
-326:                 <button class="btn-cancel" onclick="closeLinkModal()">取消</button>
-327:                 <button class="btn-confirm" onclick="confirmInsertLink()">确定</button>
-328:             </div>
-329:         </div>
-330:     </div>
-331: 
-332:     <div id="toast"></div>
-333: 
-334:     <script src="./common.js"></script>
-335:     <script>
-336:         renderHeader('发帖', 'posts');
-337: 
-338:         // 强制初始化 Supabase 客户端
-339:         var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
-340:         var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
-341:         window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-342: 
-343:         function showToast(msg) {
-344:             const toast = document.getElementById('toast');
-345:             toast.textContent = msg;
-346:             toast.classList.add('show');
-347:             clearTimeout(window.toastTimer);
-348:             window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-349:         }
-350: 
-351:         function escapeHtml(s) {
-352:             if (!s) return '';
-353:             return String(s).replace(/[&<>"']/g, function(c) {
-354:                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
-355:             });
-356:         }
-357: 
-358:         var currentUser = getSessionUser();
-359:         if (!currentUser || !currentUser.id) {
-360:             window.location.href = './index.html';
-361:         }
-362:         var isAdmin = (currentUser.is_admin === true);
-363: 
-364:         var categories = [];
-365:         var pollOptions = [];
-366:         var savedRange = null; // 保存选区
-367: 
-368:         async function loadCategories() {
-369:             try {
-370:                 const { data, error } = await window.sb
-371:                     .from('categories')
-372:                     .select('*')
-373:                     .order('sort_order', { ascending: true });
-374:                 if (error) throw error;
-375:                 categories = data || [];
-376:                 const select = document.getElementById('postCategorySelect');
-377:                 const available = categories.filter(c => c.name !== '未分类' && (isAdmin || c.is_public !== false));
-378:                 select.innerHTML = available.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-379:             } catch (err) {
-380:                 showToast('分类加载失败：' + err.message);
-381:             }
-382:         }
-383: 
-384:         function execCommand(command, value = null) {
-385:             document.execCommand(command, false, value);
-386:             document.getElementById('richEditor').focus();
-387:         }
-388: 
-389:         // ============================================================
-390:         // 图片上传功能
-391:         // ============================================================
-392:         async function uploadImage(file) {
-393:             const fileExt = file.name.split('.').pop();
-394:             const fileName = `posts/${Date.now()}.${fileExt}`;
-395:             const { data, error } = await window.sb.storage.from('posts').upload(fileName, file);
-396:             if (error) throw error;
-397:             const { data: urlData } = window.sb.storage.from('posts').getPublicUrl(fileName);
-398:             return urlData.publicUrl;
-399:         }
-400: 
-401:         function insertImage() {
-402:             const input = document.createElement('input');
-403:             input.type = 'file';
-404:             input.accept = 'image/*';
-405:             input.onchange = async (e) => {
-406:                 const file = e.target.files[0];
-407:                 if (!file) return;
-408:                 try {
-409:                     showToast('正在上传图片...');
-410:                     const url = await uploadImage(file);
-411:                     document.execCommand('insertImage', false, url);
-412:                 } catch (err) {
-413:                     showToast('图片上传失败：' + err.message);
-414:                 }
-415:             };
-416:             input.click();
-417:         }
-418: 
-419:         // ============================================================
-420:         // 超链接功能（修复版）
-421:         // ============================================================
-422:         function showLinkModal() {
-423:             const selection = window.getSelection();
-424:             if (selection.rangeCount > 0) {
-425:                 savedRange = selection.getRangeAt(0).cloneRange();
-426:             } else {
-427:                 savedRange = null;
-428:             }
-429:             document.getElementById('linkUrlInput').value = '';
-430:             document.getElementById('linkTextInput').value = '';
-431:             document.getElementById('linkModalOverlay').classList.add('active');
-432:             document.getElementById('linkUrlInput').focus();
-433:         }
-434: 
-435:         function closeLinkModal() {
-436:             document.getElementById('linkModalOverlay').classList.remove('active');
-437:         }
-438: 
-439:         function confirmInsertLink() {
-440:             const url = document.getElementById('linkUrlInput').value.trim();
-441:             const text = document.getElementById('linkTextInput').value.trim();
-442: 
-443:             if (!url) {
-444:                 showToast('请输入链接地址');
-445:                 return;
-446:             }
-447:             if (!/^https:\/\/[\w\-]+(\.[\w\-]+)+([\/\w\-.,@?^=%&:~+#]*)*$/.test(url)) {
-448:                 showToast('链接必须以 https:// 开头且格式正确');
-449:                 return;
-450:             }
-451: 
-452:             closeLinkModal();
-453:             const editor = document.getElementById('richEditor');
-454:             editor.focus();
-455: 
-456:             if (savedRange) {
-457:                 const selection = window.getSelection();
-458:                 selection.removeAllRanges();
-459:                 selection.addRange(savedRange);
-460:                 const selectedText = selection.toString();
-461:                 if (selectedText) {
-462:                     document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(selectedText)}</a>`);
-463:                 } else {
-464:                     const displayText = text || url;
-465:                     document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
-466:                 }
-467:             } else {
-468:                 const displayText = text || url;
-469:                 document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
-470:             }
-471:             savedRange = null;
-472:             editor.focus();
-473:         }
-474: 
-475:         document.getElementById('linkModalOverlay').addEventListener('click', function(e) {
-476:             if (e.target === this) closeLinkModal();
-477:         });
-478: 
-479:         function addChapter() {
-480:             const borderColor = prompt('请输入章节边框颜色（例如 #2e7d32）：') || '#2e7d32';
-481:             const textColor = prompt('请输入章节文字颜色（例如 #1e3a2e）：') || '#1e3a2e';
-482:             const html = `<div class="chapter-block" style="border-color:${borderColor};color:${textColor}">章节内容</div>`;
-483:             document.execCommand('insertHTML', false, html);
-484:         }
-485: 
-486:         function toggleFullscreen() {
-487:             const container = document.getElementById('editorContainer');
-488:             container.classList.toggle('fullscreen-mode');
-489:             if (container.classList.contains('fullscreen-mode')) {
-490:                 document.getElementById('richEditor').focus();
-491:             }
-492:         }
-493: 
-494:         function addPoll() {
-495:             pollOptions = ['', ''];
-496:             renderPollBuilder();
-497:         }
-498: 
-499:         function addPollOption() {
-500:             if (pollOptions.length >= 10) { showToast('最多10个选项'); return; }
-501:             pollOptions.push('');
-502:             renderPollBuilder();
-503:         }
-504: 
-505:         function removePollOption(index) {
-506:             pollOptions.splice(index, 1);
-507:             renderPollBuilder();
-508:         }
-509: 
-510:         function renderPollBuilder() {
-511:             const container = document.getElementById('pollBuilderContainer');
-512:             if (!container) return;
-513:             let html = '<div class="poll-builder"><label><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>投票</label>';
-514:             html += '<input type="text" id="pollTitle" placeholder="投票标题（必填）" />';
-515:             html += '<input type="text" id="pollDescription" placeholder="投票简介（选填）" />';
-516:             pollOptions.forEach((opt, index) => {
-517:                 html += `<div class="poll-option-row"><input type="text" value="${escapeHtml(opt)}" placeholder="选项 ${index+1}" oninput="pollOptions[${index}]=this.value" /><button type="button" onclick="removePollOption(${index})">✕</button></div>`;
-518:             });
-519:             html += '<button type="button" class="add-option-btn" onclick="addPollOption()">+ 添加选项</button>';
-520:             html += '</div>';
-521:             container.innerHTML = html;
-522:         }
-523: 
-524:         document.getElementById('submitPostBtn').addEventListener('click', async function() {
-525:             const title = document.getElementById('postTitleInput').value.trim();
-526:             const category_id = parseInt(document.getElementById('postCategorySelect').value);
-527:             const content = document.getElementById('richEditor').innerHTML.trim();
-528:             if (!content || content === '<br>') { showToast('请输入正文内容'); return; }
-529:             if (currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
-530:                 showToast('账号已被封禁，无法发布');
-531:                 return;
-532:             }
-533: 
-534:             let pollData = null;
-535:             const pollTitle = document.getElementById('pollTitle')?.value.trim();
-536:             if (pollTitle) {
-537:                 const validOptions = pollOptions.filter(opt => opt.trim() !== '');
-538:                 if (validOptions.length < 2) { showToast('投票至少需要2个有效选项'); return; }
-539:                 pollData = {
-540:                     title: pollTitle,
-541:                     description: document.getElementById('pollDescription')?.value.trim() || '',
-542:                     options: validOptions
-543:                 };
-544:             }
-545: 
-546:             const btn = this;
-547:             btn.disabled = true;
-548:             btn.textContent = '发布中...';
-549: 
-550:             try {
-551:                 const isOfficial = isAdmin || currentUser.is_admin === true;
-552:                 const { data: postData, error: postError } = await window.sb
-553:                     .from('posts')
-554:                     .insert([{
-555:                         title: title,
-556:                         content: content,
-557:                         category_id: category_id,
-558:                         author: currentUser.nickname,
-559:                         user_id: currentUser.id,
-560:                         is_official: isOfficial,
-561:                         is_pinned: false
-562:                     }])
-563:                     .select();
-564:                 if (postError) throw postError;
-565: 
-566:                 if (pollData && postData && postData.length > 0) {
-567:                     const postId = postData[0].id;
-568:                     await window.sb.from('post_polls').insert([{
-569:                         post_id: postId,
-570:                         title: pollData.title,
-571:                         description: pollData.description
-572:                     }]);
-573:                     for (const opt of pollData.options) {
-574:                         await window.sb.from('poll_options').insert([{
-575:                             post_id: postId,
-576:                             option_text: opt
-577:                         }]);
-578:                     }
-579:                 }
-580: 
-581:                 showToast('帖子发布成功！');
-582:                 setTimeout(() => {
-583:                     window.location.href = './posts.html';
-584:                 }, 1000);
-585:             } catch (err) {
-586:                 showToast('发布失败：' + err.message);
-587:             } finally {
-588:                 btn.disabled = false;
-589:                 btn.textContent = '发布';
-590:             }
-591:         });
-592: 
-593:         loadCategories();
-594:     
-595: /* ★★ 服务端身份确认后再刷新权限 ★★
-596:    本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
-597:    只有 get_my_profile 返回的 is_admin 才会被采纳 */
-598: window.addEventListener('sq-user-ready', function (e) {
-599:   var u = e.detail && e.detail.user;
-600:   if (!u) return;
-601:   try { currentUser = u; } catch (err) { window.currentUser = u; }
-602:   var admin = (u.is_admin === true);
-603:   try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
-604:   window.isAdmin = admin;
-605:   ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
-606:     .forEach(function (fn) {
-607:       try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
-608:     });
-609:   var ap = document.getElementById('adminPanelBtn');
-610:   if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
-611:   var cc = document.getElementById('clearChatBtn');
-612:   if (cc) cc.style.display = admin ? 'inline-block' : 'none';
-613: });
-614: </script>
-615: </body>
-616: </html>
+        .app-header {
+            flex-shrink: 0; padding: 12px 20px;
+            background: rgba(255,255,255,0.92);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 56px; z-index: 50;
+        }
+        .app-header .back-btn {
+            background: none; border: none; cursor: pointer; color: var(--text);
+            display: flex; align-items: center; padding: 4px;
+            text-decoration: none;
+        }
+        .app-header .back-btn svg {
+            width: 24px; height: 24px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .app-header .title { font-weight: 700; font-size: 1em; }
+        .app-header .placeholder { width: 32px; }
 
-(已经到底了，共 616 行)
+        .app-content {
+            flex: 1; overflow-y: auto; padding: 16px 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .field-group { margin-bottom: 16px; }
+        .field-group label {
+            display: block; font-size: 0.7em; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 4px;
+        }
+        .field-group input, .field-group select {
+            width: 100%; padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background: var(--bg-input);
+            font-family: inherit; font-size: 0.9em;
+            outline: none; color: var(--text);
+        }
+        .field-group input:focus, .field-group select:focus { border-color: var(--primary); }
+
+        .editor-container { position: relative; }
+        .editor-toolbar {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            margin-bottom: 8px; padding: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+        .editor-toolbar button {
+            background: none; border: none; cursor: pointer;
+            padding: 6px 8px; border-radius: 6px;
+            color: var(--text-muted);
+            transition: background 0.2s;
+            display: flex; align-items: center;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .editor-toolbar button:hover, .editor-toolbar button.active {
+            background: var(--primary-bg); color: var(--primary);
+        }
+        .editor-toolbar button svg {
+            width: 18px; height: 18px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .editor-content {
+            min-height: 200px; max-height: 400px;
+            overflow-y: auto; border: 2px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px;
+            background: var(--bg-input); font-size: 0.9em;
+            line-height: 1.6; outline: none; word-break: break-word;
+        }
+        .editor-content img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
+        .editor-content a { color: var(--official-blue); text-decoration: underline; cursor: pointer; }
+        .editor-content .chapter-block {
+            display: block; margin: 8px 0; padding: 8px 12px;
+            border-left: 4px solid; background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+        }
+
+        .editor-container.fullscreen-mode {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #fff; display: flex; flex-direction: column;
+        }
+        .editor-container.fullscreen-mode .editor-toolbar {
+            flex-shrink: 0; margin: 12px;
+        }
+        .editor-container.fullscreen-mode .editor-content {
+            flex: 1; max-height: none; margin: 0 12px 12px 12px;
+        }
+        .editor-container.fullscreen-mode .fullscreen-exit {
+            display: flex !important;
+        }
+        .fullscreen-exit {
+            display: none; position: absolute; top: 20px; right: 20px;
+            z-index: 10000; background: var(--primary); color: #fff;
+            border: none; border-radius: 99px; padding: 8px 16px;
+            cursor: pointer; font-weight: 600; font-size: 0.85em;
+            align-items: center; gap: 4px;
+        }
+        .fullscreen-exit svg {
+            width: 16px; height: 16px; fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .poll-builder {
+            margin-top: 12px; padding: 12px;
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+        }
+        .poll-builder label { font-weight: 600; font-size: 0.85em; }
+        .poll-builder input[type="text"] {
+            width: 100%; margin: 6px 0; padding: 8px;
+            border: 2px solid var(--border); border-radius: 6px;
+            font-size: 0.85em; outline: none;
+        }
+        .poll-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .poll-option-row input {
+            flex: 1; padding: 8px 10px;
+            border: 2px solid var(--border); border-radius: 6px;
+            font-size: 0.85em; outline: none;
+        }
+        .poll-option-row button {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 1.2em; padding: 0 4px;
+        }
+        .poll-builder .add-option-btn {
+            margin-top: 4px; background: var(--primary-bg);
+            color: var(--primary); border: none; border-radius: 6px;
+            padding: 6px 12px; cursor: pointer; font-size: 0.8em;
+        }
+
+        .actions { display: flex; gap: 8px; margin-top: 16px; }
+        .actions button {
+            flex: 1; padding: 12px; border-radius: var(--radius-sm);
+            border: none; font-weight: 700; font-size: 1em;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .actions .btn-primary { background: var(--primary); color: #fff; }
+        .actions .btn-primary:hover { background: var(--primary-light); }
+        .actions .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+        .actions .btn-secondary { background: var(--bg-input); color: var(--text-muted); }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text); color: #fff;
+            padding: 0.7em 1.6em; border-radius: 2em;
+            font-weight: 600; font-size: 0.85em;
+            opacity: 0; transition: all 0.4s ease;
+            z-index: 99999; pointer-events: none;
+            white-space: nowrap; box-shadow: var(--shadow);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* 自定义链接弹窗 */
+        .link-modal-overlay {
+            position: fixed; inset: 0; z-index: 20000;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .link-modal-overlay.active { display: flex; }
+        .link-modal-box {
+            background: #fff; border-radius: 16px;
+            max-width: 400px; width: 100%; padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .link-modal-box h3 { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; }
+        .link-modal-box .form-group { margin-bottom: 12px; }
+        .link-modal-box .form-group label {
+            display: block; font-size: 0.75em; font-weight: 600;
+            color: #5a7a6a; margin-bottom: 4px;
+        }
+        .link-modal-box .form-group input {
+            width: 100%; padding: 8px 12px;
+            border: 2px solid #c8e0c8; border-radius: 8px;
+            font-size: 0.9em; outline: none;
+        }
+        .link-modal-box .form-group input:focus { border-color: #2e7d32; }
+        .link-modal-box .modal-actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+            margin-top: 16px;
+        }
+        .link-modal-box .modal-actions button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            font-weight: 600; font-size: 0.85em; cursor: pointer;
+        }
+        .link-modal-box .modal-actions .btn-cancel {
+            background: #eaf3ea; color: #5a7a6a;
+        }
+        .link-modal-box .modal-actions .btn-confirm {
+            background: #2e7d32; color: #fff;
+        }
+
+        @media (max-width: 480px) {
+            .app-header { padding: 10px 14px; }
+            .app-content { padding: 12px 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="mainApp">
+        <div class="app-header">
+            <!-- 左上角返回按钮：直接跳转到帖子列表 -->
+            <a href="posts.html" class="back-btn" title="返回帖子广场">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </a>
+            <span class="title"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>发帖</span>
+            <div class="placeholder"></div>
+        </div>
+
+        <div class="app-content">
+            <div class="field-group">
+                <label>标题（选填）</label>
+                <input type="text" id="postTitleInput" maxlength="100" placeholder="输入帖子标题..." />
+            </div>
+
+            <div class="field-group">
+                <label>分类</label>
+                <select id="postCategorySelect"></select>
+            </div>
+
+            <div class="field-group">
+                <label>正文（支持富文本）</label>
+                <div class="editor-container" id="editorContainer">
+                    <div class="editor-toolbar" id="editorToolbar">
+                        <button type="button" onclick="execCommand('bold')" title="粗体">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6zM6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('italic')" title="斜体">
+                            <svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('underline')" title="下划线">
+                            <svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyLeft')" title="左对齐">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyCenter')" title="居中">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="execCommand('justifyRight')" title="右对齐">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+                        </button>
+                        <button type="button" onclick="addChapter()" title="章节模式">
+                            <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+                        </button>
+                        <button type="button" onclick="insertImage()" title="插入图片">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        </button>
+                        <button type="button" onclick="showLinkModal()" title="插入链接" id="linkBtn">
+                            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        </button>
+                        <button type="button" onclick="addPoll()" title="添加投票">
+                            <svg viewBox="0 0 24 24"><path d="M9 11V6a2 2 0 0 1 4 0v5"/><path d="M13 11V6a2 2 0 0 1 4 0v5"/><path d="M17 11V5a2 2 0 0 1 4 0v7a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6V9"/></svg>
+                        </button>
+                        <button type="button" onclick="toggleFullscreen()" title="全屏编辑">
+                            <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        </button>
+                    </div>
+                    <div class="editor-content" id="richEditor" contenteditable="true"></div>
+                    <button class="fullscreen-exit" id="fullscreenExitBtn" onclick="toggleFullscreen()">
+                        <svg viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        退出全屏
+                    </button>
+                </div>
+                <div id="pollBuilderContainer"></div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-secondary" onclick="window.location.href='./posts.html'">取消</button>
+                <button class="btn-primary" id="submitPostBtn">发布</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义链接弹窗 -->
+    <div class="link-modal-overlay" id="linkModalOverlay">
+        <div class="link-modal-box">
+            <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>插入链接</h3>
+            <div class="form-group">
+                <label>链接地址（必填，以 https:// 开头）</label>
+                <input type="text" id="linkUrlInput" placeholder="https://example.com" />
+            </div>
+            <div class="form-group">
+                <label>链接文字（选填，留空显示网址）</label>
+                <input type="text" id="linkTextInput" placeholder="输入链接显示文字..." />
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeLinkModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmInsertLink()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="./common.js"></script>
+    <script>
+        renderHeader('发帖', 'posts');
+
+        // 强制初始化 Supabase 客户端
+        var SUPABASE_URL = "https://ulvhuqtpdafspbdvkogs.supabase.co";
+        var SUPABASE_ANON_KEY = "sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
+        window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c];
+            });
+        }
+
+        var currentUser = getSessionUser();
+        if (!currentUser || !currentUser.id) {
+            window.location.href = './index.html';
+        }
+        var isAdmin = (currentUser.is_admin === true);
+
+        var categories = [];
+        var pollOptions = [];
+        var savedRange = null; // 保存选区
+
+        async function loadCategories() {
+            try {
+                const { data, error } = await window.sb
+                    .from('categories')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+                if (error) throw error;
+                categories = data || [];
+                const select = document.getElementById('postCategorySelect');
+                const available = categories.filter(c => c.name !== '未分类' && (isAdmin || c.is_public !== false));
+                select.innerHTML = available.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            } catch (err) {
+                showToast('分类加载失败：' + err.message);
+            }
+        }
+
+        function execCommand(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('richEditor').focus();
+        }
+
+        // ============================================================
+        // 图片上传功能
+        // ============================================================
+        async function uploadImage(file) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `posts/${Date.now()}.${fileExt}`;
+            const { data, error } = await window.sb.storage.from('posts').upload(fileName, file);
+            if (error) throw error;
+            const { data: urlData } = window.sb.storage.from('posts').getPublicUrl(fileName);
+            return urlData.publicUrl;
+        }
+
+        function insertImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    showToast('正在上传图片...');
+                    const url = await uploadImage(file);
+                    document.execCommand('insertImage', false, url);
+                } catch (err) {
+                    showToast('图片上传失败：' + err.message);
+                }
+            };
+            input.click();
+        }
+
+        // ============================================================
+        // 超链接功能（修复版）
+        // ============================================================
+        function showLinkModal() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                savedRange = selection.getRangeAt(0).cloneRange();
+            } else {
+                savedRange = null;
+            }
+            document.getElementById('linkUrlInput').value = '';
+            document.getElementById('linkTextInput').value = '';
+            document.getElementById('linkModalOverlay').classList.add('active');
+            document.getElementById('linkUrlInput').focus();
+        }
+
+        function closeLinkModal() {
+            document.getElementById('linkModalOverlay').classList.remove('active');
+        }
+
+        function confirmInsertLink() {
+            const url = document.getElementById('linkUrlInput').value.trim();
+            const text = document.getElementById('linkTextInput').value.trim();
+
+            if (!url) {
+                showToast('请输入链接地址');
+                return;
+            }
+            if (!/^https:\/\/[\w\-]+(\.[\w\-]+)+([\/\w\-.,@?^=%&:~+#]*)*$/.test(url)) {
+                showToast('链接必须以 https:// 开头且格式正确');
+                return;
+            }
+
+            closeLinkModal();
+            const editor = document.getElementById('richEditor');
+            editor.focus();
+
+            if (savedRange) {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+                const selectedText = selection.toString();
+                if (selectedText) {
+                    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(selectedText)}</a>`);
+                } else {
+                    const displayText = text || url;
+                    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
+                }
+            } else {
+                const displayText = text || url;
+                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayText)}</a>`);
+            }
+            savedRange = null;
+            editor.focus();
+        }
+
+        document.getElementById('linkModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeLinkModal();
+        });
+
+        function addChapter() {
+            const borderColor = prompt('请输入章节边框颜色（例如 #2e7d32）：') || '#2e7d32';
+            const textColor = prompt('请输入章节文字颜色（例如 #1e3a2e）：') || '#1e3a2e';
+            const html = `<div class="chapter-block" style="border-color:${borderColor};color:${textColor}">章节内容</div>`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('editorContainer');
+            container.classList.toggle('fullscreen-mode');
+            if (container.classList.contains('fullscreen-mode')) {
+                document.getElementById('richEditor').focus();
+            }
+        }
+
+        function addPoll() {
+            pollOptions = ['', ''];
+            renderPollBuilder();
+        }
+
+        function addPollOption() {
+            if (pollOptions.length >= 10) { showToast('最多10个选项'); return; }
+            pollOptions.push('');
+            renderPollBuilder();
+        }
+
+        function removePollOption(index) {
+            pollOptions.splice(index, 1);
+            renderPollBuilder();
+        }
+
+        function renderPollBuilder() {
+            const container = document.getElementById('pollBuilderContainer');
+            if (!container) return;
+            let html = '<div class="poll-builder"><label><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>投票</label>';
+            html += '<input type="text" id="pollTitle" placeholder="投票标题（必填）" />';
+            html += '<input type="text" id="pollDescription" placeholder="投票简介（选填）" />';
+            pollOptions.forEach((opt, index) => {
+                html += `<div class="poll-option-row"><input type="text" value="${escapeHtml(opt)}" placeholder="选项 ${index+1}" oninput="pollOptions[${index}]=this.value" /><button type="button" onclick="removePollOption(${index})">✕</button></div>`;
+            });
+            html += '<button type="button" class="add-option-btn" onclick="addPollOption()">+ 添加选项</button>';
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        document.getElementById('submitPostBtn').addEventListener('click', async function() {
+            const title = document.getElementById('postTitleInput').value.trim();
+            const category_id = parseInt(document.getElementById('postCategorySelect').value);
+            const content = document.getElementById('richEditor').innerHTML.trim();
+            if (!content || content === '<br>') { showToast('请输入正文内容'); return; }
+            if (currentUser.banned_until && new Date(currentUser.banned_until) > new Date()) {
+                showToast('账号已被封禁，无法发布');
+                return;
+            }
+
+            let pollData = null;
+            const pollTitle = document.getElementById('pollTitle')?.value.trim();
+            if (pollTitle) {
+                const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+                if (validOptions.length < 2) { showToast('投票至少需要2个有效选项'); return; }
+                pollData = {
+                    title: pollTitle,
+                    description: document.getElementById('pollDescription')?.value.trim() || '',
+                    options: validOptions
+                };
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '发布中...';
+
+            try {
+                const isOfficial = isAdmin || currentUser.is_admin === true;
+                const { data: postData, error: postError } = await window.sb
+                    .from('posts')
+                    .insert([{
+                        title: title,
+                        content: content,
+                        category_id: category_id,
+                        author: currentUser.nickname,
+                        user_id: currentUser.id,
+                        is_official: isOfficial,
+                        is_pinned: false
+                    }])
+                    .select();
+                if (postError) throw postError;
+
+                if (pollData && postData && postData.length > 0) {
+                    const postId = postData[0].id;
+                    await window.sb.from('post_polls').insert([{
+                        post_id: postId,
+                        title: pollData.title,
+                        description: pollData.description
+                    }]);
+                    for (const opt of pollData.options) {
+                        await window.sb.from('poll_options').insert([{
+                            post_id: postId,
+                            option_text: opt
+                        }]);
+                    }
+                }
+
+                showToast('帖子发布成功！');
+                setTimeout(() => {
+                    window.location.href = './posts.html';
+                }, 1000);
+            } catch (err) {
+                showToast('发布失败：' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '发布';
+            }
+        });
+
+        loadCategories();
+    
+/* ★★ 服务端身份确认后再刷新权限 ★★
+   本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
+   只有 get_my_profile 返回的 is_admin 才会被采纳 */
+window.addEventListener('sq-user-ready', function (e) {
+  var u = e.detail && e.detail.user;
+  if (!u) return;
+  try { currentUser = u; } catch (err) { window.currentUser = u; }
+  var admin = (u.is_admin === true);
+  try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
+  window.isAdmin = admin;
+  ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
+    .forEach(function (fn) {
+      try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
+    });
+  var ap = document.getElementById('adminPanelBtn');
+  if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
+  var cc = document.getElementById('clearChatBtn');
+  if (cc) cc.style.display = admin ? 'inline-block' : 'none';
+});
+</script>
+</body>
+</html>
