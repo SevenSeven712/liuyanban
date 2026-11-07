@@ -982,6 +982,7 @@ async function renderUserTab(box) {
         if (isBanned) h += '<span class="role-badge" style="background:#c62828">已封禁</span>';
         h += '</div><div style="font-size:.7em;color:var(--text-muted)">' + escapeHtml(u.custom_uid || u.phone || u.id || '') + '</div></div>';
         h += '<div class="user-actions">';
+        h += '<button class="btn-role" style="background:var(--primary-bg);color:var(--primary);" onclick="window.location.href=\'./user.html?id=' + u.id + '\'">👀 主页</button>';
         if (isBanned) h += '<button class="btn-role" data-act="unban" data-id="' + u.id + '">解封</button>';
         else h += '<button class="btn-role" data-act="ban" data-id="' + u.id + '">封禁</button>';
         h += '</div></div>';
