@@ -966,6 +966,29 @@ function renderCatTab(box) {
     });
 }
 
+async function adminDeleteUser(userId, nickname) {
+    if (!isAdminUser()) { showToast('无管理员权限'); return; }
+    showPrompt('危险操作', '即将永久删除账号【' + nickname + '】及其所有数据！\n\n请输入你的管理员密码以确认：', '输入你的密码', async function(pwd) {
+        if (!pwd) { showToast('密码不能为空'); return; }
+        showToast('正在删除，请稍候...');
+        try {
+            var res = await window.sb.rpc('admin_delete_user', {
+                p_target_id: userId,
+                p_admin_password: pwd
+            });
+            if (res.error) throw res.error;
+            if (res.data && res.data.ok) {
+                showToast('账号已彻底删除');
+                switchAdminTab('user'); // 刷新列表
+            } else {
+                showToast((res.data && res.data.message) || '删除失败');
+            }
+        } catch (e) {
+            showToast('删除失败：' + (e.message || '密码错误或网络异常'));
+        }
+    }, 'password');
+}
+
 async function renderUserTab(box) {
     box.innerHTML = '<div class="loading-state"><div class="spinner"></div>加载用户...</div>';
     var users = [];
@@ -975,8 +998,11 @@ async function renderUserTab(box) {
     users.forEach(function(u) {
         var nick = u.nickname || '未命名';
         var isBanned = u.banned_until && new Date(u.banned_until) > new Date();
+        var hasAvatar = u.avatar_url && String(u.avatar_url).indexOf('http') === 0;
+        var avStyle = hasAvatar ? 'background-image:url(\'' + escapeHtml(u.avatar_url) + '\');background-size:cover;background-position:center;color:transparent;' : '';
+        
         h += '<div class="admin-user-card">';
-        h += '<div class="user-avatar">' + escapeHtml(nick.charAt(0).toUpperCase()) + '</div>';
+        h += '<div class="user-avatar" style="' + avStyle + '">' + (hasAvatar ? '' : escapeHtml(nick.charAt(0).toUpperCase())) + '</div>';
         h += '<div class="user-info"><div class="name-row"><span>' + escapeHtml(nick) + '</span>';
         h += '<span class="role-badge" style="background:' + (u.is_admin ? '#e57373' : '#8aaa9a') + '">' + (u.is_admin ? '管理员' : '用户') + '</span>';
         if (isBanned) h += '<span class="role-badge" style="background:#c62828">已封禁</span>';
@@ -985,6 +1011,7 @@ async function renderUserTab(box) {
         h += '<button class="btn-role" style="background:var(--primary-bg);color:var(--primary);" onclick="window.location.href=\'./user.html?id=' + u.id + '\'">👀 主页</button>';
         if (isBanned) h += '<button class="btn-role" data-act="unban" data-id="' + u.id + '">解封</button>';
         else h += '<button class="btn-role" data-act="ban" data-id="' + u.id + '">封禁</button>';
+        h += '<button class="btn-role" style="background:#ffebee;color:#c62828;" onclick="adminDeleteUser(\'' + u.id + '\', \'' + escapeHtml(nick) + '\')">删除</button>';
         h += '</div></div>';
     });
     box.innerHTML = h;
