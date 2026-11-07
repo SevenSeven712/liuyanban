@@ -1,1087 +1,630 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8" />
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#2e7d32" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Seven戚 · 聊天群</title>
-<script src="./vendor/supabase.js"></script>
-<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
-:root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--success:#22c55e;--official-blue:#2b6cff;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
-html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
-#mainApp{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
-.app-header{flex-shrink:0;padding:12px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:56px;z-index:50;gap:8px}
-.app-header .brand{font-weight:900;font-size:1.05em;display:flex;align-items:center;gap:.35em;cursor:pointer;white-space:nowrap}
-.app-header .brand span{color:var(--primary)}
-.app-header .brand small{font-weight:400;font-size:.55em;color:var(--text-muted);margin-left:.3em}
-.header-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.user-area{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:99px}
-.user-area:hover{background:var(--primary-bg)}
-.user-area .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0;background-size:cover;background-position:center}
-.user-area .user-name{font-weight:600;font-size:.8em;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dots-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);flex-shrink:0;position:relative}
-.dots-btn:hover{background:var(--primary-bg);color:var(--primary)}
-.dots-btn svg{width:22px;height:22px;fill:currentColor}
-.dots-btn .online-badge{position:absolute;top:0;right:0;background:var(--success);color:#fff;font-size:.55em;font-weight:800;padding:1px 5px;border-radius:99px;line-height:13px;min-width:14px;text-align:center}
-.app-tabs{flex-shrink:0;display:flex;background:rgba(255,255,255,.96);border-top:1px solid var(--border);padding:6px 0 calc(6px + var(--safe-b));z-index:50}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;font-family:var(--font);font-size:.6em;font-weight:600;color:var(--text-muted);padding:4px 0;cursor:pointer;text-decoration:none;position:relative}
-.tab-btn .tab-icon{font-size:1.6em;line-height:1.2;display:flex;align-items:center;justify-content:center;width:1.7em;height:1.7em}
-.tab-btn .tab-icon svg{width:100%;height:100%;display:block;stroke:currentColor;fill:none}
-.tab-btn.active{color:var(--primary)}
-.tab-btn.active::after{content:'';position:absolute;top:-1px;left:30%;right:30%;height:3px;background:var(--primary);border-radius:0 0 4px 4px}
-.tab-btn .badge{position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:.6em;font-weight:700;padding:1px 6px;border-radius:99px;min-width:16px;text-align:center}
-.banned-banner{flex-shrink:0;background:#ffebee;color:#c62828;padding:6px 16px;font-size:.8em;font-weight:600;text-align:center;border-bottom:1px solid #ffcdd2;display:none}
-.banned-banner.active{display:block}
-.app-content{flex:1;min-height:0;display:flex;flex-direction:column}
-.chat-messages{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
-.time-divider{text-align:center;font-size:.7em;color:var(--text-light);padding:6px 0;position:relative}
-.time-divider span{background:var(--bg);padding:0 12px;position:relative;z-index:1}
-.time-divider::before{content:'';position:absolute;left:10%;right:10%;top:50%;height:1px;background:var(--border);z-index:0}
-.row{display:flex;align-items:flex-start;gap:8px;max-width:85%;}
-.row.other{align-self:flex-start;}
-.row.self{align-self:flex-end;flex-direction:row-reverse;}
-.row .avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;cursor:pointer;background-size:cover;background-position:center;overflow:hidden;}
-.row .avatar.self-av{background:#4caf50;}
-.row .bubble-wrap{display:flex;flex-direction:column;cursor:pointer;min-width:0;align-items:flex-start;}
-.row.self .bubble-wrap{align-items:flex-end;}
-.row .bubble{padding:9px 13px;font-size:.88em;line-height:1.5;word-break:break-word;position:relative;transition:transform .15s;}
-.row .bubble:hover{transform:scale(1.02);}
-.row .uname{font-size:.68em;color:var(--text-muted);margin-bottom:3px;display:flex;align-items:center;gap:6px;}
-.row.self .uname{flex-direction:row-reverse;text-align:right;}
-/* ===== 气泡皮肤（来自 bubble-demo.html，共 45 种 b0~b44）===== */
-/* 0-24 静态 */
-.b0 .bubble{background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#1a1a1a;}
-.b0.self .bubble{background:#95ec69;color:#1a1a1a;}
-.b1 .bubble{border-radius:20px;background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.b1.self .bubble{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;}
-.b2 .bubble{border-radius:14px;background:#141414;color:#ff2d95;border:1px solid #ff2d95;box-shadow:0 0 14px rgba(255,45,149,.55);}
-.b2.self .bubble{color:#ff2d95;border-color:#ff2d95;box-shadow:0 0 14px rgba(255,45,149,.55);}
-.b3 .bubble{border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;}
-.b3.self .bubble{border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;}
-.b4 .bubble{border-radius:20px;background:linear-gradient(135deg,#ff6b9d,#f06292);color:#fff;}
-.b4.self .bubble{background:linear-gradient(135deg,#ff6b9d,#f06292);color:#fff;}
-.b5 .bubble{border-radius:16px;background:rgba(46,125,50,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.6);color:#fff;}
-.b5.self .bubble{background:rgba(46,125,50,.85);color:#fff;}
-.b6 .bubble{border-radius:18px;background:#e8f5e9;color:#2e3a2e;box-shadow:4px 4px 10px #c5d6c5,-4px -4px 10px #fff;}
-.b6.self .bubble{background:#e8f5e9;box-shadow:4px 4px 10px #c5d6c5,-4px -4px 10px #fff;}
-.b7 .bubble{border-radius:16px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 0 16px rgba(219,39,119,.5);}
-.b7.self .bubble{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 0 16px rgba(219,39,119,.5);}
-.b8 .bubble{border-radius:10px;background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1a1a;border:1px solid #d4af37;}
-.b8.self .bubble{background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1a1a;}
-.b9 .bubble{border-radius:16px 4px 4px 4px;background:#ffe082;color:#5d4037;font-family:"Comic Sans MS","楷体",cursive;}
-.b9.self .bubble{border-radius:16px 4px 4px 4px;background:#ffe082;}
-.b10 .bubble{border-radius:14px;background:linear-gradient(180deg,#66bb6a,#43a047);color:#fff;box-shadow:0 2px 0 #2e7d32,0 5px 10px rgba(0,0,0,.2);}
-.b10.self .bubble{background:linear-gradient(180deg,#66bb6a,#43a047);color:#fff;box-shadow:0 2px 0 #2e7d32,0 5px 10px rgba(0,0,0,.2);}
-.b11 .bubble{border-radius:18px;background:linear-gradient(135deg,#f857a6,#ff5858);color:#fff;}
-.b11.self .bubble{background:linear-gradient(135deg,#f857a6,#ff5858);color:#fff;}
-.b12 .bubble{border-radius:16px 16px 6px 16px;background:linear-gradient(135deg,#b8a9a9,#9c8b8b);color:#fff;}
-.b12.self .bubble{border-radius:16px 16px 6px 16px;background:linear-gradient(135deg,#b8a9a9,#9c8b8b);color:#fff;}
-.b13 .bubble{border-radius:6px;background:#39ff14;color:#001a00;border:1px solid #39ff14;font-family:"Courier New",monospace;}
-.b13.self .bubble{background:#39ff14;color:#001a00;}
-.b14 .bubble{border-radius:18px;background:rgba(255,152,0,.9);color:#fff;backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.7);}
-.b14.self .bubble{background:rgba(255,152,0,.9);border-color:rgba(255,255,255,.7);}
-.b15 .bubble{border-radius:16px;background:#fff;color:#333;border:3px solid transparent;background-image:linear-gradient(#fff,#fff),linear-gradient(135deg,#4facfe,#00f2fe);background-origin:border-box;background-clip:padding-box,border-box;}
-.b15.self .bubble{background-image:linear-gradient(#fff,#fff),linear-gradient(135deg,#4facfe,#00f2fe);}
-.b16 .bubble{border-radius:14px;background:rgba(46,125,50,.85);backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.8);color:#fff;}
-.b16.self .bubble{background:rgba(46,125,50,.85);color:#fff;}
-.b17 .bubble{border-radius:12px;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);color:#ffd700;border:1.5px solid #ffd700;box-shadow:0 0 12px rgba(255,215,0,.55),inset 0 0 6px rgba(255,215,0,.15);}
-.b17.self .bubble{background:linear-gradient(135deg,#2a2a2a,#1a1a1a);color:#ffd700;border:1.5px solid #ffd700;box-shadow:0 0 12px rgba(255,215,0,.55),inset 0 0 6px rgba(255,215,0,.15);}
-.b18 .bubble{border-radius:20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
-.b18.self .bubble{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
-.b19 .bubble{border-radius:16px;background:linear-gradient(135deg,#e53935,#c62828);color:#fff;}
-.b19.self .bubble{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;}
-.b20 .bubble{border-radius:8px;background:#fff;color:#000;font-weight:600;border:2px solid #000;}
-.b20.self .bubble{background:#fff;color:#000;border:2px solid #000;}
-.b21 .bubble{border-radius:6px;background:#07c160;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.b21.self .bubble{background:#07c160;color:#fff;}
-.b22 .bubble{border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;}
-.b22.self .bubble{background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;}
-.b23 .bubble{border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,#d4145a,#7a1fa2);color:#fff;}
-.b23.self .bubble{border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,#d4145a,#7a1fa2);color:#fff;}
-.b24 .bubble{border-radius:14px;background:#fff;color:#ec4899;border:2px solid #ec4899;box-shadow:0 0 12px rgba(236,72,153,.4);}
-.b24.self .bubble{background:#fff;color:#ec4899;border-color:#ec4899;box-shadow:0 0 12px rgba(236,72,153,.4);}
+liuyanban/chats.html 这次是 第 1 到 626 行，总共 1087 行，还有 461 行没读
 
-/* 25-34 动态 */
-@keyframes flowBorder{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.b25 .bubble{border-radius:14px;background:#111;color:#fff;position:relative;isolation:isolate;}
-.b25 .bubble::before{content:'';position:absolute;inset:-2px;border-radius:16px;z-index:-1;background:linear-gradient(90deg,#ff0000,#ff7300,#fffb00,#48ff00,#00ffd5,#002bff,#7a00ff,#ff00c8,#ff0000);background-size:400% 400%;animation:flowBorder 3s linear infinite;}
-@keyframes breathe{0%,100%{box-shadow:0 0 8px rgba(76,175,80,.4)}50%{box-shadow:0 0 24px rgba(76,175,80,.9)}}
-.b26 .bubble{border-radius:16px;background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;animation:breathe 2.5s ease-in-out infinite;}
-.b26.self .bubble{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;}
-@keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.b27 .bubble{border-radius:16px;background:linear-gradient(270deg,#f093fb,#f5576c,#4facfe,#00f2fe);background-size:300% 300%;color:#fff;animation:gradientFlow 5s ease infinite;}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.b28 .bubble{border-radius:20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);animation:floaty 2s ease-in-out infinite;}
-.b28.self .bubble{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
-@keyframes shine{0%{left:-100%}60%,100%{left:200%}}
-.b29 .bubble{border-radius:14px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;position:relative;overflow:hidden;}
-.b29 .bubble::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-20deg);animation:shine 3s infinite;}
-@keyframes jelly{0%,100%{transform:scale(1,1)}25%{transform:scale(1.06,.94)}50%{transform:scale(.96,1.04)}75%{transform:scale(1.02,.98)}}
-.b30 .bubble{border-radius:18px;background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#1e3a8a;animation:jelly 1.5s ease-in-out infinite;}
-.b30.self .bubble{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#1e3a8a;}
-.b31 .bubble{border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#ffd700;position:relative;overflow:hidden;}
-.b31 .bubble::before{content:'✨ ✨ ✨';position:absolute;top:2px;left:0;right:0;font-size:.6em;text-align:center;animation:twinkle 2s ease-in-out infinite;}
-@keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
-@keyframes liquid{0%,100%{border-radius:60% 40% 50% 50%/50% 60% 40% 50%}50%{border-radius:40% 60% 60% 40%/60% 40% 60% 40%}}
-.b32 .bubble{background:linear-gradient(135deg,#00c6ff,#0072ff);color:#fff;animation:liquid 4s ease-in-out infinite;}
-@keyframes neonPulse{0%,100%{box-shadow:0 0 6px #0ff,0 0 12px #0ff}50%{box-shadow:0 0 16px #0ff,0 0 32px #0ff}}
-.b33 .bubble{border-radius:12px;background:#0a0a0a;color:#f0f;border:2px solid #f0f;animation:neonPulse 1.8s ease-in-out infinite;}
-.b33.self .bubble{color:#f0f;border-color:#f0f;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-.b34 .bubble{border-radius:14px;background:#e8f5e9;color:#333;border:1px solid #ddd;}
-.b34 .bubble::after{content:'▌';color:#2e7d32;animation:blink 1s step-end infinite;margin-left:2px;}
-.b34.self .bubble{background:#e8f5e9;}
+1: <!DOCTYPE html>
+2: <html lang="zh">
+3: <head>
+4: <meta charset="UTF-8" />
+5:     <link rel="manifest" href="./manifest.json" />
+6:     <meta name="theme-color" content="#2e7d32" />
+7:     <link rel="apple-touch-icon" href="./icon.svg" />
+8: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+9: <title>Seven戚 · 聊天群</title>
+10: <script src="./vendor/supabase.js"></script>
+11: <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>');</script>
+12: <style>
+13: *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+14: :root{--bg:#f5faf5;--bg-card:#fff;--bg-input:#eaf3ea;--border:#c8e0c8;--text:#1e3a2e;--text-muted:#5a7a6a;--text-light:#8aaa9a;--primary:#2e7d32;--primary-light:#4caf50;--primary-bg:#e8f5e9;--shadow:0 8px 32px rgba(46,125,50,.12);--radius:16px;--radius-sm:10px;--font:"Space Grotesk","PingFang SC","Segoe UI",system-ui,sans-serif;--danger:#e57373;--success:#22c55e;--official-blue:#2b6cff;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+15: html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
+16: #mainApp{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
+17: .app-header{flex-shrink:0;padding:12px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:56px;z-index:50;gap:8px}
+18: .app-header .brand{font-weight:900;font-size:1.05em;display:flex;align-items:center;gap:.35em;cursor:pointer;white-space:nowrap}
+19: .app-header .brand span{color:var(--primary)}
+20: .app-header .brand small{font-weight:400;font-size:.55em;color:var(--text-muted);margin-left:.3em}
+21: .header-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
+22: .user-area{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:99px}
+23: .user-area:hover{background:var(--primary-bg)}
+24: .user-area .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0;background-size:cover;background-position:center}
+25: .user-area .user-name{font-weight:600;font-size:.8em;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+26: .dots-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);flex-shrink:0;position:relative}
+27: .dots-btn:hover{background:var(--primary-bg);color:var(--primary)}
+28: .dots-btn svg{width:22px;height:22px;fill:currentColor}
+29: .dots-btn .online-badge{position:absolute;top:0;right:0;background:var(--success);color:#fff;font-size:.55em;font-weight:800;padding:1px 5px;border-radius:99px;line-height:13px;min-width:14px;text-align:center}
+30: .app-tabs{flex-shrink:0;display:flex;background:rgba(255,255,255,.96);border-top:1px solid var(--border);padding:6px 0 calc(6px + var(--safe-b));z-index:50}
+31: .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;font-family:var(--font);font-size:.6em;font-weight:600;color:var(--text-muted);padding:4px 0;cursor:pointer;text-decoration:none;position:relative}
+32: .tab-btn .tab-icon{font-size:1.6em;line-height:1.2;display:flex;align-items:center;justify-content:center;width:1.7em;height:1.7em}
+33: .tab-btn .tab-icon svg{width:100%;height:100%;display:block;stroke:currentColor;fill:none}
+34: .tab-btn.active{color:var(--primary)}
+35: .tab-btn.active::after{content:'';position:absolute;top:-1px;left:30%;right:30%;height:3px;background:var(--primary);border-radius:0 0 4px 4px}
+36: .tab-btn .badge{position:absolute;top:-2px;right:15%;background:#e57373;color:#fff;font-size:.6em;font-weight:700;padding:1px 6px;border-radius:99px;min-width:16px;text-align:center}
+37: .banned-banner{flex-shrink:0;background:#ffebee;color:#c62828;padding:6px 16px;font-size:.8em;font-weight:600;text-align:center;border-bottom:1px solid #ffcdd2;display:none}
+38: .banned-banner.active{display:block}
+39: .app-content{flex:1;min-height:0;display:flex;flex-direction:column}
+40: .chat-messages{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
+41: .time-divider{text-align:center;font-size:.7em;color:var(--text-light);padding:6px 0;position:relative}
+42: .time-divider span{background:var(--bg);padding:0 12px;position:relative;z-index:1}
+43: .time-divider::before{content:'';position:absolute;left:10%;right:10%;top:50%;height:1px;background:var(--border);z-index:0}
+44: .row{display:flex;align-items:flex-start;gap:8px;max-width:85%;}
+45: .row.other{align-self:flex-start;}
+46: .row.self{align-self:flex-end;flex-direction:row-reverse;}
+47: .row .avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;cursor:pointer;background-size:cover;background-position:center;overflow:hidden;}
+48: .row .avatar.self-av{background:#4caf50;}
+49: .row .bubble-wrap{display:flex;flex-direction:column;cursor:pointer;min-width:0;align-items:flex-start;}
+50: .row.self .bubble-wrap{align-items:flex-end;}
+51: .row .bubble{padding:9px 13px;font-size:.88em;line-height:1.5;word-break:break-word;position:relative;transition:transform .15s;}
+52: .row .bubble:hover{transform:scale(1.02);}
+53: .row .uname{font-size:.68em;color:var(--text-muted);margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+54: .row.self .uname{flex-direction:row-reverse;text-align:right;}
+55: /* ===== 气泡皮肤（来自 bubble-demo.html，共 45 种 b0~b44）===== */
+56: /* 0-24 静态 */
+57: .b0 .bubble{background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#1a1a1a;}
+58: .b0.self .bubble{background:#95ec69;color:#1a1a1a;}
+59: .b1 .bubble{border-radius:20px;background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+60: .b1.self .bubble{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;}
+61: .b2 .bubble{border-radius:14px;background:#141414;color:#ff2d95;border:1px solid #ff2d95;box-shadow:0 0 14px rgba(255,45,149,.55);}
+62: .b2.self .bubble{color:#ff2d95;border-color:#ff2d95;box-shadow:0 0 14px rgba(255,45,149,.55);}
+63: .b3 .bubble{border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;}
+64: .b3.self .bubble{border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;}
+65: .b4 .bubble{border-radius:20px;background:linear-gradient(135deg,#ff6b9d,#f06292);color:#fff;}
+66: .b4.self .bubble{background:linear-gradient(135deg,#ff6b9d,#f06292);color:#fff;}
+67: .b5 .bubble{border-radius:16px;background:rgba(46,125,50,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.6);color:#fff;}
+68: .b5.self .bubble{background:rgba(46,125,50,.85);color:#fff;}
+69: .b6 .bubble{border-radius:18px;background:#e8f5e9;color:#2e3a2e;box-shadow:4px 4px 10px #c5d6c5,-4px -4px 10px #fff;}
+70: .b6.self .bubble{background:#e8f5e9;box-shadow:4px 4px 10px #c5d6c5,-4px -4px 10px #fff;}
+71: .b7 .bubble{border-radius:16px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 0 16px rgba(219,39,119,.5);}
+72: .b7.self .bubble{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 0 16px rgba(219,39,119,.5);}
+73: .b8 .bubble{border-radius:10px;background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1a1a;border:1px solid #d4af37;}
+74: .b8.self .bubble{background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1a1a;}
+75: .b9 .bubble{border-radius:16px 4px 4px 4px;background:#ffe082;color:#5d4037;font-family:"Comic Sans MS","楷体",cursive;}
+76: .b9.self .bubble{border-radius:16px 4px 4px 4px;background:#ffe082;}
+77: .b10 .bubble{border-radius:14px;background:linear-gradient(180deg,#66bb6a,#43a047);color:#fff;box-shadow:0 2px 0 #2e7d32,0 5px 10px rgba(0,0,0,.2);}
+78: .b10.self .bubble{background:linear-gradient(180deg,#66bb6a,#43a047);color:#fff;box-shadow:0 2px 0 #2e7d32,0 5px 10px rgba(0,0,0,.2);}
+79: .b11 .bubble{border-radius:18px;background:linear-gradient(135deg,#f857a6,#ff5858);color:#fff;}
+80: .b11.self .bubble{background:linear-gradient(135deg,#f857a6,#ff5858);color:#fff;}
+81: .b12 .bubble{border-radius:16px 16px 6px 16px;background:linear-gradient(135deg,#b8a9a9,#9c8b8b);color:#fff;}
+82: .b12.self .bubble{border-radius:16px 16px 6px 16px;background:linear-gradient(135deg,#b8a9a9,#9c8b8b);color:#fff;}
+83: .b13 .bubble{border-radius:6px;background:#39ff14;color:#001a00;border:1px solid #39ff14;font-family:"Courier New",monospace;}
+84: .b13.self .bubble{background:#39ff14;color:#001a00;}
+85: .b14 .bubble{border-radius:18px;background:rgba(255,152,0,.9);color:#fff;backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.7);}
+86: .b14.self .bubble{background:rgba(255,152,0,.9);border-color:rgba(255,255,255,.7);}
+87: .b15 .bubble{border-radius:16px;background:#fff;color:#333;border:3px solid transparent;background-image:linear-gradient(#fff,#fff),linear-gradient(135deg,#4facfe,#00f2fe);background-origin:border-box;background-clip:padding-box,border-box;}
+88: .b15.self .bubble{background-image:linear-gradient(#fff,#fff),linear-gradient(135deg,#4facfe,#00f2fe);}
+89: .b16 .bubble{border-radius:14px;background:rgba(46,125,50,.85);backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.8);color:#fff;}
+90: .b16.self .bubble{background:rgba(46,125,50,.85);color:#fff;}
+91: .b17 .bubble{border-radius:12px;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);color:#ffd700;border:1.5px solid #ffd700;box-shadow:0 0 12px rgba(255,215,0,.55),inset 0 0 6px rgba(255,215,0,.15);}
+92: .b17.self .bubble{background:linear-gradient(135deg,#2a2a2a,#1a1a1a);color:#ffd700;border:1.5px solid #ffd700;box-shadow:0 0 12px rgba(255,215,0,.55),inset 0 0 6px rgba(255,215,0,.15);}
+93: .b18 .bubble{border-radius:20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+94: .b18.self .bubble{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+95: .b19 .bubble{border-radius:16px;background:linear-gradient(135deg,#e53935,#c62828);color:#fff;}
+96: .b19.self .bubble{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;}
+97: .b20 .bubble{border-radius:8px;background:#fff;color:#000;font-weight:600;border:2px solid #000;}
+98: .b20.self .bubble{background:#fff;color:#000;border:2px solid #000;}
+99: .b21 .bubble{border-radius:6px;background:#07c160;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+100: .b21.self .bubble{background:#07c160;color:#fff;}
+101: .b22 .bubble{border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;}
+102: .b22.self .bubble{background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;}
+103: .b23 .bubble{border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,#d4145a,#7a1fa2);color:#fff;}
+104: .b23.self .bubble{border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,#d4145a,#7a1fa2);color:#fff;}
+105: .b24 .bubble{border-radius:14px;background:#fff;color:#ec4899;border:2px solid #ec4899;box-shadow:0 0 12px rgba(236,72,153,.4);}
+106: .b24.self .bubble{background:#fff;color:#ec4899;border-color:#ec4899;box-shadow:0 0 12px rgba(236,72,153,.4);}
+107: 
+108: /* 25-34 动态 */
+109: @keyframes flowBorder{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+110: .b25 .bubble{border-radius:14px;background:#111;color:#fff;position:relative;isolation:isolate;}
+111: .b25 .bubble::before{content:'';position:absolute;inset:-2px;border-radius:16px;z-index:-1;background:linear-gradient(90deg,#ff0000,#ff7300,#fffb00,#48ff00,#00ffd5,#002bff,#7a00ff,#ff00c8,#ff0000);background-size:400% 400%;animation:flowBorder 3s linear infinite;}
+112: @keyframes breathe{0%,100%{box-shadow:0 0 8px rgba(76,175,80,.4)}50%{box-shadow:0 0 24px rgba(76,175,80,.9)}}
+113: .b26 .bubble{border-radius:16px;background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;animation:breathe 2.5s ease-in-out infinite;}
+114: .b26.self .bubble{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;}
+115: @keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+116: .b27 .bubble{border-radius:16px;background:linear-gradient(270deg,#f093fb,#f5576c,#4facfe,#00f2fe);background-size:300% 300%;color:#fff;animation:gradientFlow 5s ease infinite;}
+117: @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+118: .b28 .bubble{border-radius:20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);animation:floaty 2s ease-in-out infinite;}
+119: .b28.self .bubble{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+120: @keyframes shine{0%{left:-100%}60%,100%{left:200%}}
+121: .b29 .bubble{border-radius:14px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;position:relative;overflow:hidden;}
+122: .b29 .bubble::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-20deg);animation:shine 3s infinite;}
+123: @keyframes jelly{0%,100%{transform:scale(1,1)}25%{transform:scale(1.06,.94)}50%{transform:scale(.96,1.04)}75%{transform:scale(1.02,.98)}}
+124: .b30 .bubble{border-radius:18px;background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#1e3a8a;animation:jelly 1.5s ease-in-out infinite;}
+125: .b30.self .bubble{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#1e3a8a;}
+126: .b31 .bubble{border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#ffd700;position:relative;overflow:hidden;}
+127: .b31 .bubble::before{content:'✨ ✨ ✨';position:absolute;top:2px;left:0;right:0;font-size:.6em;text-align:center;animation:twinkle 2s ease-in-out infinite;}
+128: @keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+129: @keyframes liquid{0%,100%{border-radius:60% 40% 50% 50%/50% 60% 40% 50%}50%{border-radius:40% 60% 60% 40%/60% 40% 60% 40%}}
+130: .b32 .bubble{background:linear-gradient(135deg,#00c6ff,#0072ff);color:#fff;animation:liquid 4s ease-in-out infinite;}
+131: @keyframes neonPulse{0%,100%{box-shadow:0 0 6px #0ff,0 0 12px #0ff}50%{box-shadow:0 0 16px #0ff,0 0 32px #0ff}}
+132: .b33 .bubble{border-radius:12px;background:#0a0a0a;color:#f0f;border:2px solid #f0f;animation:neonPulse 1.8s ease-in-out infinite;}
+133: .b33.self .bubble{color:#f0f;border-color:#f0f;}
+134: @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+135: .b34 .bubble{border-radius:14px;background:#e8f5e9;color:#333;border:1px solid #ddd;}
+136: .b34 .bubble::after{content:'▌';color:#2e7d32;animation:blink 1s step-end infinite;margin-left:2px;}
+137: .b34.self .bubble{background:#e8f5e9;}
+138: 
+139: /* 35-44 可爱 SVG */
+140: .b35 .bubble{border-radius:16px;background:linear-gradient(135deg,#ff9a9e,#fecfef);color:#8a2a4a;position:relative;padding-left:34px;}
+141: .b35 .bubble::before{content:'';position:absolute;left:-5px;top:5px;width:39px;height:39px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23f06292' stroke='%23c2185b' stroke-width='1' stroke-linejoin='round'><ellipse cx='6.5' cy='7' rx='2.4' ry='3.1'/><ellipse cx='12' cy='5.2' rx='2.4' ry='3.1'/><ellipse cx='17.5' cy='7' rx='2.4' ry='3.1'/><path d='M12 10.5c-3.4 0-6.2 2.6-6.2 5.6 0 2 1.7 3.4 3.9 3.4 1 0 1.6-.4 2.3-.4s1.3.4 2.3.4c2.2 0 3.9-1.4 3.9-3.4 0-3-2.8-5.6-6.2-5.6z'/><ellipse cx='9.4' cy='14.6' rx='1' ry='1.1' fill='%23fce4ec' stroke='none'/><ellipse cx='14.6' cy='14.6' rx='1' ry='1.1' fill='%23fce4ec' stroke='none'/><ellipse cx='12' cy='17.4' rx='1.3' ry='1.2' fill='%23fce4ec' stroke='none'/></g></svg>") center/contain no-repeat;}
+142: .b35.self .bubble{background:linear-gradient(135deg,#ff9a9e,#fecfef);color:#8a2a4a;}
+143: .b36 .bubble{border-radius:18px;background:linear-gradient(135deg,#ffb6c1,#ff8fb1);color:#fff;position:relative;overflow:hidden;}
+144: .b36 .bubble::after{content:'';position:absolute;right:-8px;top:-8px;width:44px;height:44px;opacity:.55;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23ff8fb1' stroke='%23e05780' stroke-width='.8' stroke-linejoin='round'><path d='M12 4c1.2 1.6 1.2 3.4 0 4.6-1.2-1.2-1.2-3 0-4.6z'/><path d='M12 20c-1.2-1.6-1.2-3.4 0-4.6 1.2 1.2 1.2 3 0 4.6z'/><path d='M4 12c1.6-1.2 3.4-1.2 4.6 0-1.2 1.2-3 1.2-4.6 0z'/><path d='M20 12c-1.6 1.2-3.4 1.2-4.6 0 1.2-1.2 3-1.2 4.6 0z'/><path d='M6.3 6.3c2 .2 3.3 1.4 3.5 3.3-1.9-.2-3.2-1.4-3.5-3.3z'/><path d='M17.7 17.7c-2-.2-3.3-1.4-3.5-3.3 1.9.2 3.2 1.4 3.5 3.3z'/><path d='M17.7 6.3c-.2 2-1.4 3.3-3.3 3.5.2-1.9 1.4-3.2 3.3-3.5z'/><path d='M6.3 17.7c.2-2 1.4-3.3 3.3-3.5-.2 1.9-1.4 3.2-3.3 3.5z'/></g><circle cx='12' cy='12' r='1.4' fill='%23fff3f7'/></svg>") center/contain no-repeat;}
+145: .b36.self .bubble{background:linear-gradient(135deg,#ffb6c1,#ff8fb1);color:#fff;}
+146: .b37 .bubble{border-radius:16px;background:linear-gradient(135deg,#4a4a8a,#2d2d5a);color:#ffe082;position:relative;padding-left:32px;}
+147: .b37 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.4l2.7 5.9 6.3.8-4.6 4.4 1.2 6.3-5.6-3-5.6 3 1.2-6.3L2.9 9.1l6.3-.8z' fill='%23ffd54f' stroke='%23f9a825' stroke-width='1' stroke-linejoin='round'/><path d='M12 6.5l1.4 3 3.2.4-2.3 2.2.6 3.2L12 13.7 9.1 15.3l.6-3.2-2.3-2.2 3.2-.4z' fill='%23fff8e1' opacity='.7'/></svg>") center/contain no-repeat;animation:twinkle 2s ease-in-out infinite;}
+148: .b37.self .bubble{background:linear-gradient(135deg,#4a4a8a,#2d2d5a);}
+149: .b38 .bubble{border-radius:20px;background:#ffeef5;color:#a83a6a;border:1px solid #f0d0e0;position:relative;margin-top:10px;}
+150: .b38 .bubble::before{content:'';position:absolute;left:10px;top:-14px;width:28px;height:24px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 26'><g stroke='%23e88cb0' stroke-width='1.4'><path d='M10 24C6 22 5 15 6.5 9 7.5 5 9 2.5 10.5 2.5s3 2.5 3.5 6.5c.6 5-.5 12-4 15z' fill='%23fff'/><path d='M22 24c4-2 5-9 3.5-15-1-4-2.5-6.5-4-6.5s-3 2.5-3.5 6.5c-.6 5 .5 12 4 15z' fill='%23fff'/><path d='M10.3 21c-2-2-2.6-8-1.6-12 .5-2 1.3-3.6 1.8-3.6s1.3 1.6 1.8 3.6c1 4 .4 10-2 12z' fill='%23ffc9dc' stroke='none'/><path d='M21.7 21c2-2 2.6-8 1.6-12-.5-2-1.3-3.6-1.8-3.6s-1.3 1.6-1.8 3.6c-1 4-.4 10 2 12z' fill='%23ffc9dc' stroke='none'/></g></svg>") center/contain no-repeat;}
+151: .b38.self .bubble{background:#ffeef5;color:#a83a6a;}
+152: .b39 .bubble{border-radius:18px;background:linear-gradient(135deg,#ff6b9d,#e91e63);color:#fff;position:relative;padding-right:30px;}
+153: .b39 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 20.5S3.6 15.2 1.6 10.4C.2 7 2.4 3.6 6 3.6c2.1 0 3.9 1.2 5 3 1.1-1.8 2.9-3 5-3 3.6 0 5.8 3.4 4.4 6.8C18.4 15.2 12 20.5 12 20.5z' fill='%23e91e63' stroke='%23ad1457' stroke-width='1' stroke-linejoin='round'/><path d='M6.8 7.2c-.9 0-1.6.8-1.6 1.7 0 .5.2.9.5 1.2' fill='none' stroke='%23ff8fb1' stroke-width='1.2' stroke-linecap='round'/></svg>") center/contain no-repeat;animation:breathe 2s ease-in-out infinite;}
+154: .b39.self .bubble{background:linear-gradient(135deg,#ff6b9d,#e91e63);color:#fff;}
+155: .b40 .bubble{border-radius:22px;background:linear-gradient(180deg,#90caf9,#64b5f6);color:#fff;position:relative;}
+156: .b40 .bubble::before{content:'';position:absolute;left:12px;bottom:-10px;width:30px;height:20px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 22'><path d='M9 18c-3.3 0-6-2.4-6-5.4 0-2.7 2.1-4.9 4.9-5.3C8.6 4.1 11.3 2 14.5 2c2.8 0 5.2 1.6 6.2 3.9.4-.1.8-.1 1.2-.1 3.3 0 6 2.4 6 5.4S25.2 18 21.9 18z' fill='%23bbdefb' stroke='%2390caf9' stroke-width='1.2' stroke-linejoin='round'/></svg>") center/contain no-repeat;}
+157: .b40.self .bubble{background:linear-gradient(180deg,#90caf9,#64b5f6);color:#fff;}
+158: .b41 .bubble{border-radius:16px;background:linear-gradient(135deg,#66bb6a,#43a047);color:#fff;position:relative;padding-left:32px;}
+159: .b41 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%234caf50' stroke='%232e7d32' stroke-width='1' stroke-linejoin='round'><path d='M12 12C12 8 9.5 5 6.5 5S1.5 7.5 2 10.5c.5 3 3.5 4 6.5 3 2-.7 3.5-1.5 3.5-1.5z'/><path d='M12 12c0-4 2.5-7 5.5-7s5 2.5 4.5 5.5c-.5 3-3.5 4-6.5 3-2-.7-3.5-1.5-3.5-1.5z'/><path d='M12 12c-4 0-7 2.5-7 5.5s2.5 5 5.5 4.5c3-.5 4-3.5 3-6.5-.7-2-1.5-3.5-1.5-3.5z'/><path d='M12 12c4 0 7 2.5 7 5.5s-2.5 5-5.5 4.5c-3-.5-4-3.5-3-6.5.7-2 1.5-3.5 1.5-3.5z'/></g><path d='M12 12v6' stroke='%232e7d32' stroke-width='1.2' stroke-linecap='round'/><circle cx='12' cy='12' r='1.1' fill='%23a5d6a7'/></svg>") center/contain no-repeat;}
+160: .b41.self .bubble{background:linear-gradient(135deg,#66bb6a,#43a047);color:#fff;}
+161: .b42 .bubble{border-radius:16px;background:linear-gradient(135deg,#7e57c2,#5e35b1);color:#e1bee7;position:relative;padding-left:34px;}
+162: .b42 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.5a9.5 9.5 0 0 0 0 19 8 8 0 0 1 0-19z' fill='%23ffd54f' stroke='%23f9a825' stroke-width='1' stroke-linejoin='round'/><path d='M18.5 5l.6 1.6L20.7 7l-1.6.6-.6 1.6-.6-1.6L16.3 7l1.6-.4z' fill='%23fff8e1'/><circle cx='15.5' cy='14.5' r='.8' fill='%23fff8e1'/></svg>") center/contain no-repeat;animation:twinkle 3s ease-in-out infinite;}
+163: .b42.self .bubble{background:linear-gradient(135deg,#7e57c2,#5e35b1);}
+164: .b43 .bubble{border-radius:16px;background:linear-gradient(135deg,#ff8fb1,#f06292);color:#fff;position:relative;padding-right:32px;}
+165: .b43 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:24px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 22'><g stroke='%23c2185b' stroke-width='1' stroke-linejoin='round'><path d='M13 11L2.5 3.5c-.8-.6-1.5 0-1.5.9v13.2c0 .9.7 1.5 1.5.9z' fill='%23f06292'/><path d='M15 11l10.5-7.5c.8-.6 1.5 0 1.5.9v13.2c0 .9-.7 1.5-1.5.9z' fill='%23f06292'/></g><path d='M13 11l-8.6 6.2c-.6.4-1.2.1-1.2-.6 0-.5.3-.9.7-1.1L11 11z' fill='%23ec407a' stroke='%23c2185b' stroke-width='.8' stroke-linejoin='round'/><path d='M15 11l8.6 6.2c.6.4 1.2.1 1.2-.6 0-.5-.3-.9-.7-1.1L17 11z' fill='%23ec407a' stroke='%23c2185b' stroke-width='.8' stroke-linejoin='round'/><circle cx='14' cy='11' r='2.6' fill='%23ec407a' stroke='%23c2185b' stroke-width='1'/></svg>") center/contain no-repeat;}
+166: .b43.self .bubble{background:linear-gradient(135deg,#ff8fb1,#f06292);color:#fff;}
+167: .b44 .bubble{border-radius:20px;background:linear-gradient(90deg,#a1c4fd,#c2e9fb,#ffdde1,#ee9ca7);color:#333;position:relative;padding-right:32px;}
+168: .b44 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:22px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 20'><g fill='none' stroke-width='1.6' stroke-linecap='round'><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23f06292'/><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23a1c4fd' transform='translate(0,-3)' opacity='.9'/><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23ffd54f' transform='translate(0,3)' opacity='.9'/></g></svg>") center/contain no-repeat;}
+169: .b44.self .bubble{background:linear-gradient(90deg,#a1c4fd,#c2e9fb,#ffdde1,#ee9ca7);color:#333;}
+170: 
+171: /* ===== 气泡皮肤结束 ===== */
+172: .sys-recall{text-align:center;font-size:.72em;color:var(--text-muted);padding:6px 0;line-height:1.5;flex-shrink:0}
+173: .sys-recall .deleted-by{color:var(--official-blue);font-weight:600}
+174: .sys-recall .rc-icon{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px;stroke:var(--text-muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+175: .row .official-badge{font-size:.5em;background:var(--primary);color:#fff;padding:0 6px;border-radius:99px;line-height:16px;font-weight:700}
+176: .pill-bar{flex-shrink:0;display:flex;gap:8px;align-items:center;padding:8px 16px 0;overflow-x:auto;background:var(--bg)}
+177: .pill-btn{position:relative;display:inline-flex;align-items:center;gap:6px;padding:8px 22px;border-radius:999px;border:2px solid var(--border);background:var(--bg-card);color:var(--text);font-family:inherit;font-weight:700;font-size:.8em;cursor:pointer;white-space:nowrap;transition:.2s}
+178: .pill-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg)}
+179: .pill-btn:active{transform:scale(.97)}
+180: .pill-btn svg{width:15px;height:15px;flex-shrink:0}
+181: .pill-new{position:absolute;top:-7px;right:-4px;background:var(--success);color:#fff;font-size:.6em;font-weight:800;padding:1px 6px;border-radius:999px;line-height:14px;box-shadow:0 2px 6px rgba(34,197,94,.5);letter-spacing:.5px}
+182: .fixed-input-area{flex-shrink:0;padding:10px 16px calc(10px + var(--safe-b));background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+183: .fixed-input-area .input-wrapper{flex:1;display:flex;gap:8px;min-width:0}
+184: .fixed-input-area input{flex:1;padding:10px 14px;border-radius:99px;border:2px solid var(--border);background:var(--bg-input);font-family:inherit;font-size:.85em;outline:none;min-width:0;color:var(--text)}
+185: .fixed-input-area input:focus{border-color:var(--primary)}
+186: .fixed-input-area input:disabled{opacity:.5}
+187: .fixed-input-area button{padding:8px 18px;border-radius:99px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:.85em;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:inherit}
+188: .fixed-input-area button:hover{background:var(--primary-light)}
+189: .fixed-input-area button:disabled{opacity:.5;pointer-events:none}
+190: .fixed-input-area .admin-clear-btn{background:var(--danger);color:#fff;padding:6px 12px;border-radius:99px;border:none;font-size:.7em;cursor:pointer;display:none}
+191: .rp-card{display:block;max-width:230px;background:linear-gradient(135deg,#ff7043,#e64a19);border-radius:14px;padding:12px 16px;color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(230,74,25,.3);transition:transform .15s;}
+192: .rp-card:active{transform:scale(.97)}
+193: .rp-card.grabbed{background:linear-gradient(135deg,#9e9e9e,#757575);box-shadow:none;cursor:default;}
+194: .rp-card.done{background:linear-gradient(135deg,#bdbdbd,#9e9e9e);box-shadow:none;cursor:default;}
+195: .rp-card.exclusive{background:linear-gradient(135deg,#8e24aa,#5e35b1);box-shadow:0 6px 18px rgba(94,53,177,.3);}
+196: .rp-card.exclusive.grabbed,.rp-card.exclusive.done{background:linear-gradient(135deg,#9e9e9e,#757575);}
+197: .rp-card .rp-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.88em;}
+198: .rp-card .rp-top svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+199: .rp-card .rp-sub{font-size:.7em;opacity:.9;margin-top:5px;}
+200: .rp-card .rp-amt{font-size:1.4em;font-weight:900;margin-top:4px;}
+201: .rp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:998;opacity:0;pointer-events:none;transition:opacity .3s;}
+202: .rp-backdrop.open{opacity:1;pointer-events:auto;}
+203: .rp-sheet{position:fixed;left:0;right:0;bottom:0;background:var(--bg-card);border-radius:20px 20px 0 0;z-index:999;padding:8px 20px calc(20px + var(--safe-b));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:82vh;overflow-y:auto;}
+204: .rp-sheet.open{transform:translateY(0);}
+205: .rp-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:6px auto 14px;}
+206: .rp-title{font-weight:800;font-size:1.05em;margin-bottom:16px;}
+207: .rp-field{margin-bottom:14px;}
+208: .rp-field label{display:block;font-size:.72em;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
+209: .rp-field input,.rp-field select{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:inherit;font-size:1em;outline:none;box-sizing:border-box;background:var(--bg-input);color:var(--text);}
+210: .rp-field input:focus,.rp-field select:focus{border-color:var(--primary);}
+211: .rp-type-row{display:flex;gap:8px;}
+212: .rp-type{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;color:var(--text-muted);font-weight:700;font-size:.82em;cursor:pointer;font-family:inherit;}
+213: .rp-type.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);}
+214: .rp-send{width:100%;padding:13px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:1em;cursor:pointer;font-family:inherit;margin-top:6px;}
+215: .rp-send:disabled{opacity:.5;pointer-events:none;}
+216: .rp-hint{font-size:.72em;color:var(--text-light);margin-top:10px;text-align:center;}
+217: .rp-rank-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:var(--bg-input);margin-bottom:6px;font-size:.85em;}
+218: .rp-rank-item .rr-left{display:flex;align-items:center;gap:10px;}
+219: .rp-rank-item .rr-no{width:20px;text-align:center;font-weight:800;color:var(--text-muted);}
+220: .rp-rank-item .rr-no.top1{color:#e6a700;}
+221: .rp-rank-item .rr-amt{font-weight:800;color:var(--primary);}
+222: .icon-svg{width:1.2em;height:1.2em;fill:currentColor;flex-shrink:0}
+223: .empty-state{text-align:center;color:var(--text-muted);padding:40px 20px;font-size:.85em}
+224: .empty-state .big{font-size:2.8em;margin-bottom:8px;opacity:.5}
+225: .loading-state{text-align:center;color:var(--text-muted);padding:40px 20px;font-size:.9em}
+226: .loading-state .spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+227: @keyframes spin{to{transform:rotate(360deg)}}
+228: .chat-ctx-menu{position:fixed;z-index:10000;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:4px 0;min-width:130px}
+229: .chat-ctx-item{padding:10px 16px;font-size:.85em;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:8px}
+230: .chat-ctx-item:hover{background:var(--primary-bg);color:var(--primary)}
+231: .chat-ctx-item.danger:hover{background:#ffebee;color:var(--danger)}
+232: .msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+233: .row.self .msg-ip{text-align:right;}
+234: .msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+235: .row.self .msg-ip{text-align:right;}
+236: #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:.7em 1.5em;border-radius:2em;font-weight:600;font-size:.85em;opacity:0;transition:all .4s ease;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow);max-width:90vw}
+237: #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+238: .msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
+239: .row.self .msg-ip{text-align:right;}
+240: .custom-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+241: .custom-modal.active{display:flex}
+242: .custom-modal .modal-box{background:var(--bg-card);border-radius:var(--radius);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+243: .modal-title{font-size:1.2em;font-weight:700;margin-bottom:8px}
+244: .modal-body{font-size:.95em;color:var(--text-muted);margin-bottom:16px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+245: .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+246: .modal-actions button{padding:6px 18px;border-radius:var(--radius-sm);border:none;font-weight:600;cursor:pointer;font-family:inherit}
+247: .modal-actions .btn-danger{background:var(--danger);color:#fff}
+248: .modal-actions .btn-secondary{background:var(--bg-input);color:var(--text-muted)}
+249: /* 在线用户 overlay */
+250: .online-overlay{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);will-change:transform}
+251: .online-overlay.open{transform:translateX(0)}
+252: .online-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) 14px 10px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);min-height:56px;backdrop-filter:blur(8px)}
+253: .online-header .back{background:none;border:none;cursor:pointer;padding:4px;color:var(--text);display:flex}
+254: .online-header .back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+255: .online-header .title{font-weight:700;font-size:1em;flex:1}
+256: .online-header .live-dot{display:flex;align-items:center;gap:5px;font-size:.7em;color:var(--success);font-weight:700}
+257: .online-header .live-dot .dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.18);animation:pulseDot 1.8s infinite}
+258: @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
+259: .online-body{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+260: .me-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--primary-bg);border:1px solid var(--primary);border-radius:var(--radius-sm);margin-bottom:14px}
+261: .ou-avatar{width:42px;height:42px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex-shrink:0;background-size:cover;background-position:center}
+262: .ou-info{flex:1;min-width:0}
+263: .ou-name{font-weight:700;font-size:.92em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+264: .ou-status{font-size:.72em;color:var(--success);display:flex;align-items:center;gap:5px;margin-top:2px;font-weight:600}
+265: .ou-status .dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+266: .section-label{font-size:.7em;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;margin:6px 0 10px;display:flex;align-items:center;gap:6px}
+267: .online-list{display:flex;flex-direction:column;gap:10px}
+268: .online-user{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);animation:fadeInUp .3s ease}
+269: @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+270: .online-user.me{border-color:var(--primary);background:var(--primary-bg)}
+271: .empty-online{text-align:center;padding:70px 20px;color:var(--text-muted)}
+272: .empty-online-icon{font-size:3.2em;opacity:.45;margin-bottom:14px}
+273: .empty-online-title{font-size:.98em;font-weight:700;color:var(--text);margin-bottom:6px}
+274: .empty-online-sub{font-size:.78em;color:var(--text-light);line-height:1.6}
+275: @media (max-width:480px){.app-header{padding:10px 12px}.chat-messages{padding:12px 12px 4px}.fixed-input-area{padding:8px 12px calc(8px + var(--safe-b))}.pill-bar{padding:8px 12px 0}.row{max-width:90%}.user-area .user-name{max-width:54px;font-size:.72em}}
+276: ::-webkit-scrollbar{width:4px;height:4px}
+277: ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+278: </style>
+279: </head>
+280: <body>
+281: 
+282: <div id="mainApp">
+283:   <div id="header-container"></div>
+284:   <div class="banned-banner" id="bannedBanner">账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span></div>
+285:   <div class="app-content">
+286:     <div class="chat-messages" id="chatMessages"></div>
+287:     <div class="pill-bar">
+288:       <button class="pill-btn" id="roomPillBtn" type="button" onclick="location.href='./room.html'">
+289:         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+290:           <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+291:         </svg>
+292:         房间
+293:         <span class="pill-new">新</span>
+294:       </button>
+295:     </div>
+296:     <div class="fixed-input-area">
+297:       <button id="chatRedPacketBtn" type="button" style="background:linear-gradient(135deg,#ff7043,#e64a19);">
+298:         <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="2" width="18" height="20" rx="2" style="fill:#fff;stroke:none"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2c-2.5 1.5-5.5 2.5-9 2.5S5.5 8.5 3 7V5Z" style="fill:#ffe082;stroke:none"/><circle cx="12" cy="15" r="2.5" style="fill:#e53935;stroke:none"/><rect x="11.2" y="14.2" width="1.6" height="1.6" style="fill:#fff;stroke:none"/></svg>
+299:         红包
+300:       </button>
+301:       <div class="input-wrapper">
+302:         <input type="text" id="chatInput" placeholder="说点什么…" maxlength="200" />
+303:         <button id="sendChatBtn" type="button">
+304:           <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+305:           <span class="btn-text">发送</span>
+306:         </button>
+307:       </div>
+308:       <button class="admin-clear-btn" id="clearChatBtn" type="button">清空聊天</button>
+309:     </div>
+310:   </div>
+311:   <div id="footer-container"></div>
+312: </div>
+313: 
+314: <div class="rp-backdrop" id="rpBackdrop"></div>
+315: <div class="rp-sheet" id="rpSheet">
+316:   <div class="rp-handle"></div>
+317:   <div class="rp-title">发红包</div>
+318:   <div class="rp-field">
+319:     <label>红包总积分</label>
+320:     <input type="number" id="crpTotal" placeholder="如 100" min="1" />
+321:   </div>
+322:   <div class="rp-field">
+323:     <label>类型</label>
+324:     <div class="rp-type-row">
+325:       <button type="button" class="rp-type active" data-t="group">拼手气（群红包）</button>
+326:       <button type="button" class="rp-type" data-t="exclusive">专属红包</button>
+327:     </div>
+328:   </div>
+329:   <div class="rp-field" id="crpCountField">
+330:     <label>可领份数（至少 2 份）</label>
+331:     <input type="number" id="crpCount" placeholder="如 5" min="2" />
+332:   </div>
+333:   <div class="rp-field" id="crpTargetField" style="display:none;">
+334:     <label>指定领取人（在线用户）</label>
+335:     <select id="crpTarget"></select>
+336:   </div>
+337:   <button class="rp-send" id="crpSendBtn">塞钱进红包</button>
+338:   <div class="rp-hint">将从你的小七币余额中扣除</div>
+339: </div>
+340: 
+341: <div class="rp-backdrop" id="rpDetailBackdrop"></div>
+342: <div class="rp-sheet" id="rpDetailSheet">
+343:   <div class="rp-handle"></div>
+344:   <div class="rp-title" style="display:flex;justify-content:space-between;align-items:center;">红包详情<button id="rpDetailClose" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+345:   <div id="rpDetailBody" style="padding:0 4px 20px;"></div>
+346: </div>
+347: 
+348: <!-- 在线用户 overlay -->
+349: <div class="online-overlay" id="onlineOverlay">
+350:   <div class="online-header">
+351:     <button class="back" id="onlineBackBtn" type="button">
+352:       <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+353:     </button>
+354:     <span class="title">在线用户</span>
+355:     <span class="live-dot"><span class="dot"></span>实时</span>
+356:   </div>
+357:   <div class="online-body">
+358:     <div class="online-list" id="onlineUserList"></div>
+359:   </div>
+360: </div>
+361: 
+362: <div class="custom-modal" id="confirmModal">
+363:   <div class="modal-box">
+364:     <div class="modal-title" id="confirmTitle">确认</div>
+365:     <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
+366:     <div class="modal-actions">
+367:       <button class="btn-secondary" id="confirmCancel" type="button">取消</button>
+368:       <button class="btn-danger" id="confirmOk" type="button">确定</button>
+369:     </div>
+370:   </div>
+371: </div>
+372: 
+373: <div id="toast"></div>
+374: 
+375: <script src="./common.js"></script>
+376: <script>
+377: /* ============================================================
+378:    基础
+379: ============================================================ */
+380: var SUPABASE_URL="https://ljbxeuqnlxiffvbnwepv.supabase.co";
+381: var SUPABASE_ANON_KEY="sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
+382: window.sb=window.sb||window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+383: 
+384: function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2600)}
+385: function escapeHtml(s){if(!s)return '';return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+386: function safeUrl(u){if(!u)return '';var s=String(u).trim();if(!/^https?:\/\//.test(s))return '';if(/[()'"<>;]/.test(s))return '';return escapeHtml(s);}
+387: function showConfirm(title,body,onOk){var m=document.getElementById('confirmModal');document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmBody').textContent=body;m.classList.add('active');var c=document.getElementById('confirmCancel'),o=document.getElementById('confirmOk');var cleanup=function(){m.classList.remove('active');c.onclick=null;o.onclick=null};c.onclick=cleanup;o.onclick=function(){if(onOk)onOk();cleanup()}}
+388: 
+389: var currentUser=getSessionUser();
+390: if(!currentUser||!currentUser.id)window.location.href='./index.html';
+391: var isAdmin=!!(currentUser&&currentUser.is_admin===true);
+392: // 拉取当前用户最新的气泡皮肤，更新缓存（保证自己发的消息用对皮肤）
+393: async function syncMySkin(){
+394:   if(!currentUser||!currentUser.id)return;
+395:   try{
+396:     var r=await window.sb.rpc('get_my_profile');
+397:     if(r.data&&typeof r.data.bubble_skin==='number'){
+398:       currentUser.bubble_skin=r.data[0].bubble_skin;
+399:       setSessionUser(currentUser);
+400:     }
+401:   }catch(e){}
+402: }
+403: var isAuthorMode=false;
+404: 
+405: /* ============================================================
+406:    头部
+407: ============================================================ */
+408: (function renderHeaderUI(){
+409:   var u=currentUser||{},name=u.nickname||'用户';
+410:   var has=u.avatar_url&&String(u.avatar_url).indexOf('http')===0;
+411:   document.getElementById('header-container').innerHTML=
+412:     '<div class="app-header">'+
+413:       '<div class="brand" id="brandBtn">Seven<span>戚</span><small>· 聊天群</small></div>'+
+414:       '<div class="header-right">'+
+415:         '<div class="user-area" onclick="window.location.href=\'./profile.html\'">'+
+416:           '<div class="avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(name.charAt(0).toUpperCase()))+'</div>'+
+417:           '<span class="user-name">'+escapeHtml(name)+'</span>'+
+418:         '</div>'+
+419:         '<button class="dots-btn" id="dotsBtn" type="button" title="在线用户">'+
+420:           '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'+
+421:           '<span class="online-badge" id="onlineBadge" style="display:none;">0</span>'+
+422:         '</button>'+
+423:       '</div>'+
+424:     '</div>';
+425:   document.getElementById('dotsBtn').onclick=function(){
+426:     document.getElementById('onlineOverlay').classList.add('open');
+427:     renderOnlineUsers();
+428:   };
+429:   // 三击 logo → 作者模式（仅数据库 is_admin 可进入，前端不再硬编码密码）
+430:   var cnt=0,timer=null;
+431:   document.getElementById('brandBtn').addEventListener('click',async function(){
+432:     cnt++;clearTimeout(timer);timer=setTimeout(function(){cnt=0},800);
+433:     if(cnt===3){
+434:       cnt=0;
+435:       if(!isAuthorMode){
+436:         if(!(currentUser&&currentUser.is_admin===true)){showToast('无权进入作者模式');return;}
+437:         isAuthorMode=true;showToast('作者模式已激活');
+438:       }else{isAuthorMode=false;showToast('已退出作者模式')}
+439:     }
+440:   });
+441: })();
+442: 
+443: /* ============================================================
+444:    ★★★ 在线用户（Presence）★★★
+445:    修复要点：
+446:    1. 用独立频道名 + 随机后缀，避免多设备冲突
+447:    2. 排除自己用 user_id 判等，不依赖 key
+448:    3. sync 事件用 setTimeout 防抖，避免高频抖动
+449:    4. 同时监听 join / leave 事件，立刻更新
+450: ============================================================ */
+451: var onlineUsers={};
+452: var onlineChannel=null;
+453: var renderDebounce=null;
+454: 
+455: document.getElementById('onlineBackBtn').onclick=function(){
+456:   document.getElementById('onlineOverlay').classList.remove('open');
+457: };
+458: 
+459: function renderOnlineUsers(){
+460:   var c=document.getElementById('onlineUserList');
+461:   if(!c)return;
+462:   // 把自己和他人分开
+463:   var mine=null;
+464:   var others=[];
+465:   Object.keys(onlineUsers).forEach(function(k){
+466:     var u=onlineUsers[k];
+467:     if(u.id===currentUser.id){mine=u}
+468:     else{others.push(u)}
+469:   });
+470:   others.sort(function(a,b){return String(a.nickname||'').localeCompare(String(b.nickname||''),'zh')});
+471: 
+472:   // 更新头部徽章
+473:   var badge=document.getElementById('onlineBadge');
+474:   if(badge){
+475:     if(others.length>0){badge.textContent=others.length>99?'99+':others.length;badge.style.display='inline-block'}
+476:     else{badge.style.display='none'}
+477:   }
+478: 
+479:   // 渲染列表
+480:   var html='';
+481:   // 我
+482:   var me=currentUser;
+483:   var meHas=me.avatar_url&&String(me.avatar_url).indexOf('http')===0;
+484:   html+='<div class="online-user me">'+
+485:     '<div class="ou-avatar" style="'+(meHas?'background-image:url(\''+safeUrl(me.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(meHas?'':escapeHtml(String(me.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
+486:     '<div class="ou-info">'+
+487:       '<div class="ou-name">'+escapeHtml(me.nickname||'我')+' <span style="font-size:.75em;color:var(--primary);font-weight:800;">（我）</span></div>'+
+488:       '<div class="ou-status"><span class="dot"></span>在线</div>'+
+489:     '</div>'+
+490:   '</div>';
+491: 
+492:   if(others.length===0){
+493:     html+='<div class="empty-online">'+
+494:       '<div class="empty-online-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'+
+495:       '<div class="empty-online-title">除你之外没有用户上线</div>'+
+496:       '<div class="empty-online-sub">快去邀请你的好友上线游玩吧！，<br>房间页面有互动游戏哦！</div>'+
+497:     '</div>';
+498:   }else{
+499:     html+='<div class="section-label">其他在线用户 · '+others.length+' 人</div>';
+500:     html+=others.map(function(u){
+501:       var has=u.avatar_url&&String(u.avatar_url).indexOf('http')===0;
+502:       return '<div class="online-user">'+
+503:         '<div class="ou-avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(u.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
+504:         '<div class="ou-info">'+
+505:           '<div class="ou-name">'+escapeHtml(u.nickname||'用户')+'</div>'+
+506:           '<div class="ou-status"><span class="dot"></span>在线</div>'+
+507:         '</div>'+
+508:       '</div>';
+509:     }).join('');
+510:   }
+511:   c.innerHTML=html;
+512: }
+513: 
+514: function scheduleRender(){
+515:   if(renderDebounce)clearTimeout(renderDebounce);
+516:   renderDebounce=setTimeout(function(){renderOnlineUsers()},50);
+517: }
+518: 
+519: function initPresence(){
+520:   if(onlineChannel){try{window.sb.removeChannel(onlineChannel)}catch(e){}onlineChannel=null}
+521:   // 每个用户用 user_id 作为 presence key，保证唯一
+522:   onlineChannel=window.sb.channel('sq-chat-online',{
+523:     config:{presence:{key:currentUser.id}}
+524:   });
+525: 
+526:   // 全量同步
+527:   onlineChannel.on('presence',{event:'sync'},function(){
+528:     var raw=onlineChannel.presenceState();
+529:     var map={};
+530:     Object.keys(raw).forEach(function(key){
+531:       var arr=raw[key];
+532:       if(!arr||!arr.length)return;
+533:       var p=arr[0];
+534:       var uid=p.user_id||key;
+535:       map[uid]={
+536:         id:uid,
+537:         nickname:p.nickname||'用户',
+538:         avatar_url:p.avatar_url||'',
+539:         online_at:p.online_at||''
+540:       };
+541:     });
+542:     onlineUsers=map;
+543:     scheduleRender();
+544:   });
+545: 
+546:   // 有新人加入
+547:   onlineChannel.on('presence',{event:'join'},function(payload){
+548:     if(payload&&payload.newPresences){
+549:       payload.newPresences.forEach(function(p){
+550:         var uid=p.user_id||'';
+551:         if(!uid)return;
+552:         onlineUsers[uid]={id:uid,nickname:p.nickname||'用户',avatar_url:p.avatar_url||'',online_at:p.online_at||''};
+553:       });
+554:       scheduleRender();
+555:     }
+556:   });
+557: 
+558:   // 有人离开
+559:   onlineChannel.on('presence',{event:'leave'},function(payload){
+560:     if(payload&&payload.leftPresences){
+561:       payload.leftPresences.forEach(function(p){
+562:         var uid=p.user_id||'';
+563:         if(uid&&onlineUsers[uid])delete onlineUsers[uid];
+564:       });
+565:       scheduleRender();
+566:     }
+567:   });
+568: 
+569:   onlineChannel.subscribe(function(status){
+570:     if(status==='SUBSCRIBED'){
+571:       onlineChannel.track({
+572:         user_id:currentUser.id,
+573:         nickname:currentUser.nickname,
+574:         avatar_url:currentUser.avatar_url||'',
+575:         online_at:new Date().toISOString()
+576:       });
+577:     }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+578:       // 断线后 3 秒重连
+579:       setTimeout(initPresence,3000);
+580:     }
+581:   });
+582: }
+583: 
+584: /* ============================================================
+585:    聊天
+586: ============================================================ */
+587: var chats=[],chatsLoading=false,usersCache={};
+588: 
+589: function isUserBanned(){if(!currentUser||!currentUser.banned_until)return false;return new Date(currentUser.banned_until)>new Date()}
+590: function updateBannedBanner(){
+591:   var b=document.getElementById('bannedBanner'),d=document.getElementById('bannedUntilDisplay'),i=document.getElementById('chatInput'),s=document.getElementById('sendChatBtn');
+592:   if(isUserBanned()){
+593:     b.classList.add('active');
+594:     d.textContent=new Date(currentUser.banned_until).toLocaleString('zh-CN',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+595:     i.disabled=true;i.placeholder='账号已被封禁，无法发送消息';s.disabled=true;
+596:   }else{
+597:     b.classList.remove('active');
+598:     i.disabled=false;i.placeholder='说点什么…';s.disabled=false;
+599:   }
+600: }
+601: 
+602: async function fetchChats(){
+603:   var res=await window.sb.from('chats').select('*').order('created_at',{ascending:true});
+604:   if(res.error)throw res.error;
+605:   var data=res.data||[];
+606:   // 加固后 users 只允许读自己，作者资料改走 public_profiles 补全
+607:   try{
+608:     var pr=await window.sb.from('public_profiles').select('id, nickname, avatar_url');
+609:     if(!pr.error){
+610:       var map={};
+611:       (pr.data||[]).forEach(function(u){ map[u.id]=u; });
+612:       data.forEach(function(item){
+613:         if(item.user_id && map[item.user_id]){
+614:           var prev=usersCache[item.user_id]||{};
+615:           usersCache[item.user_id]={
+616:             nickname:map[item.user_id].nickname,
+617:             avatar_url:map[item.user_id].avatar_url,
+618:             bubble_skin:typeof prev.bubble_skin==='number'?prev.bubble_skin:0
+619:           };
+620:         }
+621:       });
+622:     }
+623:   }catch(e){}
+624:   // 补当前用户自己的气泡皮肤（自己可读 users）
+625:   if(currentUser&&currentUser.id&&typeof currentUser.bubble_skin==='number'){
+626:     var cu=usersCache[currentUser.id]||{};
 
-/* 35-44 可爱 SVG */
-.b35 .bubble{border-radius:16px;background:linear-gradient(135deg,#ff9a9e,#fecfef);color:#8a2a4a;position:relative;padding-left:34px;}
-.b35 .bubble::before{content:'';position:absolute;left:-5px;top:5px;width:39px;height:39px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23f06292' stroke='%23c2185b' stroke-width='1' stroke-linejoin='round'><ellipse cx='6.5' cy='7' rx='2.4' ry='3.1'/><ellipse cx='12' cy='5.2' rx='2.4' ry='3.1'/><ellipse cx='17.5' cy='7' rx='2.4' ry='3.1'/><path d='M12 10.5c-3.4 0-6.2 2.6-6.2 5.6 0 2 1.7 3.4 3.9 3.4 1 0 1.6-.4 2.3-.4s1.3.4 2.3.4c2.2 0 3.9-1.4 3.9-3.4 0-3-2.8-5.6-6.2-5.6z'/><ellipse cx='9.4' cy='14.6' rx='1' ry='1.1' fill='%23fce4ec' stroke='none'/><ellipse cx='14.6' cy='14.6' rx='1' ry='1.1' fill='%23fce4ec' stroke='none'/><ellipse cx='12' cy='17.4' rx='1.3' ry='1.2' fill='%23fce4ec' stroke='none'/></g></svg>") center/contain no-repeat;}
-.b35.self .bubble{background:linear-gradient(135deg,#ff9a9e,#fecfef);color:#8a2a4a;}
-.b36 .bubble{border-radius:18px;background:linear-gradient(135deg,#ffb6c1,#ff8fb1);color:#fff;position:relative;overflow:hidden;}
-.b36 .bubble::after{content:'';position:absolute;right:-8px;top:-8px;width:44px;height:44px;opacity:.55;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23ff8fb1' stroke='%23e05780' stroke-width='.8' stroke-linejoin='round'><path d='M12 4c1.2 1.6 1.2 3.4 0 4.6-1.2-1.2-1.2-3 0-4.6z'/><path d='M12 20c-1.2-1.6-1.2-3.4 0-4.6 1.2 1.2 1.2 3 0 4.6z'/><path d='M4 12c1.6-1.2 3.4-1.2 4.6 0-1.2 1.2-3 1.2-4.6 0z'/><path d='M20 12c-1.6 1.2-3.4 1.2-4.6 0 1.2-1.2 3-1.2 4.6 0z'/><path d='M6.3 6.3c2 .2 3.3 1.4 3.5 3.3-1.9-.2-3.2-1.4-3.5-3.3z'/><path d='M17.7 17.7c-2-.2-3.3-1.4-3.5-3.3 1.9.2 3.2 1.4 3.5 3.3z'/><path d='M17.7 6.3c-.2 2-1.4 3.3-3.3 3.5.2-1.9 1.4-3.2 3.3-3.5z'/><path d='M6.3 17.7c.2-2 1.4-3.3 3.3-3.5-.2 1.9-1.4 3.2-3.3 3.5z'/></g><circle cx='12' cy='12' r='1.4' fill='%23fff3f7'/></svg>") center/contain no-repeat;}
-.b36.self .bubble{background:linear-gradient(135deg,#ffb6c1,#ff8fb1);color:#fff;}
-.b37 .bubble{border-radius:16px;background:linear-gradient(135deg,#4a4a8a,#2d2d5a);color:#ffe082;position:relative;padding-left:32px;}
-.b37 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.4l2.7 5.9 6.3.8-4.6 4.4 1.2 6.3-5.6-3-5.6 3 1.2-6.3L2.9 9.1l6.3-.8z' fill='%23ffd54f' stroke='%23f9a825' stroke-width='1' stroke-linejoin='round'/><path d='M12 6.5l1.4 3 3.2.4-2.3 2.2.6 3.2L12 13.7 9.1 15.3l.6-3.2-2.3-2.2 3.2-.4z' fill='%23fff8e1' opacity='.7'/></svg>") center/contain no-repeat;animation:twinkle 2s ease-in-out infinite;}
-.b37.self .bubble{background:linear-gradient(135deg,#4a4a8a,#2d2d5a);}
-.b38 .bubble{border-radius:20px;background:#ffeef5;color:#a83a6a;border:1px solid #f0d0e0;position:relative;margin-top:10px;}
-.b38 .bubble::before{content:'';position:absolute;left:10px;top:-14px;width:28px;height:24px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 26'><g stroke='%23e88cb0' stroke-width='1.4'><path d='M10 24C6 22 5 15 6.5 9 7.5 5 9 2.5 10.5 2.5s3 2.5 3.5 6.5c.6 5-.5 12-4 15z' fill='%23fff'/><path d='M22 24c4-2 5-9 3.5-15-1-4-2.5-6.5-4-6.5s-3 2.5-3.5 6.5c-.6 5 .5 12 4 15z' fill='%23fff'/><path d='M10.3 21c-2-2-2.6-8-1.6-12 .5-2 1.3-3.6 1.8-3.6s1.3 1.6 1.8 3.6c1 4 .4 10-2 12z' fill='%23ffc9dc' stroke='none'/><path d='M21.7 21c2-2 2.6-8 1.6-12-.5-2-1.3-3.6-1.8-3.6s-1.3 1.6-1.8 3.6c-1 4-.4 10 2 12z' fill='%23ffc9dc' stroke='none'/></g></svg>") center/contain no-repeat;}
-.b38.self .bubble{background:#ffeef5;color:#a83a6a;}
-.b39 .bubble{border-radius:18px;background:linear-gradient(135deg,#ff6b9d,#e91e63);color:#fff;position:relative;padding-right:30px;}
-.b39 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 20.5S3.6 15.2 1.6 10.4C.2 7 2.4 3.6 6 3.6c2.1 0 3.9 1.2 5 3 1.1-1.8 2.9-3 5-3 3.6 0 5.8 3.4 4.4 6.8C18.4 15.2 12 20.5 12 20.5z' fill='%23e91e63' stroke='%23ad1457' stroke-width='1' stroke-linejoin='round'/><path d='M6.8 7.2c-.9 0-1.6.8-1.6 1.7 0 .5.2.9.5 1.2' fill='none' stroke='%23ff8fb1' stroke-width='1.2' stroke-linecap='round'/></svg>") center/contain no-repeat;animation:breathe 2s ease-in-out infinite;}
-.b39.self .bubble{background:linear-gradient(135deg,#ff6b9d,#e91e63);color:#fff;}
-.b40 .bubble{border-radius:22px;background:linear-gradient(180deg,#90caf9,#64b5f6);color:#fff;position:relative;}
-.b40 .bubble::before{content:'';position:absolute;left:12px;bottom:-10px;width:30px;height:20px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 22'><path d='M9 18c-3.3 0-6-2.4-6-5.4 0-2.7 2.1-4.9 4.9-5.3C8.6 4.1 11.3 2 14.5 2c2.8 0 5.2 1.6 6.2 3.9.4-.1.8-.1 1.2-.1 3.3 0 6 2.4 6 5.4S25.2 18 21.9 18z' fill='%23bbdefb' stroke='%2390caf9' stroke-width='1.2' stroke-linejoin='round'/></svg>") center/contain no-repeat;}
-.b40.self .bubble{background:linear-gradient(180deg,#90caf9,#64b5f6);color:#fff;}
-.b41 .bubble{border-radius:16px;background:linear-gradient(135deg,#66bb6a,#43a047);color:#fff;position:relative;padding-left:32px;}
-.b41 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%234caf50' stroke='%232e7d32' stroke-width='1' stroke-linejoin='round'><path d='M12 12C12 8 9.5 5 6.5 5S1.5 7.5 2 10.5c.5 3 3.5 4 6.5 3 2-.7 3.5-1.5 3.5-1.5z'/><path d='M12 12c0-4 2.5-7 5.5-7s5 2.5 4.5 5.5c-.5 3-3.5 4-6.5 3-2-.7-3.5-1.5-3.5-1.5z'/><path d='M12 12c-4 0-7 2.5-7 5.5s2.5 5 5.5 4.5c3-.5 4-3.5 3-6.5-.7-2-1.5-3.5-1.5-3.5z'/><path d='M12 12c4 0 7 2.5 7 5.5s-2.5 5-5.5 4.5c-3-.5-4-3.5-3-6.5.7-2 1.5-3.5 1.5-3.5z'/></g><path d='M12 12v6' stroke='%232e7d32' stroke-width='1.2' stroke-linecap='round'/><circle cx='12' cy='12' r='1.1' fill='%23a5d6a7'/></svg>") center/contain no-repeat;}
-.b41.self .bubble{background:linear-gradient(135deg,#66bb6a,#43a047);color:#fff;}
-.b42 .bubble{border-radius:16px;background:linear-gradient(135deg,#7e57c2,#5e35b1);color:#e1bee7;position:relative;padding-left:34px;}
-.b42 .bubble::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.5a9.5 9.5 0 0 0 0 19 8 8 0 0 1 0-19z' fill='%23ffd54f' stroke='%23f9a825' stroke-width='1' stroke-linejoin='round'/><path d='M18.5 5l.6 1.6L20.7 7l-1.6.6-.6 1.6-.6-1.6L16.3 7l1.6-.4z' fill='%23fff8e1'/><circle cx='15.5' cy='14.5' r='.8' fill='%23fff8e1'/></svg>") center/contain no-repeat;animation:twinkle 3s ease-in-out infinite;}
-.b42.self .bubble{background:linear-gradient(135deg,#7e57c2,#5e35b1);}
-.b43 .bubble{border-radius:16px;background:linear-gradient(135deg,#ff8fb1,#f06292);color:#fff;position:relative;padding-right:32px;}
-.b43 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:24px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 22'><g stroke='%23c2185b' stroke-width='1' stroke-linejoin='round'><path d='M13 11L2.5 3.5c-.8-.6-1.5 0-1.5.9v13.2c0 .9.7 1.5 1.5.9z' fill='%23f06292'/><path d='M15 11l10.5-7.5c.8-.6 1.5 0 1.5.9v13.2c0 .9-.7 1.5-1.5.9z' fill='%23f06292'/></g><path d='M13 11l-8.6 6.2c-.6.4-1.2.1-1.2-.6 0-.5.3-.9.7-1.1L11 11z' fill='%23ec407a' stroke='%23c2185b' stroke-width='.8' stroke-linejoin='round'/><path d='M15 11l8.6 6.2c.6.4 1.2.1 1.2-.6 0-.5-.3-.9-.7-1.1L17 11z' fill='%23ec407a' stroke='%23c2185b' stroke-width='.8' stroke-linejoin='round'/><circle cx='14' cy='11' r='2.6' fill='%23ec407a' stroke='%23c2185b' stroke-width='1'/></svg>") center/contain no-repeat;}
-.b43.self .bubble{background:linear-gradient(135deg,#ff8fb1,#f06292);color:#fff;}
-.b44 .bubble{border-radius:20px;background:linear-gradient(90deg,#a1c4fd,#c2e9fb,#ffdde1,#ee9ca7);color:#333;position:relative;padding-right:32px;}
-.b44 .bubble::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:22px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 20'><g fill='none' stroke-width='1.6' stroke-linecap='round'><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23f06292'/><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23a1c4fd' transform='translate(0,-3)' opacity='.9'/><path d='M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9-2 4.5 4.5 0 0 1 7 4 3.5 3.5 0 0 1-1 7H6z' stroke='%23ffd54f' transform='translate(0,3)' opacity='.9'/></g></svg>") center/contain no-repeat;}
-.b44.self .bubble{background:linear-gradient(90deg,#a1c4fd,#c2e9fb,#ffdde1,#ee9ca7);color:#333;}
-
-/* ===== 气泡皮肤结束 ===== */
-.sys-recall{text-align:center;font-size:.72em;color:var(--text-muted);padding:6px 0;line-height:1.5;flex-shrink:0}
-.sys-recall .deleted-by{color:var(--official-blue);font-weight:600}
-.sys-recall .rc-icon{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px;stroke:var(--text-muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.row .official-badge{font-size:.5em;background:var(--primary);color:#fff;padding:0 6px;border-radius:99px;line-height:16px;font-weight:700}
-.pill-bar{flex-shrink:0;display:flex;gap:8px;align-items:center;padding:8px 16px 0;overflow-x:auto;background:var(--bg)}
-.pill-btn{position:relative;display:inline-flex;align-items:center;gap:6px;padding:8px 22px;border-radius:999px;border:2px solid var(--border);background:var(--bg-card);color:var(--text);font-family:inherit;font-weight:700;font-size:.8em;cursor:pointer;white-space:nowrap;transition:.2s}
-.pill-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg)}
-.pill-btn:active{transform:scale(.97)}
-.pill-btn svg{width:15px;height:15px;flex-shrink:0}
-.pill-new{position:absolute;top:-7px;right:-4px;background:var(--success);color:#fff;font-size:.6em;font-weight:800;padding:1px 6px;border-radius:999px;line-height:14px;box-shadow:0 2px 6px rgba(34,197,94,.5);letter-spacing:.5px}
-.fixed-input-area{flex-shrink:0;padding:10px 16px calc(10px + var(--safe-b));background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.fixed-input-area .input-wrapper{flex:1;display:flex;gap:8px;min-width:0}
-.fixed-input-area input{flex:1;padding:10px 14px;border-radius:99px;border:2px solid var(--border);background:var(--bg-input);font-family:inherit;font-size:.85em;outline:none;min-width:0;color:var(--text)}
-.fixed-input-area input:focus{border-color:var(--primary)}
-.fixed-input-area input:disabled{opacity:.5}
-.fixed-input-area button{padding:8px 18px;border-radius:99px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:.85em;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:inherit}
-.fixed-input-area button:hover{background:var(--primary-light)}
-.fixed-input-area button:disabled{opacity:.5;pointer-events:none}
-.fixed-input-area .admin-clear-btn{background:var(--danger);color:#fff;padding:6px 12px;border-radius:99px;border:none;font-size:.7em;cursor:pointer;display:none}
-.rp-card{display:block;max-width:230px;background:linear-gradient(135deg,#ff7043,#e64a19);border-radius:14px;padding:12px 16px;color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(230,74,25,.3);transition:transform .15s;}
-.rp-card:active{transform:scale(.97)}
-.rp-card.grabbed{background:linear-gradient(135deg,#9e9e9e,#757575);box-shadow:none;cursor:default;}
-.rp-card.done{background:linear-gradient(135deg,#bdbdbd,#9e9e9e);box-shadow:none;cursor:default;}
-.rp-card.exclusive{background:linear-gradient(135deg,#8e24aa,#5e35b1);box-shadow:0 6px 18px rgba(94,53,177,.3);}
-.rp-card.exclusive.grabbed,.rp-card.exclusive.done{background:linear-gradient(135deg,#9e9e9e,#757575);}
-.rp-card .rp-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.88em;}
-.rp-card .rp-top svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
-.rp-card .rp-sub{font-size:.7em;opacity:.9;margin-top:5px;}
-.rp-card .rp-amt{font-size:1.4em;font-weight:900;margin-top:4px;}
-.rp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:998;opacity:0;pointer-events:none;transition:opacity .3s;}
-.rp-backdrop.open{opacity:1;pointer-events:auto;}
-.rp-sheet{position:fixed;left:0;right:0;bottom:0;background:var(--bg-card);border-radius:20px 20px 0 0;z-index:999;padding:8px 20px calc(20px + var(--safe-b));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:82vh;overflow-y:auto;}
-.rp-sheet.open{transform:translateY(0);}
-.rp-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:6px auto 14px;}
-.rp-title{font-weight:800;font-size:1.05em;margin-bottom:16px;}
-.rp-field{margin-bottom:14px;}
-.rp-field label{display:block;font-size:.72em;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
-.rp-field input,.rp-field select{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:inherit;font-size:1em;outline:none;box-sizing:border-box;background:var(--bg-input);color:var(--text);}
-.rp-field input:focus,.rp-field select:focus{border-color:var(--primary);}
-.rp-type-row{display:flex;gap:8px;}
-.rp-type{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;color:var(--text-muted);font-weight:700;font-size:.82em;cursor:pointer;font-family:inherit;}
-.rp-type.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);}
-.rp-send{width:100%;padding:13px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:1em;cursor:pointer;font-family:inherit;margin-top:6px;}
-.rp-send:disabled{opacity:.5;pointer-events:none;}
-.rp-hint{font-size:.72em;color:var(--text-light);margin-top:10px;text-align:center;}
-.rp-rank-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:var(--bg-input);margin-bottom:6px;font-size:.85em;}
-.rp-rank-item .rr-left{display:flex;align-items:center;gap:10px;}
-.rp-rank-item .rr-no{width:20px;text-align:center;font-weight:800;color:var(--text-muted);}
-.rp-rank-item .rr-no.top1{color:#e6a700;}
-.rp-rank-item .rr-amt{font-weight:800;color:var(--primary);}
-.icon-svg{width:1.2em;height:1.2em;fill:currentColor;flex-shrink:0}
-.empty-state{text-align:center;color:var(--text-muted);padding:40px 20px;font-size:.85em}
-.empty-state .big{font-size:2.8em;margin-bottom:8px;opacity:.5}
-.loading-state{text-align:center;color:var(--text-muted);padding:40px 20px;font-size:.9em}
-.loading-state .spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.chat-ctx-menu{position:fixed;z-index:10000;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:4px 0;min-width:130px}
-.chat-ctx-item{padding:10px 16px;font-size:.85em;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:8px}
-.chat-ctx-item:hover{background:var(--primary-bg);color:var(--primary)}
-.chat-ctx-item.danger:hover{background:#ffebee;color:var(--danger)}
-.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
-.row.self .msg-ip{text-align:right;}
-.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
-.row.self .msg-ip{text-align:right;}
-#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:.7em 1.5em;border-radius:2em;font-weight:600;font-size:.85em;opacity:0;transition:all .4s ease;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow);max-width:90vw}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.msg-ip{font-size:.65em;color:var(--text-light);margin-top:4px;}
-.row.self .msg-ip{text-align:right;}
-.custom-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
-.custom-modal.active{display:flex}
-.custom-modal .modal-box{background:var(--bg-card);border-radius:var(--radius);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
-.modal-title{font-size:1.2em;font-weight:700;margin-bottom:8px}
-.modal-body{font-size:.95em;color:var(--text-muted);margin-bottom:16px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end}
-.modal-actions button{padding:6px 18px;border-radius:var(--radius-sm);border:none;font-weight:600;cursor:pointer;font-family:inherit}
-.modal-actions .btn-danger{background:var(--danger);color:#fff}
-.modal-actions .btn-secondary{background:var(--bg-input);color:var(--text-muted)}
-/* 在线用户 overlay */
-.online-overlay{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);will-change:transform}
-.online-overlay.open{transform:translateX(0)}
-.online-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) 14px 10px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);min-height:56px;backdrop-filter:blur(8px)}
-.online-header .back{background:none;border:none;cursor:pointer;padding:4px;color:var(--text);display:flex}
-.online-header .back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.online-header .title{font-weight:700;font-size:1em;flex:1}
-.online-header .live-dot{display:flex;align-items:center;gap:5px;font-size:.7em;color:var(--success);font-weight:700}
-.online-header .live-dot .dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.18);animation:pulseDot 1.8s infinite}
-@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
-.online-body{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
-.me-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--primary-bg);border:1px solid var(--primary);border-radius:var(--radius-sm);margin-bottom:14px}
-.ou-avatar{width:42px;height:42px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex-shrink:0;background-size:cover;background-position:center}
-.ou-info{flex:1;min-width:0}
-.ou-name{font-weight:700;font-size:.92em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ou-status{font-size:.72em;color:var(--success);display:flex;align-items:center;gap:5px;margin-top:2px;font-weight:600}
-.ou-status .dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
-.section-label{font-size:.7em;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;margin:6px 0 10px;display:flex;align-items:center;gap:6px}
-.online-list{display:flex;flex-direction:column;gap:10px}
-.online-user{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);animation:fadeInUp .3s ease}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.online-user.me{border-color:var(--primary);background:var(--primary-bg)}
-.empty-online{text-align:center;padding:70px 20px;color:var(--text-muted)}
-.empty-online-icon{font-size:3.2em;opacity:.45;margin-bottom:14px}
-.empty-online-title{font-size:.98em;font-weight:700;color:var(--text);margin-bottom:6px}
-.empty-online-sub{font-size:.78em;color:var(--text-light);line-height:1.6}
-@media (max-width:480px){.app-header{padding:10px 12px}.chat-messages{padding:12px 12px 4px}.fixed-input-area{padding:8px 12px calc(8px + var(--safe-b))}.pill-bar{padding:8px 12px 0}.row{max-width:90%}.user-area .user-name{max-width:54px;font-size:.72em}}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
-</style>
-</head>
-<body>
-
-<div id="mainApp">
-  <div id="header-container"></div>
-  <div class="banned-banner" id="bannedBanner">账号已被封禁，无法发送聊天消息。解封时间：<span id="bannedUntilDisplay"></span></div>
-  <div class="app-content">
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="pill-bar">
-      <button class="pill-btn" id="roomPillBtn" type="button" onclick="location.href='./room.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
-        </svg>
-        房间
-        <span class="pill-new">新</span>
-      </button>
-    </div>
-    <div class="fixed-input-area">
-      <button id="chatRedPacketBtn" type="button" style="background:linear-gradient(135deg,#ff7043,#e64a19);">
-        <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="2" width="18" height="20" rx="2" style="fill:#fff;stroke:none"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2c-2.5 1.5-5.5 2.5-9 2.5S5.5 8.5 3 7V5Z" style="fill:#ffe082;stroke:none"/><circle cx="12" cy="15" r="2.5" style="fill:#e53935;stroke:none"/><rect x="11.2" y="14.2" width="1.6" height="1.6" style="fill:#fff;stroke:none"/></svg>
-        红包
-      </button>
-      <div class="input-wrapper">
-        <input type="text" id="chatInput" placeholder="说点什么…" maxlength="200" />
-        <button id="sendChatBtn" type="button">
-          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-          <span class="btn-text">发送</span>
-        </button>
-      </div>
-      <button class="admin-clear-btn" id="clearChatBtn" type="button">清空聊天</button>
-    </div>
-  </div>
-  <div id="footer-container"></div>
-</div>
-
-<div class="rp-backdrop" id="rpBackdrop"></div>
-<div class="rp-sheet" id="rpSheet">
-  <div class="rp-handle"></div>
-  <div class="rp-title">发红包</div>
-  <div class="rp-field">
-    <label>红包总积分</label>
-    <input type="number" id="crpTotal" placeholder="如 100" min="1" />
-  </div>
-  <div class="rp-field">
-    <label>类型</label>
-    <div class="rp-type-row">
-      <button type="button" class="rp-type active" data-t="group">拼手气（群红包）</button>
-      <button type="button" class="rp-type" data-t="exclusive">专属红包</button>
-    </div>
-  </div>
-  <div class="rp-field" id="crpCountField">
-    <label>可领份数（至少 2 份）</label>
-    <input type="number" id="crpCount" placeholder="如 5" min="2" />
-  </div>
-  <div class="rp-field" id="crpTargetField" style="display:none;">
-    <label>指定领取人（在线用户）</label>
-    <select id="crpTarget"></select>
-  </div>
-  <button class="rp-send" id="crpSendBtn">塞钱进红包</button>
-  <div class="rp-hint">将从你的小七币余额中扣除</div>
-</div>
-
-<div class="rp-backdrop" id="rpDetailBackdrop"></div>
-<div class="rp-sheet" id="rpDetailSheet">
-  <div class="rp-handle"></div>
-  <div class="rp-title" style="display:flex;justify-content:space-between;align-items:center;">红包详情<button id="rpDetailClose" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-  <div id="rpDetailBody" style="padding:0 4px 20px;"></div>
-</div>
-
-<!-- 在线用户 overlay -->
-<div class="online-overlay" id="onlineOverlay">
-  <div class="online-header">
-    <button class="back" id="onlineBackBtn" type="button">
-      <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-    </button>
-    <span class="title">在线用户</span>
-    <span class="live-dot"><span class="dot"></span>实时</span>
-  </div>
-  <div class="online-body">
-    <div class="online-list" id="onlineUserList"></div>
-  </div>
-</div>
-
-<div class="custom-modal" id="confirmModal">
-  <div class="modal-box">
-    <div class="modal-title" id="confirmTitle">确认</div>
-    <div class="modal-body" id="confirmBody">确定要执行此操作吗？</div>
-    <div class="modal-actions">
-      <button class="btn-secondary" id="confirmCancel" type="button">取消</button>
-      <button class="btn-danger" id="confirmOk" type="button">确定</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script src="./common.js"></script>
-<script>
-/* ============================================================
-   基础
-============================================================ */
-var SUPABASE_URL="https://ulvhuqtpdafspbdvkogs.supabase.co";
-var SUPABASE_ANON_KEY="sb_publishable_b3zSRFSj9k73_tIxO1yJYw_IEK9tPLg";
-window.sb=window.sb||window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
-function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2600)}
-function escapeHtml(s){if(!s)return '';return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function safeUrl(u){if(!u)return '';var s=String(u).trim();if(!/^https?:\/\//.test(s))return '';if(/[()'"<>;]/.test(s))return '';return escapeHtml(s);}
-function showConfirm(title,body,onOk){var m=document.getElementById('confirmModal');document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmBody').textContent=body;m.classList.add('active');var c=document.getElementById('confirmCancel'),o=document.getElementById('confirmOk');var cleanup=function(){m.classList.remove('active');c.onclick=null;o.onclick=null};c.onclick=cleanup;o.onclick=function(){if(onOk)onOk();cleanup()}}
-
-var currentUser=getSessionUser();
-if(!currentUser||!currentUser.id)window.location.href='./index.html';
-var isAdmin=!!(currentUser&&currentUser.is_admin===true);
-// 拉取当前用户最新的气泡皮肤，更新缓存（保证自己发的消息用对皮肤）
-async function syncMySkin(){
-  if(!currentUser||!currentUser.id)return;
-  try{
-    var r=await window.sb.rpc('get_my_profile');
-    if(r.data&&typeof r.data.bubble_skin==='number'){
-      currentUser.bubble_skin=r.data[0].bubble_skin;
-      setSessionUser(currentUser);
-    }
-  }catch(e){}
-}
-var isAuthorMode=false;
-
-/* ============================================================
-   头部
-============================================================ */
-(function renderHeaderUI(){
-  var u=currentUser||{},name=u.nickname||'用户';
-  var has=u.avatar_url&&String(u.avatar_url).indexOf('http')===0;
-  document.getElementById('header-container').innerHTML=
-    '<div class="app-header">'+
-      '<div class="brand" id="brandBtn">Seven<span>戚</span><small>· 聊天群</small></div>'+
-      '<div class="header-right">'+
-        '<div class="user-area" onclick="window.location.href=\'./profile.html\'">'+
-          '<div class="avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(name.charAt(0).toUpperCase()))+'</div>'+
-          '<span class="user-name">'+escapeHtml(name)+'</span>'+
-        '</div>'+
-        '<button class="dots-btn" id="dotsBtn" type="button" title="在线用户">'+
-          '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'+
-          '<span class="online-badge" id="onlineBadge" style="display:none;">0</span>'+
-        '</button>'+
-      '</div>'+
-    '</div>';
-  document.getElementById('dotsBtn').onclick=function(){
-    document.getElementById('onlineOverlay').classList.add('open');
-    renderOnlineUsers();
-  };
-  // 三击 logo → 作者模式（仅数据库 is_admin 可进入，前端不再硬编码密码）
-  var cnt=0,timer=null;
-  document.getElementById('brandBtn').addEventListener('click',async function(){
-    cnt++;clearTimeout(timer);timer=setTimeout(function(){cnt=0},800);
-    if(cnt===3){
-      cnt=0;
-      if(!isAuthorMode){
-        if(!(currentUser&&currentUser.is_admin===true)){showToast('无权进入作者模式');return;}
-        isAuthorMode=true;showToast('作者模式已激活');
-      }else{isAuthorMode=false;showToast('已退出作者模式')}
-    }
-  });
-})();
-
-/* ============================================================
-   ★★★ 在线用户（Presence）★★★
-   修复要点：
-   1. 用独立频道名 + 随机后缀，避免多设备冲突
-   2. 排除自己用 user_id 判等，不依赖 key
-   3. sync 事件用 setTimeout 防抖，避免高频抖动
-   4. 同时监听 join / leave 事件，立刻更新
-============================================================ */
-var onlineUsers={};
-var onlineChannel=null;
-var renderDebounce=null;
-
-document.getElementById('onlineBackBtn').onclick=function(){
-  document.getElementById('onlineOverlay').classList.remove('open');
-};
-
-function renderOnlineUsers(){
-  var c=document.getElementById('onlineUserList');
-  if(!c)return;
-  // 把自己和他人分开
-  var mine=null;
-  var others=[];
-  Object.keys(onlineUsers).forEach(function(k){
-    var u=onlineUsers[k];
-    if(u.id===currentUser.id){mine=u}
-    else{others.push(u)}
-  });
-  others.sort(function(a,b){return String(a.nickname||'').localeCompare(String(b.nickname||''),'zh')});
-
-  // 更新头部徽章
-  var badge=document.getElementById('onlineBadge');
-  if(badge){
-    if(others.length>0){badge.textContent=others.length>99?'99+':others.length;badge.style.display='inline-block'}
-    else{badge.style.display='none'}
-  }
-
-  // 渲染列表
-  var html='';
-  // 我
-  var me=currentUser;
-  var meHas=me.avatar_url&&String(me.avatar_url).indexOf('http')===0;
-  html+='<div class="online-user me">'+
-    '<div class="ou-avatar" style="'+(meHas?'background-image:url(\''+safeUrl(me.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(meHas?'':escapeHtml(String(me.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
-    '<div class="ou-info">'+
-      '<div class="ou-name">'+escapeHtml(me.nickname||'我')+' <span style="font-size:.75em;color:var(--primary);font-weight:800;">（我）</span></div>'+
-      '<div class="ou-status"><span class="dot"></span>在线</div>'+
-    '</div>'+
-  '</div>';
-
-  if(others.length===0){
-    html+='<div class="empty-online">'+
-      '<div class="empty-online-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'+
-      '<div class="empty-online-title">除你之外没有用户上线</div>'+
-      '<div class="empty-online-sub">快去邀请你的好友上线游玩吧！，<br>房间页面有互动游戏哦！</div>'+
-    '</div>';
-  }else{
-    html+='<div class="section-label">其他在线用户 · '+others.length+' 人</div>';
-    html+=others.map(function(u){
-      var has=u.avatar_url&&String(u.avatar_url).indexOf('http')===0;
-      return '<div class="online-user">'+
-        '<div class="ou-avatar" style="'+(has?'background-image:url(\''+safeUrl(u.avatar_url)+'\');background-size:cover;background-position:center;':'')+'">'+(has?'':escapeHtml(String(u.nickname||'U').charAt(0).toUpperCase()))+'</div>'+
-        '<div class="ou-info">'+
-          '<div class="ou-name">'+escapeHtml(u.nickname||'用户')+'</div>'+
-          '<div class="ou-status"><span class="dot"></span>在线</div>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-  }
-  c.innerHTML=html;
-}
-
-function scheduleRender(){
-  if(renderDebounce)clearTimeout(renderDebounce);
-  renderDebounce=setTimeout(function(){renderOnlineUsers()},50);
-}
-
-function initPresence(){
-  if(onlineChannel){try{window.sb.removeChannel(onlineChannel)}catch(e){}onlineChannel=null}
-  // 每个用户用 user_id 作为 presence key，保证唯一
-  onlineChannel=window.sb.channel('sq-chat-online',{
-    config:{presence:{key:currentUser.id}}
-  });
-
-  // 全量同步
-  onlineChannel.on('presence',{event:'sync'},function(){
-    var raw=onlineChannel.presenceState();
-    var map={};
-    Object.keys(raw).forEach(function(key){
-      var arr=raw[key];
-      if(!arr||!arr.length)return;
-      var p=arr[0];
-      var uid=p.user_id||key;
-      map[uid]={
-        id:uid,
-        nickname:p.nickname||'用户',
-        avatar_url:p.avatar_url||'',
-        online_at:p.online_at||''
-      };
-    });
-    onlineUsers=map;
-    scheduleRender();
-  });
-
-  // 有新人加入
-  onlineChannel.on('presence',{event:'join'},function(payload){
-    if(payload&&payload.newPresences){
-      payload.newPresences.forEach(function(p){
-        var uid=p.user_id||'';
-        if(!uid)return;
-        onlineUsers[uid]={id:uid,nickname:p.nickname||'用户',avatar_url:p.avatar_url||'',online_at:p.online_at||''};
-      });
-      scheduleRender();
-    }
-  });
-
-  // 有人离开
-  onlineChannel.on('presence',{event:'leave'},function(payload){
-    if(payload&&payload.leftPresences){
-      payload.leftPresences.forEach(function(p){
-        var uid=p.user_id||'';
-        if(uid&&onlineUsers[uid])delete onlineUsers[uid];
-      });
-      scheduleRender();
-    }
-  });
-
-  onlineChannel.subscribe(function(status){
-    if(status==='SUBSCRIBED'){
-      onlineChannel.track({
-        user_id:currentUser.id,
-        nickname:currentUser.nickname,
-        avatar_url:currentUser.avatar_url||'',
-        online_at:new Date().toISOString()
-      });
-    }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-      // 断线后 3 秒重连
-      setTimeout(initPresence,3000);
-    }
-  });
-}
-
-/* ============================================================
-   聊天
-============================================================ */
-var chats=[],chatsLoading=false,usersCache={};
-
-function isUserBanned(){if(!currentUser||!currentUser.banned_until)return false;return new Date(currentUser.banned_until)>new Date()}
-function updateBannedBanner(){
-  var b=document.getElementById('bannedBanner'),d=document.getElementById('bannedUntilDisplay'),i=document.getElementById('chatInput'),s=document.getElementById('sendChatBtn');
-  if(isUserBanned()){
-    b.classList.add('active');
-    d.textContent=new Date(currentUser.banned_until).toLocaleString('zh-CN',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    i.disabled=true;i.placeholder='账号已被封禁，无法发送消息';s.disabled=true;
-  }else{
-    b.classList.remove('active');
-    i.disabled=false;i.placeholder='说点什么…';s.disabled=false;
-  }
-}
-
-async function fetchChats(){
-  var res=await window.sb.from('chats').select('*').order('created_at',{ascending:true});
-  if(res.error)throw res.error;
-  var data=res.data||[];
-  // 加固后 users 只允许读自己，作者资料改走 public_profiles 补全
-  try{
-    var pr=await window.sb.from('public_profiles').select('id, nickname, avatar_url');
-    if(!pr.error){
-      var map={};
-      (pr.data||[]).forEach(function(u){ map[u.id]=u; });
-      data.forEach(function(item){
-        if(item.user_id && map[item.user_id]){
-          var prev=usersCache[item.user_id]||{};
-          usersCache[item.user_id]={
-            nickname:map[item.user_id].nickname,
-            avatar_url:map[item.user_id].avatar_url,
-            bubble_skin:typeof prev.bubble_skin==='number'?prev.bubble_skin:0
-          };
-        }
-      });
-    }
-  }catch(e){}
-  // 补当前用户自己的气泡皮肤（自己可读 users）
-  if(currentUser&&currentUser.id&&typeof currentUser.bubble_skin==='number'){
-    var cu=usersCache[currentUser.id]||{};
-    cu.bubble_skin=currentUser.bubble_skin;
-    usersCache[currentUser.id]=cu;
-  }
-  return data;
-}
-async function addChat(userId,author,content,isOfficial,ip){
-  var r=await window.sb.from('chats').insert([{user_id:userId,author:author,content:content,is_official:isOfficial,is_deleted:false,deleted_by:null,ip:ip}]);
-  if(r.error)throw r.error;return r.data;
-}
-async function revokeChat(id,author,revoker,isSelf){
-  var nc=isSelf?author+' 撤回了一条消息':author+' 的消息被 '+revoker+' 撤回了';
-  var r=await window.sb.from('chats').update({is_deleted:true,content:nc,deleted_by:revoker}).eq('id',id);
-  if(r.error)throw r.error;
-}
-async function clearAllChats(){
-  if(!isAdmin){showToast('权限不足');return}
-  showConfirm('清空聊天','确定要删除所有聊天消息吗？此操作不可恢复！',async function(){
-    try{var r=await window.sb.from('chats').delete().not('id','is',null);if(r.error)throw r.error;showToast('所有聊天消息已清空');await loadAllChats()}catch(e){showToast('清空失败：'+e.message)}
-  });
-}
-function formatTimeDivider(date){
-  var now=new Date(),d=new Date(date);
-  var sy=d.getFullYear()===now.getFullYear();
-  var sd=sy&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
-  var hm=d.toTimeString().slice(0,5);
-  if(sd)return hm;
-  if(sy)return(d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
-  return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
-}
-function shouldShowTimeDivider(p,c){if(!p)return true;return(new Date(c)-new Date(p))/60000>30}
-
-function renderChat(){
-  var container=document.getElementById('chatMessages');
-  if(chatsLoading){container.innerHTML='<div class="loading-state"><div class="spinner"></div><div>正在加载聊天内容...</div></div>';return}
-  if(!chats.length){container.innerHTML='<div class="empty-state"><div class="big"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>还没有聊天消息，来打个招呼吧！</div>';return}
-  // 合并聊天消息 + 红包，按时间排序
-  var merged=[];
-  chats.forEach(function(c){ merged.push({ kind:'chat', t:new Date(c.created_at).getTime(), c:c }); });
-  (crpState.list||[]).forEach(function(p){ merged.push({ kind:'rp', t:new Date(p.created_at).getTime(), p:p }); });
-  merged.sort(function(a,b){ return a.t - b.t; });
-
-  var html='',prev=null;
-  var rcIcon='<svg class="rc-icon" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9"/></svg>';
-
-  merged.forEach(function(item){
-    var created = item.kind==='chat' ? item.c.created_at : item.p.created_at;
-    if(shouldShowTimeDivider(prev, created)) html+='<div class="time-divider"><span>'+formatTimeDivider(created)+'</span></div>';
-    prev = created;
-
-    if(item.kind==='rp'){
-      var p=item.p;
-      var rpSelf = currentUser && p.sender_id===currentUser.id;
-      var mine = crpState.myGrabs[p.id];
-      var finished = p.remaining_count<=0;
-      var isEx = !!p.target_user_id;
-      var rpCls = (isEx?'exclusive ':'') + (mine!==undefined?'grabbed':(finished?'done':''));
-      var sub='', amtHtml='';
-      if(mine!==undefined){ sub = isEx?'专属红包 · 你已领取':'你已领取 · 看看手气'; amtHtml='<div class="rp-amt">'+mine+' 币</div>'; }
-      else if(finished){ sub='手慢了，红包已领完'; }
-      else if(isEx){ sub = (p.target_user_id===currentUser.id)?'专属红包 · 点击领取':'专属红包（非指定人无法领取）'; }
-      else { sub='剩余 '+p.remaining_count+'/'+p.count+' 份'; }
-      var rpUi = usersCache[p.sender_id]||null;
-      var rpName = rpUi?rpUi.nickname:p.sender_name;
-      var rpAu = rpUi?rpUi.avatar_url:null;
-      var skinId = rpSelf?((currentUser&&currentUser.bubble_skin)||0):((rpUi&&rpUi.bubble_skin)||0);
-      var skinCls = 'b'+(skinId>=0&&skinId<=44?skinId:0);
-      var avCls = 'avatar'+(rpSelf?' self-av':'');
-      var av = (rpAu&&String(rpAu).indexOf('http')===0)?'<div class="'+avCls+'" style="background-image:url(\''+safeUrl(rpAu)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls+'">'+escapeHtml(String(rpName||'U').charAt(0).toUpperCase())+'</div>';
-      html+='<div class="row '+(rpSelf?'self':'other')+' '+skinCls+'" data-rp="'+p.id+'">'+av+
-        '<div class="bubble-wrap"><div class="uname">'+escapeHtml(rpName||'')+'</div>'+
-        '<div class="rp-card '+rpCls+'" data-rp="'+p.id+'">'+
-          '<div class="rp-top"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="3" y="2" width="18" height="20" rx="2" style="fill:#fff;stroke:none"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2c-2.5 1.5-5.5 2.5-9 2.5S5.5 8.5 3 7V5Z" style="fill:#ffe082;stroke:none"/><circle cx="12" cy="15" r="2.5" style="fill:#e53935;stroke:none"/><rect x="11.2" y="14.2" width="1.6" height="1.6" style="fill:#fff;stroke:none"/></svg>'+
-          (isEx?'专属红包':'红包')+'</div>'+ amtHtml +
-          '<div class="rp-sub">'+sub+'</div>'+
-        '</div></div></div>';
-      return;
-    }
-
-    var c=item.c;
-    var isSelf=currentUser&&c.user_id===currentUser.id;
-    var isOfficial=c.is_official||c.author==='Seven戚';
-    var isDeleted=c.is_deleted===true;
-    var ui=usersCache[c.user_id]||null;
-    var dn=ui?ui.nickname:c.author,au=ui?ui.avatar_url:null;
-    var badge=isOfficial?'<span class="official-badge">官方</span>':'';
-    if(isDeleted){
-      var txt=c.content||'';
-      var m=txt.match(/^(.*?) 的消息被 (.*?) 撤回了$/);
-      if(m)html+='<div class="sys-recall">'+rcIcon+'<span class="deleted-by">'+escapeHtml(m[1])+'</span> 的消息被 <span class="deleted-by">'+escapeHtml(m[2])+'</span> 撤回了</div>';
-      else if(txt.indexOf('撤回了一条消息')>=0){var n=txt.replace(' 撤回了一条消息','');html+='<div class="sys-recall">'+rcIcon+'<span class="deleted-by">'+escapeHtml(n)+'</span> 撤回了一条消息</div>'}
-      else html+='<div class="sys-recall">'+rcIcon+escapeHtml(txt)+'</div>';
-      return;
-    }
-    var skinId2=0;
-    if(isSelf){ skinId2=(currentUser&&currentUser.bubble_skin)||0; }
-    else { skinId2=(ui&&ui.bubble_skin)||0; }
-    var skinCls2='b'+(skinId2>=0&&skinId2<=44?skinId2:0);
-    var avCls2='avatar'+(isSelf?' self-av':'');
-    var av2=(au&&String(au).indexOf('http')===0)?'<div class="'+avCls2+'" style="background-image:url(\''+safeUrl(au)+'\');background-size:cover;background-position:center;text-indent:-9999px;"> </div>':'<div class="'+avCls2+'">'+escapeHtml(String(dn).charAt(0).toUpperCase())+'</div>';
-    var ipHtml = '';
-    if (isAdmin && c.ip) {
-      ipHtml = '<div class="msg-ip" style="color:#2b6cff;background:#e3f2fd;border:1px solid #bbdefb;padding:2px 6px;border-radius:4px;display:inline-block;">📍 '+escapeHtml(c.ip)+'</div>';
-    }
-    html+='<div class="row '+(isSelf?'self':'other')+' '+skinCls2+'" data-id="'+c.id+'" data-author="'+escapeHtml(c.author)+'" data-self="'+isSelf+'">'+av2+'<div class="bubble-wrap"><div class="uname">'+escapeHtml(dn)+badge+'</div><div class="bubble">'+escapeHtml(c.content)+'</div>'+ipHtml+'</div></div>';
-  });
-  container.innerHTML=html;
-  container.scrollTop=container.scrollHeight;
-  // 红包卡片点击领取
-  container.querySelectorAll('.rp-card').forEach(function(el){
-    el.addEventListener('click',function(e){ e.stopPropagation(); openChatRedPacket(this.dataset.rp); });
-  });
-  container.querySelectorAll('.row').forEach(function(el){
-    if(el.dataset.rp) return; // 红包行不参与撤回/举报菜单
-    el.addEventListener('contextmenu',function(e){
-      e.preventDefault();
-      showChatCtxMenu(e.clientX,e.clientY,this.dataset.id,this.dataset.author,this.dataset.self==='true',this.querySelector('.bubble')?this.querySelector('.bubble').textContent:'');
-    });
-    var timer=null;
-    el.addEventListener('touchstart',function(e){
-      var self=this;
-      timer=setTimeout(function(){
-        if(navigator.vibrate)navigator.vibrate(45);
-        showChatCtxMenu(e.touches[0].clientX,e.touches[0].clientY,self.dataset.id,self.dataset.author,self.dataset.self==='true',self.querySelector('.bubble')?self.querySelector('.bubble').textContent:'');
-        timer=null;
-      },600);
-    },{passive:true});
-    el.addEventListener('touchend',function(){if(timer){clearTimeout(timer);timer=null}});
-    el.addEventListener('touchmove',function(){if(timer){clearTimeout(timer);timer=null}});
-  });
-}
-
-function showChatCtxMenu(x,y,id,author,isSelf,contentText){
-  var old=document.getElementById('chatCtxMenu');if(old)old.remove();
-  var menu=document.createElement('div');menu.id='chatCtxMenu';menu.className='chat-ctx-menu';
-  menu.style.left=Math.min(x,window.innerWidth-160)+'px';
-  menu.style.top=Math.min(y,window.innerHeight-140)+'px';
-  var html='';
-  if(isAdmin||isSelf)html+='<div class="chat-ctx-item danger" data-action="revoke">'+svgIcon('undo',16)+' 撤回</div>';
-  if(!isSelf)html+='<div class="chat-ctx-item" data-action="report">'+svgIcon('flag',16)+' 举报</div>';
-  menu.innerHTML=html;
-  document.body.appendChild(menu);
-  menu.querySelectorAll('.chat-ctx-item').forEach(function(item){
-    item.onclick=function(){
-      var a=this.dataset.action;menu.remove();
-      if(a==='revoke'){
-        if(!isAdmin&&!isSelf){showToast('您只能撤回自己的消息');return}
-        showConfirm('撤回消息','确定撤回此消息吗？',function(){
-          revokeChat(id,author,currentUser.nickname,isSelf)
-            .then(function(){showToast('消息已撤回');return loadAllChats()})
-            .catch(function(e){showToast('撤回失败：'+e.message)});
-        });
-      }else if(a==='report'){
-        reportChat(id,author,contentText);
-      }
-    };
-  });
-  setTimeout(function(){
-    document.addEventListener('click',function close(e){
-      if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',close)}
-    });
-  },10);
-}
-
-async function reportChat(contentId,author,snapshot){
-  try{
-    var res=await window.sb.from('public_users').select('id').eq('nickname',author).single();
-    if(res.error||!res.data){showToast('无法找到该用户');return}
-    openReportDialog(res.data.id,'chat',contentId,snapshot);
-  }catch(e){showToast('举报失败：'+e.message)}
-}
-
-function sendChat(){
-  if(!currentUser){showToast('请先登录');return}
-  if(isUserBanned()){showToast('账号已被封禁，无法发送消息');return}
-  var input=document.getElementById('chatInput'),content=input.value.trim();
-  if(!content){showToast('请输入内容');return}
-  var btn=document.getElementById('sendChatBtn'),orig=btn.innerHTML;
-  btn.disabled=true;btn.innerHTML='发送中...';
-  var isOfficial=currentUser.nickname==='Seven戚'||isAuthorMode;
-  var ipText = window.sqClientGeo ? (window.sqClientGeo.ip + ' · ' + window.sqClientGeo.location) : '';
-  addChat(currentUser.id,currentUser.nickname,content,isOfficial,ipText)
-    .then(function(){
-      input.value='';
-      loadAllChats();
-      showToast('消息已发送');
-    })
-    .catch(function(e){
-      showToast('发送失败：'+e.message);
-    })
-    .finally(function(){
-      btn.disabled=false;
-      btn.innerHTML=orig;
-    });
-}
-async function loadAllChats(){
-  chatsLoading=true;renderChat();
-  try{await syncMySkin();chats=await fetchChats()}
-  catch(e){console.error('加载聊天失败:',e);showToast('聊天加载失败')}
-  finally{chatsLoading=false;renderChat()}
-}
-
-/* ============================================================
-   聊天群红包
-============================================================ */
-var crpState = { list: [], myGrabs: {}, channel: null };
-
-async function loadChatRedPackets(){
-  try{
-    var res = await window.sb.from('red_packets')
-      .select('*')
-      .eq('scope', 'chat')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if(res.error) throw res.error;
-    crpState.list = res.data || [];
-    await loadChatMyGrabs();
-    renderChatRedPackets();
-  }catch(e){ crpState.list = []; renderChatRedPackets(); }
-}
-
-async function loadChatMyGrabs(){
-  crpState.myGrabs = {};
-  if(!crpState.list.length) return;
-  try{
-    var ids = crpState.list.map(function(p){ return p.id; });
-    var res = await window.sb.from('red_packet_grabs')
-      .select('packet_id, amount')
-      .eq('user_id', currentUser.id)
-      .in('packet_id', ids);
-    (res.data || []).forEach(function(g){ crpState.myGrabs[g.packet_id] = g.amount; });
-  }catch(e){}
-}
-
-function renderChatRedPackets(){
-  // 红包已并入聊天消息流，统一由 renderChat 渲染
-  renderChat();
-}
-
-async function openChatRedPacket(packetId){
-  var p = crpState.list.find(function(x){ return String(x.id) === String(packetId); });
-  if(!p) return;
-  var mine = crpState.myGrabs[p.id];
-  if(mine === undefined && p.remaining_count > 0 && p.sender_id !== currentUser.id){
-    await grabChatRedPacket(p.id);
-    p = crpState.list.find(function(x){ return String(x.id) === String(packetId); }) || p;
-    mine = crpState.myGrabs[p.id];
-  }
-  showChatRedPacketDetail(p, mine);
-}
-
-async function grabChatRedPacket(packetId){
-  try{
-    var res = await window.sb.rpc('grab_red_packet', { p_packet_id: packetId });
-    if(res.error) throw res.error;
-    var d = res.data;
-    if(d && d.ok){
-      showToast('手气不错，抢到 ' + d.amount + ' 币！');
-      try{ var u = await window.sb.rpc('get_my_profile'); if(u.data){ currentUser.coins = u.data.coins; setSessionUser(currentUser); } }catch(e){}
-      await loadChatRedPackets();
-    } else {
-      showToast((d && d.message) || '领取失败');
-      await loadChatRedPackets();
-    }
-  }catch(e){ showToast('领取失败：' + e.message); }
-}
-
-async function showChatRedPacketDetail(p, myAmount){
-  var body = document.getElementById('rpDetailBody');
-  body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载中…</div>';
-  openChatRpDetail();
-  try{
-    var res = await window.sb.from('red_packet_grabs')
-      .select('*').eq('packet_id', p.id).order('amount', { ascending: false });
-    var rows = res.data || [];
-    var html = '<div style="text-align:center;margin-bottom:18px;">' +
-      '<div style="font-size:.8em;color:var(--text-muted);">' + escapeHtml(p.sender_name || '匿名') + (p.target_user_id ? ' 的专属红包' : ' 的红包') + '</div>' +
-      '<div style="font-size:1.6em;font-weight:900;color:var(--primary);margin-top:4px;">' + p.total + ' 币</div>' +
-      '<div style="font-size:.75em;color:var(--text-light);margin-top:4px;">共 ' + p.count + ' 份 · 已领 ' + rows.length + ' 份</div>';
-    if(myAmount !== undefined) html += '<div style="margin-top:10px;font-size:.85em;font-weight:700;color:var(--primary);">你领到 ' + myAmount + ' 币</div>';
-    html += '</div>';
-    if(rows.length){
-      html += '<div style="font-size:.72em;font-weight:700;color:var(--text-muted);margin-bottom:8px;">领取排行榜</div>';
-      html += rows.map(function(g, i){
-        var noCls = i === 0 ? 'top1' : '';
-        return '<div class="rp-rank-item"><div class="rr-left"><span class="rr-no ' + noCls + '">' + (i+1) + '</span><span>' + escapeHtml(g.user_name || '用户') + '</span></div><span class="rr-amt">' + g.amount + ' 币</span></div>';
-      }).join('');
-      if(rows[0]) html += '<div style="font-size:.72em;color:var(--text-light);margin-top:8px;text-align:center;">🏆 手气最佳：' + escapeHtml(rows[0].user_name || '用户') + '（' + rows[0].amount + ' 币）</div>';
-    } else {
-      html += '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">还没有人领取</div>';
-    }
-    body.innerHTML = html;
-  }catch(e){
-    body.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.85em;padding:20px;">加载失败：' + escapeHtml(e.message) + '</div>';
-  }
-}
-
-var crpType = 'group';
-function openChatRpSheet(){
-  if(isUserBanned()){ showToast('账号已被封禁'); return; }
-  crpType = 'group';
-  document.getElementById('crpTotal').value = '';
-  document.getElementById('crpCount').value = '';
-  syncCrpTypeUI();
-  buildCrpTargetOptions();
-  document.getElementById('rpBackdrop').classList.add('open');
-  document.getElementById('rpSheet').classList.add('open');
-}
-function closeChatRpSheet(){
-  document.getElementById('rpBackdrop').classList.remove('open');
-  document.getElementById('rpSheet').classList.remove('open');
-}
-function syncCrpTypeUI(){
-  document.querySelectorAll('.rp-type').forEach(function(b){ b.classList.toggle('active', b.dataset.t === crpType); });
-  document.getElementById('crpCountField').style.display = crpType === 'group' ? 'block' : 'none';
-  document.getElementById('crpTargetField').style.display = crpType === 'exclusive' ? 'block' : 'none';
-}
-function buildCrpTargetOptions(){
-  var sel = document.getElementById('crpTarget');
-  var opts = ['<option value="">请选择在线用户</option>'];
-  Object.keys(onlineUsers).forEach(function(k){
-    var u = onlineUsers[k];
-    if(u.id === currentUser.id) return;
-    opts.push('<option value="' + u.id + '">' + escapeHtml(u.nickname || '用户') + '</option>');
-  });
-  sel.innerHTML = opts.join('');
-}
-async function sendChatRedPacket(){
-  var total = parseInt(document.getElementById('crpTotal').value, 10);
-  if(!total || total < 1){ showToast('请输入红包总积分'); return; }
-  var count, target = null;
-  if(crpType === 'exclusive'){
-    target = document.getElementById('crpTarget').value;
-    if(!target){ showToast('请选择指定领取人'); return; }
-    count = 1;
-  } else {
-    count = parseInt(document.getElementById('crpCount').value, 10);
-    if(!count || count < 2){ showToast('份数至少 2 份'); return; }
-    if(count > total){ showToast('份数不能超过总积分'); return; }
-  }
-  var btn = document.getElementById('crpSendBtn');
-  btn.disabled = true;
-  try{
-    var res = await window.sb.rpc('send_red_packet', {
-      p_room_id: null,
-      p_total: total,
-      p_count: count,
-      p_scope: 'chat',
-      p_target_user_id: target
-    });
-    if(res.error) throw res.error;
-    var d = res.data;
-    if(!d || !d.ok){ showToast((d && d.message) || '发送失败'); btn.disabled = false; return; }
-    if(d.balance !== undefined){ currentUser.coins = d.balance; setSessionUser(currentUser); }
-    closeChatRpSheet();
-    showToast('红包已发出');
-    await loadChatRedPackets();
-  }catch(e){ showToast('发送失败：' + e.message); }
-  btn.disabled = false;
-}
-function openChatRpDetail(){
-  document.getElementById('rpDetailBackdrop').classList.add('open');
-  document.getElementById('rpDetailSheet').classList.add('open');
-}
-function closeChatRpDetail(){
-  document.getElementById('rpDetailBackdrop').classList.remove('open');
-  document.getElementById('rpDetailSheet').classList.remove('open');
-}
-
-
-/* ============================================================
-   事件绑定
-============================================================ */
-document.getElementById('sendChatBtn').addEventListener('click',sendChat);
-document.getElementById('chatInput').addEventListener('keydown',function(e){
-  if(e.key==='Enter')sendChat();
-});
-document.getElementById('clearChatBtn').addEventListener('click',clearAllChats);
-document.getElementById('chatRedPacketBtn').addEventListener('click',openChatRpSheet);
-document.getElementById('rpBackdrop').addEventListener('click',closeChatRpSheet);
-document.getElementById('crpSendBtn').addEventListener('click',sendChatRedPacket);
-document.getElementById('rpDetailBackdrop').addEventListener('click',closeChatRpDetail);
-document.getElementById('rpDetailClose').addEventListener('click',closeChatRpDetail);
-document.querySelectorAll('.rp-type').forEach(function(b){
-  b.addEventListener('click',function(){ crpType = this.dataset.t; syncCrpTypeUI(); });
-});
-document.addEventListener('gesturestart',function(e){e.preventDefault()});
-
-/* ============================================================
-   初始化
-============================================================ */
-window.addEventListener('DOMContentLoaded',function(){
-  // 底部导航
-  if(typeof renderFooter==='function')renderFooter('chats');
-  else console.error('renderFooter 未定义，检查 common.js');
-
-  if(isAdmin)document.getElementById('clearChatBtn').style.display='inline-block';
-
-  updateBannedBanner();
-  loadAllChats();
-  loadChatRedPackets();
-  initPresence();  // ★ 启动在线用户
-
-  if(currentUser&&currentUser.id){
-    updateLastChatRead(currentUser.id).then(function(){
-      if(typeof updateChatBadge==='function')updateChatBadge();
-    });
-  }
-
-  // 全局聊天实时订阅
-  window.sb.channel('chats-page-realtime-'+Date.now())
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'chats'},function(){loadAllChats()})
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'chats'},function(){loadAllChats()})
-    .on('postgres_changes',{event:'DELETE',schema:'public',table:'chats'},function(){loadAllChats()})
-    .subscribe();
-
-  // 聊天群红包实时订阅（scope=chat）
-  crpState.channel = window.sb.channel('chats-rp-'+Date.now())
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(){loadChatRedPackets()})
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'red_packets',filter:'scope=eq.chat'},function(p){
-      var i = crpState.list.findIndex(function(x){ return x.id === p.new.id; });
-      if(i >= 0){ crpState.list[i] = p.new; renderChatRedPackets(); } else { loadChatRedPackets(); }
-    })
-    .subscribe();
-
-  // 会话同步
-  function syncUser(){
-    var s=getSessionUser();
-    if(s&&s.id){
-      if(!currentUser||currentUser.id!==s.id||currentUser.avatar_url!==s.avatar_url||currentUser.nickname!==s.nickname){
-        location.reload();
-      }
-    }
-  }
-  window.addEventListener('focus',syncUser);
-  document.addEventListener('visibilitychange',function(){
-    if(!document.hidden)syncUser();
-  });
-});
-
-/* ★★ 服务端身份确认后再刷新权限 ★★
-   本地 localStorage 里的 is_admin 可以随便改，但不能决定任何事：
-   只有 get_my_profile 返回的 is_admin 才会被采纳 */
-window.addEventListener('sq-user-ready', function (e) {
-  var u = e.detail && e.detail.user;
-  if (!u) return;
-  try { currentUser = u; } catch (err) { window.currentUser = u; }
-  var admin = (u.is_admin === true);
-  try { isAdmin = admin; } catch (err) { window.isAdmin = admin; }
-  window.isAdmin = admin;
-  ['renderChat','renderMessages','renderPosts','render','renderShop','renderActivity','refreshAll','loadCategories','updateBannedBanner']
-    .forEach(function (fn) {
-      try { if (typeof window[fn] === 'function') window[fn](); } catch (err) {}
-    });
-  var ap = document.getElementById('adminPanelBtn');
-  if (ap) ap.style.display = admin ? 'inline-flex' : 'none';
-  var cc = document.getElementById('clearChatBtn');
-  if (cc) cc.style.display = admin ? 'inline-block' : 'none';
-});
-</script>
-</body>
-</html>
+(内容太多被截断，显示到第 626 行；继续读传 offset=627)
