@@ -50,7 +50,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .intro-btn { background: linear-gradient(135deg, #4caf50, #2e7d32); color: #fff; border: none; padding: 16px 48px; font-size: 1.05em; font-weight: 700; border-radius: 99px; cursor: pointer; min-width: 220px; box-shadow: 0 10px 25px rgba(46,125,50,0.3); }
 .skip-btn { background: none; border: none; color: #8aaa9a; font-size: 0.85em; margin-top: 16px; cursor: pointer; }
 
-/* 3. 登录层 */
+/* 3. 登录/注册层 */
 #authScreen { position: fixed; inset: 0; z-index: 8000; background: var(--bg); display: none; align-items: center; justify-content: center; padding: 20px; background-image: radial-gradient(circle at 20% 10%, rgba(46, 125, 50, 0.06) 0%, transparent 45%), radial-gradient(circle at 80% 90%, rgba(76, 175, 80, 0.06) 0%, transparent 45%); transition: opacity 0.4s ease; opacity: 1; overflow-y: auto; }
 #authScreen.hide { opacity: 0; pointer-events: none; }
 .login-card { width: 23em; max-width: 92vw; background: #fff; border-radius: 16px; padding: 2.2em 2em; border: 1px solid #c8e0c8; box-shadow: 0 8px 32px rgba(46,125,50,0.12); }
@@ -68,9 +68,14 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .login-continue:hover { background: #4caf50; transform: translateY(-1px); }
 .login-footer { text-align: center; margin-top: 1.1em; font-size: 0.82em; color: #5a7a6a; }
 .login-footer .switch-link { color: #2e7d32; font-weight: 700; cursor: pointer; border: none; background: none; padding: 0 4px; text-decoration: underline; }
-.login-error { color: #c62828; font-size: 0.78em; text-align: center; min-height: 1.5em; margin-top: 0.2em; }
+.login-error { color: #c62828; font-size: 0.78em; text-align: center; min-height: 1.5em; margin-top: 0.2em; line-height: 1.4; }
 .auth-card { display: none; }
 .auth-card.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* 实时校验提示 */
+.field-hint { font-size: 0.72em; margin-top: 4px; min-height: 1.2em; transition: color 0.2s; }
+.field-hint.error { color: #c62828; }
+.field-hint.success { color: #2e7d32; }
 
 /* 第三方登录 UI */
 .oauth-row { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -149,7 +154,11 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
             <div class="login-title"><span>创建账户</span><span>加入 Seven戚 社区</span></div>
             <div class="login-form">
                 <div class="field-group"><label>昵称</label><input type="text" id="regNick" maxlength="12" placeholder="请输入昵称" /></div>
-                <div class="field-group"><label>邮箱账号</label><input type="email" id="regEmail" placeholder="请输入真实邮箱" /></div>
+                <div class="field-group">
+                    <label>邮箱账号</label>
+                    <input type="email" id="regEmail" placeholder="请输入国内邮箱 (QQ/163等)" />
+                    <div id="regEmailHint" class="field-hint"></div>
+                </div>
                 <div class="field-group"><label>密码</label><input type="password" id="regPassword" placeholder="密码至少6位" /></div>
                 <div class="field-group"><label>确认密码</label><input type="password" id="regPassword2" placeholder="再次输入密码" /></div>
                 <button class="login-continue" id="registerBtn">注册</button>
@@ -164,6 +173,9 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 var SUPABASE_URL = "https://ljbxeuqnlxiffvbnwepv.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_OT_i4T2SnTxA8bHKnSQ1sw_0Es4l8SP";
 if (!window.sb) window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 国内邮箱正则 (qq, 163, 126, sina, sohu, yeah, 139, 189, aliyun, foxmail, vip.qq)
+var DOMESTIC_EMAIL_REGEX = /^[a-zA-Z0-9_.-]+@(qq|vip\.qq|foxmail|163|126|yeah|sina|sohu|139|189|aliyun)\.(com|cn|net)$/i;
 
 async function fetchMyProfileServer() {
     try {
@@ -239,6 +251,7 @@ async function doRegister() {
     var errEl = document.getElementById('registerError');
     
     if (!nickname || !email || !pwd) return errEl.textContent = '请填写完整信息';
+    if (!DOMESTIC_EMAIL_REGEX.test(email)) return errEl.textContent = '请使用 QQ、163、126 等国内常用邮箱';
     if (pwd !== pwd2) return errEl.textContent = '两次密码不一致';
     
     errEl.textContent = '注册中...';
@@ -247,13 +260,16 @@ async function doRegister() {
         
         if (res.error) {
             var msg = res.error.message;
-            if (msg.includes('rate limit')) throw new Error('后端邮箱发送数量已达上限，需要明日再进行注册。');
+            if (msg.includes('rate limit') || msg.includes('Email rate limit exceeded')) {
+                errEl.innerHTML = '⚠️ <b>今日邮箱发送数量已达上限</b><br>请直接添加 <b>站主QQ：2103686588</b><br>让站主为您在后台添加账号。';
+                return;
+            }
             if (msg.includes('already registered')) throw new Error('该邮箱已注册');
             throw new Error(msg);
         }
         
         if (!res.data.session) {
-            alert('注册成功，请去邮箱查收验证邮件后再登录。\n(注：如未收到邮件，可能已触发限流)');
+            alert('注册成功，请去邮箱查收验证邮件后再登录。\n(注：如未收到邮件，请检查垃圾箱或联系站主QQ 2103686588)');
             switchCard('login');
             document.getElementById('loginEmail').value = email;
             return;
@@ -272,6 +288,7 @@ function switchCard(which) {
     });
     document.getElementById('loginError').textContent = '';
     document.getElementById('registerError').textContent = '';
+    if (which === 'login') document.getElementById('regEmailHint').textContent = '';
 }
 
 (async function init() {
@@ -281,6 +298,24 @@ function switchCard(which) {
     document.getElementById('registerBtn').onclick = doRegister;
     document.getElementById('loginPassword').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
     document.getElementById('regPassword2').addEventListener('keydown', e => e.key === 'Enter' && doRegister());
+
+    // 实时监听邮箱输入校验
+    document.getElementById('regEmail').addEventListener('input', function() {
+        var val = this.value.trim();
+        var hint = document.getElementById('regEmailHint');
+        if (!val) {
+            hint.textContent = '';
+            hint.className = 'field-hint';
+            return;
+        }
+        if (DOMESTIC_EMAIL_REGEX.test(val)) {
+            hint.textContent = '✅ 邮箱格式正确';
+            hint.className = 'field-hint success';
+        } else {
+            hint.textContent = '❌ 仅支持 QQ、163、126、foxmail 等国内邮箱';
+            hint.className = 'field-hint error';
+        }
+    });
 
     var currentSlide = 0;
     var totalSlides = 4;
@@ -301,11 +336,10 @@ function switchCard(which) {
         document.getElementById('introScreen').classList.add('hide');
         setTimeout(() => {
             document.getElementById('introScreen').style.display = 'none';
-            window.location.href = './messages.html'; // 引导结束去留言板
+            window.location.href = './messages.html';
         }, 400);
     }
 
-    // 保证开屏动画至少显示 1.8 秒
     var minTimePromise = new Promise(resolve => setTimeout(resolve, 1800));
     
     var authPromise = (async function() {
@@ -336,7 +370,7 @@ function switchCard(which) {
         } else if (!hasSeenIntro) {
             document.getElementById('introScreen').style.display = 'flex';
         } else {
-            window.location.replace('./messages.html'); // 默认进入留言板
+            window.location.replace('./messages.html');
         }
     }
 })();
